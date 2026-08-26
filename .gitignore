@@ -1,0 +1,23 @@
+/vendor/
+/.vscode/
+/.idea/
+/.env
+/.env.local
+/.env.*.local
+*.log
+*.tmp
+*.temp
+/tmp/
+/cache/
+.DS_Store
+Thumbs.db
+Desktop.ini
+*.css.map
+/private/database-secret.php
+/documents/cahier des charges/cahier-des-charges-enrichi.md
+/documents/conceptualisation/Spécifications/Google sheet
+/documents/cours
+/AGENTS.md
+/documents/pilotage
+/documents/outils
+/etat-avancement.md
