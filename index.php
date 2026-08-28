@@ -2,14 +2,14 @@
 
 /**
  * Description générale :
- * Point d'entrée initial de l'application QUIDITMIEUX.
+ * Point d'entrée unique de l'application QUIDITMIEUX.
  *
  * Rôle :
- * Réserver l'emplacement du futur point d'entrée et du routeur simple.
+ * Réserver l'emplacement du futur routeur simple de l'application.
  *
  * Tâches :
- * Ne réaliser aucun traitement tant que le socle PHP n'est pas abordé.
+ * Accueillir ultérieurement le chargement commun, la session, PDO et le routage.
  *
  * Liens avec les autres fichiers :
- * Aucun lien actif à cette étape du projet.
+ * S'appuiera sur l'autoload, les fichiers de src/core et src/config/routes.php.
  */
