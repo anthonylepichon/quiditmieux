@@ -1,6 +1,6 @@
 <mxfile host="app.diagrams.net" compressed="false">
   <diagram name="MCD" id="quiditmieux-mcd">
-    <mxGraphModel dx="2738" dy="1474" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+    <mxGraphModel dx="1164" dy="819" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -149,7 +149,7 @@
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="ULabLuA7f-vGaEG7Z3MC-43" edge="1" parent="1" source="note_api" style="edgeStyle=orthogonalEdgeStyle;shape=connector;curved=0;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.75;entryY=1;entryDx=0;entryDy=0;strokeColor=default;strokeWidth=5;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=11;fontColor=default;labelBackgroundColor=default;startSize=5;endArrow=classic;endSize=5;exitX=0.044;exitY=0.642;exitDx=0;exitDy=0;exitPerimeter=0;" target="ent_listing">
+        <mxCell id="ULabLuA7f-vGaEG7Z3MC-43" edge="1" parent="1" source="note_api" style="edgeStyle=orthogonalEdgeStyle;shape=connector;curved=0;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.75;entryY=1;entryDx=0;entryDy=0;strokeColor=default;strokeWidth=5;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=11;fontColor=default;labelBackgroundColor=default;startSize=5;endArrow=classic;endSize=5;exitX=0.044;exitY=0.642;exitDx=0;exitDy=0;exitPerimeter=0;dashed=1;" target="ent_listing">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
               <mxPoint x="707.47" y="480.65" />
