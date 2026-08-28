@@ -1,0 +1,31 @@
+/*
+ * Description générale :
+ * Conteneurs et panneaux structurels communs.
+ *
+ * Rôle :
+ * Reproduire la largeur utile et les espacements horizontaux de la maquette.
+ *
+ * Tâches :
+ * Centrer le contenu et fournir les surfaces vitrées génériques.
+ *
+ * Liens avec les autres fichiers :
+ * S'appuie sur les mixins et accueille les composants des différentes pages.
+ */
+
+@use "../abstracts/mixins" as mixins;
+
+.container {
+  @include mixins.content-container;
+}
+
+.glass-panel {
+  @include mixins.glass-panel;
+
+  padding: clamp(var(--space-6), 4vw, var(--space-10));
+}
+
+.section-stack {
+  display: grid;
+  gap: var(--space-8);
+  padding-block: var(--space-8) var(--space-16);
+}

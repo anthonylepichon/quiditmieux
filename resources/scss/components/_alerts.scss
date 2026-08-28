@@ -1,0 +1,39 @@
+/*
+ * Description générale :
+ * Messages de retour génériques de l'application.
+ *
+ * Rôle :
+ * Informer clairement de la réussite, d'un avertissement ou d'une erreur.
+ *
+ * Tâches :
+ * Définir une structure commune et trois variantes sémantiques.
+ *
+ * Liens avec les autres fichiers :
+ * Utilisé après les actions des formulaires et les traitements serveur.
+ */
+
+.alert {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-5);
+  border: 0.0625rem solid currentColor;
+  border-radius: var(--radius-field);
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+
+.alert--success {
+  background: var(--color-success-surface);
+  color: var(--color-success);
+}
+
+.alert--warning {
+  background: var(--color-warning-surface);
+  color: var(--color-warning);
+}
+
+.alert--error {
+  background: var(--color-error-surface);
+  color: var(--color-error);
+}

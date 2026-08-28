@@ -1,0 +1,18 @@
+/*
+ * Description générale :
+ * Variables techniques communes aux modules SCSS.
+ *
+ * Rôle :
+ * Centraliser les dimensions nécessaires aux calculs et aux ruptures responsives.
+ *
+ * Tâches :
+ * Définir la largeur de contenu et les principaux points de rupture.
+ *
+ * Liens avec les autres fichiers :
+ * Utilisé par les mixins, les mises en page et les composants responsives.
+ */
+
+$content-max-width: 75rem;
+$breakpoint-desktop: 64rem;
+$breakpoint-tablet: 48rem;
+$breakpoint-mobile: 30rem;

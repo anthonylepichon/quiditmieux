@@ -1,0 +1,61 @@
+/*
+ * Description générale :
+ * Styles fondamentaux de la page et des éléments interactifs.
+ *
+ * Rôle :
+ * Appliquer le thème clair et garantir une navigation visible au clavier.
+ *
+ * Tâches :
+ * Définir le corps de page, les liens, la sélection et le focus.
+ *
+ * Liens avec les autres fichiers :
+ * Complète le thème, la normalisation et la typographie.
+ */
+
+body {
+  min-width: 20rem;
+  min-height: 100vh;
+  background: var(--color-page);
+  color: var(--color-text-primary);
+  font-family: var(--font-family-primary);
+  font-size: 1rem;
+  line-height: 1.5;
+  text-rendering: optimizeLegibility;
+}
+
+main {
+  display: block;
+}
+
+a {
+  transition: color var(--transition-fast);
+}
+
+a:hover {
+  color: var(--color-action-dark);
+}
+
+:focus-visible {
+  outline: 0.1875rem solid var(--color-focus);
+  outline-offset: 0.1875rem;
+}
+
+::selection {
+  background: var(--color-border-accent);
+  color: var(--color-text-primary);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}

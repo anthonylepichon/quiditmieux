@@ -1,0 +1,13 @@
+/*
+ * Description générale :
+ * Point d'entrée réservé aux styles provenant d'un fournisseur externe.
+ *
+ * Rôle :
+ * Isoler une éventuelle dépendance visuelle du code propre au projet.
+ *
+ * Tâches :
+ * Ne charger aucun fournisseur tant qu'une dépendance n'a pas été validée.
+ *
+ * Liens avec les autres fichiers :
+ * Chargé en dernier par main.scss afin de rendre son rôle explicite.
+ */

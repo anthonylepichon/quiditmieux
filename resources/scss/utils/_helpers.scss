@@ -1,0 +1,24 @@
+/*
+ * Description générale :
+ * Classes utilitaires accessibles et limitées aux besoins communs.
+ *
+ * Rôle :
+ * Fournir des aides difficiles à rattacher à un composant unique.
+ *
+ * Tâches :
+ * Masquer visuellement un texte sans le retirer des technologies d'assistance.
+ *
+ * Liens avec les autres fichiers :
+ * Utilisé par les libellés, les boutons illustrés et les messages accessibles.
+ */
+
+.visually-hidden {
+  position: absolute !important;
+  width: 0.0625rem !important;
+  height: 0.0625rem !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  clip: rect(0 0 0 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}

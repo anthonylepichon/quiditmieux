@@ -1,13 +1,29 @@
 /*
  * Description générale :
- * Feuille de style principale du projet QUIDITMIEUX.
+ * Point d'entrée de la compilation des styles de QUIDITMIEUX.
  *
  * Rôle :
- * Réserver le point d'entrée de la future compilation SCSS.
+ * Charger les fondations visuelles dans un ordre cohérent.
  *
  * Tâches :
- * Ne définir aucun style tant que l'intégration n'a pas commencé.
+ * Rassembler le thème light, les styles de base, les composants et les mises en page.
  *
  * Liens avec les autres fichiers :
- * Les futurs fichiers SCSS seront organisés dans les sous-dossiers voisins.
+ * Compile tous les modules SCSS vers public/assets/css/main.css.
  */
+
+@use "themes/light";
+@use "base/reset";
+@use "base/typography";
+@use "base/base";
+@use "layout/container";
+@use "layout/header";
+@use "layout/footer";
+@use "components/buttons";
+@use "components/forms";
+@use "components/alerts";
+@use "components/cards";
+@use "components/countdown";
+@use "pages/index" as pages;
+@use "utils/helpers";
+@use "vendors/index" as vendors;

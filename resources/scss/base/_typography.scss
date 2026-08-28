@@ -1,0 +1,55 @@
+/*
+ * Description générale :
+ * Hiérarchie typographique générale de l'application.
+ *
+ * Rôle :
+ * Retrouver la lisibilité et le caractère jeune de la maquette.
+ *
+ * Tâches :
+ * Définir les titres, paragraphes, libellés et liens textuels.
+ *
+ * Liens avec les autres fichiers :
+ * Utilise les constantes du thème light et complète les styles de base.
+ */
+
+h1,
+h2,
+h3 {
+  color: var(--color-text-primary);
+  line-height: 1.15;
+  text-wrap: balance;
+}
+
+h1 {
+  font-size: clamp(2rem, 4vw, 2.625rem);
+  font-weight: 900;
+}
+
+h2 {
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  font-weight: 800;
+}
+
+h3 {
+  font-size: 1.125rem;
+  font-weight: 700;
+}
+
+p {
+  color: var(--color-text-secondary);
+  line-height: 1.55;
+}
+
+a {
+  color: var(--color-text-action);
+  text-decoration-thickness: 0.0625rem;
+  text-underline-offset: 0.2em;
+}
+
+.eyebrow {
+  color: var(--color-text-action);
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}

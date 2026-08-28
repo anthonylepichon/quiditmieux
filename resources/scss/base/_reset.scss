@@ -1,0 +1,58 @@
+/*
+ * Description générale :
+ * Normalisation légère des éléments HTML.
+ *
+ * Rôle :
+ * Fournir une base prévisible sans masquer les comportements accessibles du navigateur.
+ *
+ * Tâches :
+ * Uniformiser le modèle de boîte, les marges et les médias.
+ *
+ * Liens avec les autres fichiers :
+ * Chargé avant les styles typographiques et les composants.
+ */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body,
+h1,
+h2,
+h3,
+p,
+ul,
+ol,
+figure {
+  margin: 0;
+}
+
+ul,
+ol {
+  padding: 0;
+}
+
+img,
+picture,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button,
+select {
+  cursor: pointer;
+}

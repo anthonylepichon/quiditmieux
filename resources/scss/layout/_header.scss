@@ -1,0 +1,102 @@
+/*
+ * Description générale :
+ * Structure visuelle de l'en-tête principal.
+ *
+ * Rôle :
+ * Organiser l'identité, la navigation et les actions du compte.
+ *
+ * Tâches :
+ * Fournir une barre claire, adaptable et utilisable sur petits écrans.
+ *
+ * Liens avec les autres fichiers :
+ * Utilise le conteneur général et les boutons réutilisables.
+ */
+
+@use "../abstracts/variables" as variables;
+@use "../abstracts/mixins" as mixins;
+
+.site-header {
+  position: relative;
+  z-index: 10;
+  padding-block: var(--space-8) var(--space-6);
+}
+
+.site-header__inner {
+  @include mixins.content-container;
+
+  display: flex;
+  min-height: 5rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-6);
+  padding: var(--space-4) var(--space-6);
+  border: 0.0625rem solid var(--color-border-default);
+  border-radius: var(--radius-card);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-header);
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  color: var(--color-text-brand);
+  font-size: 1.375rem;
+  font-weight: 900;
+  text-decoration: none;
+}
+
+.brand__accent {
+  color: var(--color-action-primary);
+}
+
+.site-navigation,
+.site-navigation__list,
+.site-header__actions {
+  display: flex;
+  align-items: center;
+}
+
+.site-navigation__list {
+  gap: var(--space-6);
+  list-style: none;
+}
+
+.site-navigation a {
+  color: var(--color-text-secondary);
+  font-size: 0.9375rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.site-navigation a:hover,
+.site-navigation a[aria-current="page"] {
+  color: var(--color-text-action);
+}
+
+.site-header__actions {
+  gap: var(--space-3);
+}
+
+.site-header__menu-button {
+  display: none;
+}
+
+@media (max-width: variables.$breakpoint-tablet) {
+  .site-header {
+    padding-block: var(--space-4);
+  }
+
+  .site-header__inner {
+    min-height: 4.25rem;
+    padding: var(--space-3) var(--space-4);
+  }
+
+  .site-navigation,
+  .site-header__actions {
+    display: none;
+  }
+
+  .site-header__menu-button {
+    display: inline-flex;
+  }
+}

@@ -1,0 +1,932 @@
+@charset "UTF-8";
+/*
+ * Description générale :
+ * Point d'entrée de la compilation des styles de QUIDITMIEUX.
+ *
+ * Rôle :
+ * Charger les fondations visuelles dans un ordre cohérent.
+ *
+ * Tâches :
+ * Rassembler le thème light, les styles de base, les composants et les mises en page.
+ *
+ * Liens avec les autres fichiers :
+ * Compile tous les modules SCSS vers public/assets/css/main.css.
+ */
+/*
+ * Description générale :
+ * Thème clair de l'interface QUIDITMIEUX.
+ *
+ * Rôle :
+ * Traduire les couleurs, espacements, rayons et ombres de la maquette validée.
+ *
+ * Tâches :
+ * Exposer les constantes visuelles sous forme de propriétés CSS réutilisables.
+ *
+ * Liens avec les autres fichiers :
+ * Chargé en premier par main.scss et consommé par tous les modules visuels.
+ */
+:root {
+  color-scheme: light;
+  --color-page: #fff6fc;
+  --color-surface: #ffffff;
+  --color-surface-glass: rgb(255 255 255 / 60%);
+  --color-text-primary: #120d34;
+  --color-text-secondary: #433451;
+  --color-text-tertiary: #74697e;
+  --color-text-brand: #3c1272;
+  --color-text-action: #c12a91;
+  --color-action-primary: #ed329c;
+  --color-action-secondary: #942287;
+  --color-action-dark: #3c1272;
+  --color-on-action: #ffffff;
+  --color-border-default: #ede7f0;
+  --color-border-accent: #f78fc9;
+  --color-accent-gold: #f5c34b;
+  --color-accent-cyan: #45d8d5;
+  --color-focus: #167f86;
+  --color-success: #237a57;
+  --color-success-surface: #edf9f3;
+  --color-warning: #865c08;
+  --color-warning-surface: #fff8e8;
+  --color-error: #a5204d;
+  --color-error-surface: #fff0f5;
+  --gradient-action: linear-gradient(110deg, #ed329c 0%, #c12a91 35%, #942287 62%, #681a7c 82%, #3c1272 100%);
+  --gradient-soft: linear-gradient(135deg, rgb(247 143 201 / 24%) 0%, rgb(69 216 213 / 15%) 100%);
+  --font-family-primary: "Lato", "Segoe UI", Arial, sans-serif;
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+  --radius-button: 0.5rem;
+  --radius-field: 0.625rem;
+  --radius-card: 1.125rem;
+  --radius-panel: 1.75rem;
+  --radius-round: 999rem;
+  --shadow-header: 0 0.5rem 0.75rem rgb(60 18 114 / 8%);
+  --shadow-panel: 0 0.625rem 1.75rem -0.625rem rgb(60 18 114 / 7%);
+  --shadow-card: 0 0.375rem 1.0313rem -0.5rem rgb(60 18 114 / 8%);
+  --shadow-raised: 0 0.5rem 1.125rem -0.375rem rgb(60 18 114 / 18%);
+  --transition-fast: 160ms ease;
+  --transition-standard: 240ms ease;
+}
+
+/*
+ * Description générale :
+ * Normalisation légère des éléments HTML.
+ *
+ * Rôle :
+ * Fournir une base prévisible sans masquer les comportements accessibles du navigateur.
+ *
+ * Tâches :
+ * Uniformiser le modèle de boîte, les marges et les médias.
+ *
+ * Liens avec les autres fichiers :
+ * Chargé avant les styles typographiques et les composants.
+ */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body,
+h1,
+h2,
+h3,
+p,
+ul,
+ol,
+figure {
+  margin: 0;
+}
+
+ul,
+ol {
+  padding: 0;
+}
+
+img,
+picture,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button,
+select {
+  cursor: pointer;
+}
+
+/*
+ * Description générale :
+ * Hiérarchie typographique générale de l'application.
+ *
+ * Rôle :
+ * Retrouver la lisibilité et le caractère jeune de la maquette.
+ *
+ * Tâches :
+ * Définir les titres, paragraphes, libellés et liens textuels.
+ *
+ * Liens avec les autres fichiers :
+ * Utilise les constantes du thème light et complète les styles de base.
+ */
+h1,
+h2,
+h3 {
+  color: var(--color-text-primary);
+  line-height: 1.15;
+  text-wrap: balance;
+}
+
+h1 {
+  font-size: clamp(2rem, 4vw, 2.625rem);
+  font-weight: 900;
+}
+
+h2 {
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  font-weight: 800;
+}
+
+h3 {
+  font-size: 1.125rem;
+  font-weight: 700;
+}
+
+p {
+  color: var(--color-text-secondary);
+  line-height: 1.55;
+}
+
+a {
+  color: var(--color-text-action);
+  text-decoration-thickness: 0.0625rem;
+  text-underline-offset: 0.2em;
+}
+
+.eyebrow {
+  color: var(--color-text-action);
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/*
+ * Description générale :
+ * Styles fondamentaux de la page et des éléments interactifs.
+ *
+ * Rôle :
+ * Appliquer le thème clair et garantir une navigation visible au clavier.
+ *
+ * Tâches :
+ * Définir le corps de page, les liens, la sélection et le focus.
+ *
+ * Liens avec les autres fichiers :
+ * Complète le thème, la normalisation et la typographie.
+ */
+body {
+  min-width: 20rem;
+  min-height: 100vh;
+  background: var(--color-page);
+  color: var(--color-text-primary);
+  font-family: var(--font-family-primary);
+  font-size: 1rem;
+  line-height: 1.5;
+  text-rendering: optimizeLegibility;
+}
+
+main {
+  display: block;
+}
+
+a {
+  transition: color var(--transition-fast);
+}
+
+a:hover {
+  color: var(--color-action-dark);
+}
+
+:focus-visible {
+  outline: 0.1875rem solid var(--color-focus);
+  outline-offset: 0.1875rem;
+}
+
+::selection {
+  background: var(--color-border-accent);
+  color: var(--color-text-primary);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+/*
+ * Description générale :
+ * Conteneurs et panneaux structurels communs.
+ *
+ * Rôle :
+ * Reproduire la largeur utile et les espacements horizontaux de la maquette.
+ *
+ * Tâches :
+ * Centrer le contenu et fournir les surfaces vitrées génériques.
+ *
+ * Liens avec les autres fichiers :
+ * S'appuie sur les mixins et accueille les composants des différentes pages.
+ */
+/*
+ * Description générale :
+ * Outils SCSS réutilisables du projet.
+ *
+ * Rôle :
+ * Éviter la répétition des règles structurelles et d'accessibilité.
+ *
+ * Tâches :
+ * Fournir les styles de conteneur, de focus et de panneau vitré.
+ *
+ * Liens avec les autres fichiers :
+ * Utilisé par les modules de mise en page et de composants.
+ */
+/*
+ * Description générale :
+ * Variables techniques communes aux modules SCSS.
+ *
+ * Rôle :
+ * Centraliser les dimensions nécessaires aux calculs et aux ruptures responsives.
+ *
+ * Tâches :
+ * Définir la largeur de contenu et les principaux points de rupture.
+ *
+ * Liens avec les autres fichiers :
+ * Utilisé par les mixins, les mises en page et les composants responsives.
+ */
+.container {
+  width: min(100% - 2 * var(--space-6), 75rem);
+  margin-inline: auto;
+}
+@media (max-width: 48rem) {
+  .container {
+    width: min(100% - 2 * var(--space-4), 75rem);
+  }
+}
+
+.glass-panel {
+  border: 0.0625rem solid var(--color-border-default);
+  border-radius: var(--radius-panel);
+  background: var(--color-surface-glass);
+  box-shadow: var(--shadow-panel);
+  backdrop-filter: blur(0.625rem);
+  padding: clamp(var(--space-6), 4vw, var(--space-10));
+}
+
+.section-stack {
+  display: grid;
+  gap: var(--space-8);
+  padding-block: var(--space-8) var(--space-16);
+}
+
+/*
+ * Description générale :
+ * Outils SCSS réutilisables du projet.
+ *
+ * Rôle :
+ * Éviter la répétition des règles structurelles et d'accessibilité.
+ *
+ * Tâches :
+ * Fournir les styles de conteneur, de focus et de panneau vitré.
+ *
+ * Liens avec les autres fichiers :
+ * Utilisé par les modules de mise en page et de composants.
+ */
+/*
+ * Description générale :
+ * Conteneurs et panneaux structurels communs.
+ *
+ * Rôle :
+ * Reproduire la largeur utile et les espacements horizontaux de la maquette.
+ *
+ * Tâches :
+ * Centrer le contenu et fournir les surfaces vitrées génériques.
+ *
+ * Liens avec les autres fichiers :
+ * S'appuie sur les mixins et accueille les composants des différentes pages.
+ */
+/*
+ * Description générale :
+ * Structure visuelle de l'en-tête principal.
+ *
+ * Rôle :
+ * Organiser l'identité, la navigation et les actions du compte.
+ *
+ * Tâches :
+ * Fournir une barre claire, adaptable et utilisable sur petits écrans.
+ *
+ * Liens avec les autres fichiers :
+ * Utilise le conteneur général et les boutons réutilisables.
+ */
+.site-header {
+  position: relative;
+  z-index: 10;
+  padding-block: var(--space-8) var(--space-6);
+}
+
+.site-header__inner {
+  width: min(100% - 2 * var(--space-6), 75rem);
+  margin-inline: auto;
+}
+@media (max-width: 48rem) {
+  .site-header__inner {
+    width: min(100% - 2 * var(--space-4), 75rem);
+  }
+}
+.site-header__inner {
+  display: flex;
+  min-height: 5rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-6);
+  padding: var(--space-4) var(--space-6);
+  border: 0.0625rem solid var(--color-border-default);
+  border-radius: var(--radius-card);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-header);
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  color: var(--color-text-brand);
+  font-size: 1.375rem;
+  font-weight: 900;
+  text-decoration: none;
+}
+
+.brand__accent {
+  color: var(--color-action-primary);
+}
+
+.site-navigation,
+.site-navigation__list,
+.site-header__actions {
+  display: flex;
+  align-items: center;
+}
+
+.site-navigation__list {
+  gap: var(--space-6);
+  list-style: none;
+}
+
+.site-navigation a {
+  color: var(--color-text-secondary);
+  font-size: 0.9375rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.site-navigation a:hover,
+.site-navigation a[aria-current=page] {
+  color: var(--color-text-action);
+}
+
+.site-header__actions {
+  gap: var(--space-3);
+}
+
+.site-header__menu-button {
+  display: none;
+}
+
+@media (max-width: 48rem) {
+  .site-header {
+    padding-block: var(--space-4);
+  }
+  .site-header__inner {
+    min-height: 4.25rem;
+    padding: var(--space-3) var(--space-4);
+  }
+  .site-navigation,
+  .site-header__actions {
+    display: none;
+  }
+  .site-header__menu-button {
+    display: inline-flex;
+  }
+}
+/*
+ * Description générale :
+ * Outils SCSS réutilisables du projet.
+ *
+ * Rôle :
+ * Éviter la répétition des règles structurelles et d'accessibilité.
+ *
+ * Tâches :
+ * Fournir les styles de conteneur, de focus et de panneau vitré.
+ *
+ * Liens avec les autres fichiers :
+ * Utilisé par les modules de mise en page et de composants.
+ */
+/*
+ * Description générale :
+ * Conteneurs et panneaux structurels communs.
+ *
+ * Rôle :
+ * Reproduire la largeur utile et les espacements horizontaux de la maquette.
+ *
+ * Tâches :
+ * Centrer le contenu et fournir les surfaces vitrées génériques.
+ *
+ * Liens avec les autres fichiers :
+ * S'appuie sur les mixins et accueille les composants des différentes pages.
+ */
+/*
+ * Description générale :
+ * Structure visuelle du pied de page.
+ *
+ * Rôle :
+ * Regrouper les informations secondaires et les liens utiles.
+ *
+ * Tâches :
+ * Organiser un pied de page sobre et responsive.
+ *
+ * Liens avec les autres fichiers :
+ * Partage le conteneur et l'identité visuelle de l'en-tête.
+ */
+.site-footer {
+  padding-block: var(--space-8);
+  border-top: 0.0625rem solid var(--color-border-default);
+  background: var(--color-surface);
+}
+
+.site-footer__inner {
+  width: min(100% - 2 * var(--space-6), 75rem);
+  margin-inline: auto;
+}
+@media (max-width: 48rem) {
+  .site-footer__inner {
+    width: min(100% - 2 * var(--space-4), 75rem);
+  }
+}
+.site-footer__inner {
+  display: flex;
+  min-height: 7rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-6);
+}
+
+.site-footer__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4) var(--space-6);
+  list-style: none;
+}
+
+.site-footer__links a,
+.site-footer__legal {
+  color: var(--color-text-tertiary);
+  font-size: 0.875rem;
+}
+
+@media (max-width: 48rem) {
+  .site-footer__inner {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+/*
+ * Description générale :
+ * Boutons et liens d'action communs.
+ *
+ * Rôle :
+ * Rendre les actions principales et secondaires immédiatement identifiables.
+ *
+ * Tâches :
+ * Définir les tailles, variantes et états interactifs des boutons.
+ *
+ * Liens avec les autres fichiers :
+ * Utilisé dans l'en-tête, les formulaires, les cartes et les pages.
+ */
+.button {
+  display: inline-flex;
+  min-height: 3.25rem;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-6);
+  border: 0.0625rem solid transparent;
+  border-radius: var(--radius-button);
+  font-size: 0.9375rem;
+  font-weight: 800;
+  line-height: 1.2;
+  text-align: center;
+  text-decoration: none;
+  transition: box-shadow var(--transition-fast), transform var(--transition-fast), background-color var(--transition-fast);
+}
+
+.button:hover {
+  transform: translateY(-0.125rem);
+}
+
+.button:active {
+  transform: translateY(0);
+}
+
+.button--primary {
+  background: var(--gradient-action);
+  box-shadow: var(--shadow-raised);
+  color: var(--color-on-action);
+}
+
+.button--primary:hover {
+  color: var(--color-on-action);
+  box-shadow: 0 0.625rem 1.5rem -0.375rem rgba(60, 18, 114, 0.28);
+}
+
+.button--secondary {
+  border-color: var(--color-border-accent);
+  background: var(--color-surface);
+  color: var(--color-text-action);
+}
+
+.button--secondary:hover {
+  background: var(--color-error-surface);
+  color: var(--color-action-dark);
+}
+
+.button--compact {
+  min-height: 3rem;
+  padding-inline: var(--space-5);
+}
+
+.button--icon {
+  width: 3rem;
+  min-height: 3rem;
+  padding: 0;
+}
+
+.button:disabled,
+.button[aria-disabled=true] {
+  cursor: not-allowed;
+  opacity: 0.55;
+  transform: none;
+}
+
+/*
+ * Description générale :
+ * Champs et groupes de formulaire communs.
+ *
+ * Rôle :
+ * Présenter les informations demandées de manière claire et accessible.
+ *
+ * Tâches :
+ * Définir les libellés, contrôles, aides et états d'erreur.
+ *
+ * Liens avec les autres fichiers :
+ * Utilisé par les recherches, l'authentification, le compte et les annonces.
+ */
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-5);
+}
+
+.form-field {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.form-field--full {
+  grid-column: 1/-1;
+}
+
+.form-field__label,
+fieldset legend {
+  color: var(--color-text-primary);
+  font-size: 0.8125rem;
+  font-weight: 800;
+}
+
+.form-control {
+  width: 100%;
+  min-height: 3.25rem;
+  padding: 0.8125rem var(--space-4);
+  border: 0.0625rem solid var(--color-border-default);
+  border-radius: var(--radius-field);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+textarea.form-control {
+  min-height: 8rem;
+  resize: vertical;
+}
+
+.form-control::placeholder {
+  color: var(--color-text-tertiary);
+  opacity: 1;
+}
+
+.form-control:hover {
+  border-color: var(--color-border-accent);
+}
+
+.form-control:focus {
+  border-color: var(--color-action-secondary);
+  box-shadow: 0 0 0 0.25rem rgba(237, 50, 156, 0.12);
+  outline: none;
+}
+
+.form-control[aria-invalid=true] {
+  border-color: var(--color-error);
+}
+
+.form-field__help,
+.form-field__error {
+  font-size: 0.75rem;
+  line-height: 1.4;
+}
+
+.form-field__help {
+  color: var(--color-text-tertiary);
+}
+
+.form-field__error {
+  color: var(--color-error);
+  font-weight: 700;
+}
+
+@media (max-width: 48rem) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+/*
+ * Description générale :
+ * Messages de retour génériques de l'application.
+ *
+ * Rôle :
+ * Informer clairement de la réussite, d'un avertissement ou d'une erreur.
+ *
+ * Tâches :
+ * Définir une structure commune et trois variantes sémantiques.
+ *
+ * Liens avec les autres fichiers :
+ * Utilisé après les actions des formulaires et les traitements serveur.
+ */
+.alert {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-5);
+  border: 0.0625rem solid currentColor;
+  border-radius: var(--radius-field);
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+
+.alert--success {
+  background: var(--color-success-surface);
+  color: var(--color-success);
+}
+
+.alert--warning {
+  background: var(--color-warning-surface);
+  color: var(--color-warning);
+}
+
+.alert--error {
+  background: var(--color-error-surface);
+  color: var(--color-error);
+}
+
+/*
+ * Description générale :
+ * Outils SCSS réutilisables du projet.
+ *
+ * Rôle :
+ * Éviter la répétition des règles structurelles et d'accessibilité.
+ *
+ * Tâches :
+ * Fournir les styles de conteneur, de focus et de panneau vitré.
+ *
+ * Liens avec les autres fichiers :
+ * Utilisé par les modules de mise en page et de composants.
+ */
+/*
+ * Description générale :
+ * Cartes réutilisables pour les annonces de vente aux enchères.
+ *
+ * Rôle :
+ * Présenter une photographie, les informations essentielles et l'état d'une annonce.
+ *
+ * Tâches :
+ * Définir la grille responsive, le visuel, le contenu et les métadonnées.
+ *
+ * Liens avec les autres fichiers :
+ * Utilisé sur l'accueil, les résultats, les suivis et le tableau de bord.
+ */
+.auction-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-6);
+}
+
+.auction-card {
+  position: relative;
+  overflow: hidden;
+  border: 0.0625rem solid var(--color-border-default);
+  border-radius: var(--radius-card);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-card);
+  transition: box-shadow var(--transition-standard), transform var(--transition-standard);
+}
+
+.auction-card:hover {
+  box-shadow: var(--shadow-raised);
+  transform: translateY(-0.25rem);
+}
+
+.auction-card__media {
+  aspect-ratio: 4/3;
+  overflow: hidden;
+  background: var(--gradient-soft);
+}
+
+.auction-card__media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.auction-card__body {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+}
+
+.auction-card__category {
+  color: var(--color-text-action);
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.auction-card__title {
+  font-size: 1rem;
+}
+
+.auction-card__meta {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: var(--space-3);
+  color: var(--color-text-tertiary);
+  font-size: 0.75rem;
+}
+
+.auction-card__price {
+  color: var(--color-text-brand);
+  font-size: 1.125rem;
+  font-weight: 900;
+}
+
+@media (max-width: 64rem) {
+  .auction-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@media (max-width: 48rem) {
+  .auction-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 30rem) {
+  .auction-grid {
+    grid-template-columns: 1fr;
+  }
+}
+/*
+ * Description générale :
+ * Compte à rebours visuel des ventes aux enchères.
+ *
+ * Rôle :
+ * Mettre en évidence le temps restant sans dépendre du comportement JavaScript.
+ *
+ * Tâches :
+ * Organiser les unités de temps et leurs libellés dans une surface contrastée.
+ *
+ * Liens avec les autres fichiers :
+ * Le futur JavaScript actualisera les valeurs affichées par ce composant.
+ */
+.countdown {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border-radius: var(--radius-field);
+  background: var(--gradient-action);
+  color: var(--color-on-action);
+}
+
+.countdown__item {
+  display: grid;
+  min-width: 4rem;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-3);
+  border: 0.0625rem solid rgba(255, 255, 255, 0.55);
+  border-radius: var(--radius-field);
+  text-align: center;
+}
+
+.countdown__value {
+  font-size: 1.25rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.countdown__label {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+/*
+ * Description générale :
+ * Point de regroupement réservé aux styles spécifiques des pages.
+ *
+ * Rôle :
+ * Maintenir l'emplacement prévu pour l'intégration progressive des interfaces.
+ *
+ * Tâches :
+ * Ne charger aucun style de page avant la création des templates correspondants.
+ *
+ * Liens avec les autres fichiers :
+ * Chargé par main.scss et complété pendant le développement fonctionnel.
+ */
+/*
+ * Description générale :
+ * Classes utilitaires accessibles et limitées aux besoins communs.
+ *
+ * Rôle :
+ * Fournir des aides difficiles à rattacher à un composant unique.
+ *
+ * Tâches :
+ * Masquer visuellement un texte sans le retirer des technologies d'assistance.
+ *
+ * Liens avec les autres fichiers :
+ * Utilisé par les libellés, les boutons illustrés et les messages accessibles.
+ */
+.visually-hidden {
+  position: absolute !important;
+  width: 0.0625rem !important;
+  height: 0.0625rem !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  clip: rect(0 0 0 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+/*
+ * Description générale :
+ * Point d'entrée réservé aux styles provenant d'un fournisseur externe.
+ *
+ * Rôle :
+ * Isoler une éventuelle dépendance visuelle du code propre au projet.
+ *
+ * Tâches :
+ * Ne charger aucun fournisseur tant qu'une dépendance n'a pas été validée.
+ *
+ * Liens avec les autres fichiers :
+ * Chargé en dernier par main.scss afin de rendre son rôle explicite.
+ */

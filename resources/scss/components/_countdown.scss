@@ -1,0 +1,45 @@
+/*
+ * Description générale :
+ * Compte à rebours visuel des ventes aux enchères.
+ *
+ * Rôle :
+ * Mettre en évidence le temps restant sans dépendre du comportement JavaScript.
+ *
+ * Tâches :
+ * Organiser les unités de temps et leurs libellés dans une surface contrastée.
+ *
+ * Liens avec les autres fichiers :
+ * Le futur JavaScript actualisera les valeurs affichées par ce composant.
+ */
+
+.countdown {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border-radius: var(--radius-field);
+  background: var(--gradient-action);
+  color: var(--color-on-action);
+}
+
+.countdown__item {
+  display: grid;
+  min-width: 4rem;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-3);
+  border: 0.0625rem solid rgb(255 255 255 / 55%);
+  border-radius: var(--radius-field);
+  text-align: center;
+}
+
+.countdown__value {
+  font-size: 1.25rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.countdown__label {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}

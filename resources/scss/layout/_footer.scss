@@ -1,0 +1,52 @@
+/*
+ * Description générale :
+ * Structure visuelle du pied de page.
+ *
+ * Rôle :
+ * Regrouper les informations secondaires et les liens utiles.
+ *
+ * Tâches :
+ * Organiser un pied de page sobre et responsive.
+ *
+ * Liens avec les autres fichiers :
+ * Partage le conteneur et l'identité visuelle de l'en-tête.
+ */
+
+@use "../abstracts/variables" as variables;
+@use "../abstracts/mixins" as mixins;
+
+.site-footer {
+  padding-block: var(--space-8);
+  border-top: 0.0625rem solid var(--color-border-default);
+  background: var(--color-surface);
+}
+
+.site-footer__inner {
+  @include mixins.content-container;
+
+  display: flex;
+  min-height: 7rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-6);
+}
+
+.site-footer__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4) var(--space-6);
+  list-style: none;
+}
+
+.site-footer__links a,
+.site-footer__legal {
+  color: var(--color-text-tertiary);
+  font-size: 0.875rem;
+}
+
+@media (max-width: variables.$breakpoint-tablet) {
+  .site-footer__inner {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

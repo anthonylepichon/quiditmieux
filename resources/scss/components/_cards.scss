@@ -1,0 +1,99 @@
+/*
+ * Description générale :
+ * Cartes réutilisables pour les annonces de vente aux enchères.
+ *
+ * Rôle :
+ * Présenter une photographie, les informations essentielles et l'état d'une annonce.
+ *
+ * Tâches :
+ * Définir la grille responsive, le visuel, le contenu et les métadonnées.
+ *
+ * Liens avec les autres fichiers :
+ * Utilisé sur l'accueil, les résultats, les suivis et le tableau de bord.
+ */
+
+@use "../abstracts/variables" as variables;
+
+.auction-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-6);
+}
+
+.auction-card {
+  position: relative;
+  overflow: hidden;
+  border: 0.0625rem solid var(--color-border-default);
+  border-radius: var(--radius-card);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-card);
+  transition: box-shadow var(--transition-standard), transform var(--transition-standard);
+}
+
+.auction-card:hover {
+  box-shadow: var(--shadow-raised);
+  transform: translateY(-0.25rem);
+}
+
+.auction-card__media {
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  background: var(--gradient-soft);
+}
+
+.auction-card__media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.auction-card__body {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+}
+
+.auction-card__category {
+  color: var(--color-text-action);
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.auction-card__title {
+  font-size: 1rem;
+}
+
+.auction-card__meta {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: var(--space-3);
+  color: var(--color-text-tertiary);
+  font-size: 0.75rem;
+}
+
+.auction-card__price {
+  color: var(--color-text-brand);
+  font-size: 1.125rem;
+  font-weight: 900;
+}
+
+@media (max-width: variables.$breakpoint-desktop) {
+  .auction-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: variables.$breakpoint-tablet) {
+  .auction-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: variables.$breakpoint-mobile) {
+  .auction-grid {
+    grid-template-columns: 1fr;
+  }
+}
