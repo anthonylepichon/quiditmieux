@@ -1,12 +1,84 @@
-<mxfile host="app.diagrams.net">
-  <diagram name="Page-1" id="Suh-dnzl_69F96QHAMto">
-    <mxGraphModel dx="2797" dy="1585" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+<mxfile host="app.diagrams.net" compressed="false">
+  <diagram name="MPD" id="quiditmieux-mpd-simplifie">
+    <mxGraphModel dx="1164" dy="819" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
-        <mxCell id="-Tv-v7kium4bpuCcuZqP-1" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=#82b366;fillColor=#d5e8d4;align=center;verticalAlign=middle;rounded=0;fontStyle=1;fontSize=22;" value="MPD" vertex="1">
-          <mxGeometry height="30" width="1152" x="5" y="6" as="geometry" />
+        <mxCell id="title" value="MPD — QUIDITMIEUX" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e8f5e9;strokeColor=#2e7d32;fontColor=#1f5132;fontSize=22;fontStyle=1;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="10" y="10" width="1140" height="38" as="geometry" />
         </mxCell>
+
+        <mxCell id="table_user" value="UTILISATEUR" style="swimlane;html=1;startSize=42;rounded=1;fillColor=#236b47;swimlaneFillColor=#ffffff;strokeColor=#4caf7a;fontColor=#ffffff;fontSize=17;fontStyle=1;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="40" y="80" width="300" height="190" as="geometry" />
+        </mxCell>
+        <mxCell id="user_id" value="utilisateur_id (Clé primaire)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=12;" vertex="1" parent="table_user">
+          <mxGeometry x="20" y="50" width="260" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="user_pseudo" value="pseudo : VARCHAR(30)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=12;" vertex="1" parent="table_user">
+          <mxGeometry x="20" y="82" width="260" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="user_email" value="email : VARCHAR(255)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=12;" vertex="1" parent="table_user">
+          <mxGeometry x="20" y="114" width="260" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="user_password" value="password_hash : VARCHAR(255)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=12;" vertex="1" parent="table_user">
+          <mxGeometry x="20" y="146" width="260" height="24" as="geometry" />
+        </mxCell>
+
+        <mxCell id="table_follow" value="ASSOC_UTILISATEUR_ANNONCE" style="swimlane;html=1;startSize=42;rounded=1;fillColor=#236b47;swimlaneFillColor=#ffffff;strokeColor=#4caf7a;fontColor=#ffffff;fontSize=16;fontStyle=1;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="400" y="80" width="320" height="170" as="geometry" />
+        </mxCell>
+        <mxCell id="follow_user_id" value="utilisateur_id : INT (Clé étrangère)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=12;" vertex="1" parent="table_follow">
+          <mxGeometry x="20" y="50" width="280" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="follow_listing_id" value="annonce_id : INT (Clé étrangère)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=12;" vertex="1" parent="table_follow">
+          <mxGeometry x="20" y="82" width="280" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="follow_id" value="assoc_utilisateur_annonce_id (Clé primaire)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=12;" vertex="1" parent="table_follow">
+          <mxGeometry x="20" y="114" width="280" height="34" as="geometry" />
+        </mxCell>
+
+        <mxCell id="table_listing" value="ANNONCE" style="swimlane;html=1;startSize=42;rounded=1;fillColor=#236b47;swimlaneFillColor=#ffffff;strokeColor=#4caf7a;fontColor=#ffffff;fontSize=17;fontStyle=1;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="820" y="80" width="300" height="310" as="geometry" />
+        </mxCell>
+        <mxCell id="listing_id" value="annonce_id (Clé primaire)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=12;" vertex="1" parent="table_listing"><mxGeometry x="20" y="50" width="260" height="24" as="geometry" /></mxCell>
+        <mxCell id="listing_user_id" value="utilisateur_id : INT (Clé étrangère)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=12;" vertex="1" parent="table_listing"><mxGeometry x="20" y="80" width="260" height="24" as="geometry" /></mxCell>
+        <mxCell id="listing_title" value="titre : VARCHAR(255)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=12;" vertex="1" parent="table_listing"><mxGeometry x="20" y="110" width="260" height="24" as="geometry" /></mxCell>
+        <mxCell id="listing_description" value="description : TEXT" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=12;" vertex="1" parent="table_listing"><mxGeometry x="20" y="140" width="260" height="24" as="geometry" /></mxCell>
+        <mxCell id="listing_condition" value="etat_objet : VARCHAR(20)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=12;" vertex="1" parent="table_listing"><mxGeometry x="20" y="170" width="260" height="24" as="geometry" /></mxCell>
+        <mxCell id="listing_price" value="prix_depart : DECIMAL(10,2)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=12;" vertex="1" parent="table_listing"><mxGeometry x="20" y="200" width="260" height="24" as="geometry" /></mxCell>
+        <mxCell id="listing_end" value="date_heure_fin : DATETIME" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=12;" vertex="1" parent="table_listing"><mxGeometry x="20" y="230" width="260" height="24" as="geometry" /></mxCell>
+        <mxCell id="listing_category" value="categorie_libelle : VARCHAR(255)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=12;" vertex="1" parent="table_listing"><mxGeometry x="20" y="260" width="260" height="24" as="geometry" /></mxCell>
+
+        <mxCell id="table_bid" value="ENCHERE" style="swimlane;html=1;startSize=42;rounded=1;fillColor=#236b47;swimlaneFillColor=#ffffff;strokeColor=#4caf7a;fontColor=#ffffff;fontSize=17;fontStyle=1;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="40" y="470" width="300" height="220" as="geometry" />
+        </mxCell>
+        <mxCell id="bid_id" value="enchere_id (Clé primaire)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=12;" vertex="1" parent="table_bid"><mxGeometry x="20" y="50" width="260" height="24" as="geometry" /></mxCell>
+        <mxCell id="bid_user_id" value="utilisateur_id : INT (Clé étrangère)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=12;" vertex="1" parent="table_bid"><mxGeometry x="20" y="82" width="260" height="24" as="geometry" /></mxCell>
+        <mxCell id="bid_listing_id" value="annonce_id : INT (Clé étrangère)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=12;" vertex="1" parent="table_bid"><mxGeometry x="20" y="114" width="260" height="24" as="geometry" /></mxCell>
+        <mxCell id="bid_amount" value="montant : DECIMAL(10,2)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=12;" vertex="1" parent="table_bid"><mxGeometry x="20" y="146" width="260" height="24" as="geometry" /></mxCell>
+        <mxCell id="bid_datetime" value="date_heure_enchere : DATETIME" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=12;" vertex="1" parent="table_bid"><mxGeometry x="20" y="178" width="260" height="24" as="geometry" /></mxCell>
+
+        <mxCell id="api_categories" value="&lt;b&gt;API CATÉGORIES&lt;/b&gt;&lt;br&gt;&lt;br&gt;Libellé de la catégorie" style="rounded=1;whiteSpace=wrap;html=1;dashed=1;strokeWidth=2;fillColor=#e0f7fa;strokeColor=#168b82;fontColor=#236b47;fontSize=12;align=left;verticalAlign=top;spacingTop=14;spacingLeft=14;" vertex="1" parent="1">
+          <mxGeometry x="820" y="430" width="240" height="105" as="geometry" />
+        </mxCell>
+
+        <mxCell id="table_photo" value="PHOTOGRAPHIE" style="swimlane;html=1;startSize=42;rounded=1;fillColor=#236b47;swimlaneFillColor=#ffffff;strokeColor=#4caf7a;fontColor=#ffffff;fontSize=17;fontStyle=1;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="820" y="570" width="300" height="180" as="geometry" />
+        </mxCell>
+        <mxCell id="photo_id" value="photographie_id (Clé primaire)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=12;" vertex="1" parent="table_photo"><mxGeometry x="20" y="50" width="260" height="24" as="geometry" /></mxCell>
+        <mxCell id="photo_listing_id" value="annonce_id : INT (Clé étrangère)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=12;" vertex="1" parent="table_photo"><mxGeometry x="20" y="80" width="260" height="24" as="geometry" /></mxCell>
+        <mxCell id="photo_ref" value="ref_fichier : VARCHAR(255)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=12;" vertex="1" parent="table_photo"><mxGeometry x="20" y="110" width="260" height="24" as="geometry" /></mxCell>
+        <mxCell id="photo_order" value="ordre : TINYINT" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=12;" vertex="1" parent="table_photo"><mxGeometry x="20" y="140" width="260" height="24" as="geometry" /></mxCell>
+
+        <mxCell id="edge_listing_user" edge="1" parent="1" source="listing_user_id" target="table_user" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#4b5563;strokeWidth=2;">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="780" y="160" /><mxPoint x="370" y="160" /></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="edge_follow_user" edge="1" parent="1" source="follow_user_id" target="table_user" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#4b5563;strokeWidth=2;"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="edge_follow_listing" edge="1" parent="1" source="follow_listing_id" target="table_listing" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#4b5563;strokeWidth=2;"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="edge_bid_user" edge="1" parent="1" source="bid_user_id" target="table_user" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#4b5563;strokeWidth=2;"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="10" y="560" /><mxPoint x="10" y="110" /></Array></mxGeometry></mxCell>
+        <mxCell id="edge_bid_listing" edge="1" parent="1" source="bid_listing_id" target="table_listing" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#4b5563;strokeWidth=2;"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="760" y="600" /><mxPoint x="760" y="280" /></Array></mxGeometry></mxCell>
+        <mxCell id="edge_photo_listing" edge="1" parent="1" source="photo_listing_id" target="table_listing" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#4b5563;strokeWidth=2;"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="1145" y="650" /><mxPoint x="1145" y="300" /></Array></mxGeometry></mxCell>
+        <mxCell id="edge_api_listing" edge="1" parent="1" source="api_categories" target="listing_category" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeColor=#4b5563;strokeWidth=2;"><mxGeometry relative="1" as="geometry" /></mxCell>
       </root>
     </mxGraphModel>
   </diagram>
