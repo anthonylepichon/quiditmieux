@@ -14,20 +14,67 @@
 
 .auth-page {
   display: grid;
-  min-height: 62vh;
+  min-height: 47.5rem;
   place-items: center;
   padding-block: var(--space-8) var(--space-12);
 }
 
 .auth-card {
-  width: min(100%, 47rem);
-  padding: clamp(var(--space-6), 5vw, var(--space-10));
+  display: grid;
+  width: 100%;
+  min-height: 43.75rem;
+  grid-template-columns: minmax(0, 1fr) 26rem;
+  gap: clamp(var(--space-8), 7vw, 6.25rem);
+  padding: var(--space-6);
+}
+
+.auth-card__form-panel {
+  padding: var(--space-2) var(--space-4);
 }
 
 .auth-card form {
   display: grid;
   gap: var(--space-6);
-  margin-top: var(--space-7);
+  margin-top: var(--space-5);
+}
+
+.auth-card__introduction {
+  display: grid;
+  gap: var(--space-1);
+  margin-top: var(--space-4);
+}
+
+.auth-card__illustration {
+  display: grid;
+  min-height: 40.75rem;
+  align-content: space-between;
+  justify-items: center;
+  padding: var(--space-6) var(--space-7) var(--space-8);
+  border: 0.0625rem solid var(--color-border-accent);
+  border-radius: 1.625rem;
+  background: var(--color-surface-accent-soft);
+  text-align: center;
+}
+
+.auth-card__character {
+  width: 13.5rem;
+  height: 22.125rem;
+  object-fit: contain;
+}
+
+.auth-card__illustration-copy {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-3);
+}
+
+.auth-card__illustration-copy h2,
+.auth-card__illustration-copy p {
+  margin: 0;
+}
+
+.auth-card__illustration-copy h2 {
+  color: var(--color-text-brand);
 }
 
 .auth-card__actions {
@@ -48,6 +95,16 @@
   width: 1px;
   height: 1px;
   overflow: hidden;
+}
+
+@media (max-width: 62rem) {
+  .auth-card {
+    grid-template-columns: 1fr;
+  }
+
+  .auth-card__illustration {
+    min-height: auto;
+  }
 }
 
 @media (max-width: 30rem) {

@@ -8,3 +8,7 @@
 ## Navigation
 
 - Le pied de page validé demande un lien « Politique de confidentialité », mais aucune page ni aucun contenu juridique correspondant ne figure dans les dix fonctionnalités définies. Le lien est affiché ; sa page de destination reste à définir.
+
+## Erreurs corrigées pendant le développement
+
+- La première réduction de `UserModel.php` à la seule inscription avait supprimé par erreur la fermeture de la classe. Le contrôle de syntaxe PHP l’a détecté ; le modèle a été reconstruit avec ses méthodes d’unicité et validé de nouveau.
