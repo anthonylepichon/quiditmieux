@@ -2,19 +2,109 @@
 
 /**
  * Description générale : Contrôleur des participations d'un utilisateur aux ventes.
- * Rôle : Gérer le suivi volontaire des annonces par les utilisateurs connectés.
+ * Rôle : Gérer le suivi volontaire et accueillir le dépôt transactionnel des enchères.
  * Tâches : Revalider l'authentification, le CSRF, la propriété et l'échéance avant toute modification.
- * Liens avec les autres fichiers : Étend Controller.php et utilise ListingModel.php et FollowModel.php.
+ * Liens avec les autres fichiers : Étend Controller.php et utilise ListingModel.php, FollowModel.php et BidModel.php.
  */
 
 namespace App\controllers;
 
 use App\core\Controller;
+use App\models\BidModel;
 use App\models\FollowModel;
 use App\models\ListingModel;
 
 class ParticipationController extends Controller
 {
+    /**
+     * Rôle : Enregistrer une enchère strictement supérieure au prix courant d'une vente active.
+     * Paramètres : Aucun, l'annonce, le montant et le jeton sont lus dans la requête POST.
+     * Retour : Aucun, une réponse JSON ou une redirection vers le détail est envoyée.
+     */
+    public function placeBid(): void
+    {
+        $userId = $this->session->obtenirIdentifiantUtilisateurConnecte();
+        $listingId = $this->readPositivePostIdentifier('id');
+        $amountText = $this->readPostString('amount');
+
+        if ($userId === null) {
+            $this->respondBid(false, 'Connectez-vous pour enchérir.', $listingId);
+            return;
+        }
+
+        if ($listingId === null || !$this->session->estJetonCsrfValide($this->readPostString('csrf_token'))) {
+            $this->respondBid(false, 'La demande d’enchère ne peut pas être confirmée.', $listingId);
+            return;
+        }
+
+        if (preg_match('/^(?:0|[1-9][0-9]{0,7})(?:\.[0-9]{1,2})?$/', $amountText) !== 1) {
+            $this->respondBid(false, 'Saisissez un montant positif avec deux décimales au maximum.', $listingId);
+            return;
+        }
+
+        $amount = (float) $amountText;
+
+        if (!$this->database->beginTransaction()) {
+            $this->respondBid(false, 'L’enchère ne peut pas être enregistrée pour le moment.', $listingId);
+            return;
+        }
+
+        $listingModel = new ListingModel($this->database);
+        $bidModel = new BidModel($this->database);
+        $listing = $listingModel->getForUpdate($listingId);
+
+        if ($listing === null) {
+            $this->database->rollback();
+            $this->respondBid(false, 'L’annonce demandée est introuvable.', $listingId);
+            return;
+        }
+
+        if ((int) $listing['utilisateur_id'] === $userId) {
+            $this->database->rollback();
+            $this->respondBid(false, 'Vous ne pouvez pas enchérir sur votre propre annonce.', $listingId);
+            return;
+        }
+
+        if ((string) $listing['date_heure_fin'] <= gmdate('Y-m-d H:i:s')) {
+            $this->database->rollback();
+            $this->respondBid(false, 'Cette vente est terminée.', $listingId);
+            return;
+        }
+
+        $summary = $bidModel->getSummary($listingId);
+        $currentPrice = (float) $listing['prix_depart'];
+
+        if ($summary['best_bid'] !== null) {
+            $currentPrice = (float) $summary['best_bid'];
+        }
+
+        $minimumBid = round($currentPrice + 0.01, 2);
+
+        if ($amount < $minimumBid) {
+            $this->database->rollback();
+            $message = 'Le montant minimum est de ' . number_format($minimumBid, 2, ',', ' ') . ' €.';
+            $this->respondBid(false, $message, $listingId, $summary, $minimumBid);
+            return;
+        }
+
+        if (!$bidModel->placeBid($userId, $listingId, $amount)) {
+            $this->database->rollback();
+            $this->respondBid(false, 'L’enchère ne peut pas être enregistrée pour le moment.', $listingId);
+            return;
+        }
+
+        $updatedSummary = $bidModel->getSummary($listingId);
+
+        if (!$this->database->commit()) {
+            $this->database->rollback();
+            $this->respondBid(false, 'L’enchère ne peut pas être confirmée pour le moment.', $listingId);
+            return;
+        }
+
+        $nextMinimum = round($amount + 0.01, 2);
+        $this->respondBid(true, 'Votre enchère est enregistrée.', $listingId, $updatedSummary, $nextMinimum);
+    }
+
     /**
      * Rôle : Ajouter le suivi volontaire d'une annonce active appartenant à un autre utilisateur.
      * Paramètres : Aucun, l'annonce et le jeton sont lus dans la requête POST.
@@ -132,6 +222,62 @@ class ParticipationController extends Controller
     }
 
     /**
+     * Rôle : Envoyer le résultat d'une enchère en JSON ou appliquer le repli POST-Redirect-GET.
+     * Paramètres : Succès, message, annonce, résumé éventuel et prochain montant minimum.
+     * Retour : Aucun.
+     */
+    private function respondBid(
+        bool $success,
+        string $message,
+        ?int $listingId,
+        array $summary = [],
+        ?float $minimumBid = null
+    ): void {
+        if ($this->isJsonRequest()) {
+            $currentPrice = null;
+            $bidCount = null;
+
+            if (isset($summary['best_bid']) && is_numeric($summary['best_bid'])) {
+                $currentPrice = number_format((float) $summary['best_bid'], 2, ',', ' ') . ' €';
+            }
+
+            if (isset($summary['bid_count']) && is_numeric($summary['bid_count'])) {
+                $bidCount = (int) $summary['bid_count'];
+            }
+
+            $minimumBidValue = null;
+
+            if ($minimumBid !== null) {
+                $minimumBidValue = number_format($minimumBid, 2, '.', '');
+            }
+
+            $this->json([
+                'success' => $success,
+                'message' => $message,
+                'current_price' => $currentPrice,
+                'bid_count' => $bidCount,
+                'minimum_bid' => $minimumBidValue,
+                'canonical_url' => $this->detailUrl($listingId),
+            ]);
+            return;
+        }
+
+        $messageType = 'notice';
+
+        if ($success) {
+            $messageType = 'success';
+        }
+
+        $this->session->enregistrerMessageTemporaire($messageType, $message);
+
+        if ($listingId !== null) {
+            $this->redirect('listing_detail', ['id' => $listingId]);
+        }
+
+        $this->redirect('home');
+    }
+
+    /**
      * Rôle : Lire une valeur POST simple sans accepter de tableau inattendu.
      * Paramètres : Nom du champ.
      * Retour : Valeur reçue ou chaîne vide.
@@ -187,3 +333,4 @@ class ParticipationController extends Controller
         return 'index.php?' . http_build_query(['route' => 'listing_detail', 'id' => $listingId]);
     }
 }
+
