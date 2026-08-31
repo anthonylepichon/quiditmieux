@@ -7,6 +7,7 @@
  * Liens avec les autres fichiers : Est chargé par App.php puis transmis à Router.php pour orienter les demandes.
  */
 
+use App\controllers\AuthController;
 use App\controllers\ListingController;
 
 return [
@@ -15,5 +16,17 @@ return [
         'controller' => ListingController::class,
         'action' => 'search',
         'response' => 'HTML ou JSON selon le paramètre de format',
+    ],
+    'register_form' => [
+        'method' => 'GET',
+        'controller' => AuthController::class,
+        'action' => 'showRegisterForm',
+        'response' => 'HTML',
+    ],
+    'register' => [
+        'method' => 'POST',
+        'controller' => AuthController::class,
+        'action' => 'register',
+        'response' => 'HTML ou redirection interne',
     ],
 ];

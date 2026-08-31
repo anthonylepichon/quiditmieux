@@ -1151,6 +1151,66 @@ textarea.form-control {
 }
 /*
  * Description générale :
+ * Mise en page des formulaires publics d'authentification.
+ *
+ * Rôle :
+ * Présenter l'inscription et la connexion dans une carte claire et responsive.
+ *
+ * Tâches :
+ * Dimensionner la page, le formulaire, les actions et le champ anti-robot.
+ *
+ * Liens avec les autres fichiers :
+ * Complète les composants de formulaire communs pour register.php et login.php.
+ */
+.auth-page {
+  display: grid;
+  min-height: 62vh;
+  place-items: center;
+  padding-block: var(--space-8) var(--space-12);
+}
+
+.auth-card {
+  width: min(100%, 47rem);
+  padding: clamp(var(--space-6), 5vw, var(--space-10));
+}
+
+.auth-card form {
+  display: grid;
+  gap: var(--space-6);
+  margin-top: var(--space-7);
+}
+
+.auth-card__actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.auth-card__actions a {
+  color: var(--color-text-action);
+  font-weight: 700;
+}
+
+.honeypot {
+  position: absolute;
+  left: -10000px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+@media (max-width: 30rem) {
+  .auth-card__actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .auth-card__actions .button {
+    width: 100%;
+  }
+}
+/*
+ * Description générale :
  * Classes utilitaires accessibles et limitées aux besoins communs.
  *
  * Rôle :
