@@ -35,6 +35,24 @@ return [
         'action' => 'create',
         'response' => 'HTML ou redirection interne',
     ],
+    'listing_edit_form' => [
+        'method' => 'GET',
+        'controller' => ListingController::class,
+        'action' => 'showEditForm',
+        'response' => 'HTML ou redirection interne',
+    ],
+    'listing_update' => [
+        'method' => 'POST',
+        'controller' => ListingController::class,
+        'action' => 'update',
+        'response' => 'HTML ou redirection interne',
+    ],
+    'listing_delete' => [
+        'method' => 'POST',
+        'controller' => ListingController::class,
+        'action' => 'delete',
+        'response' => 'Redirection interne',
+    ],
     'register_form' => [
         'method' => 'GET',
         'controller' => AuthController::class,
