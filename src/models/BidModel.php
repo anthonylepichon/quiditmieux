@@ -165,6 +165,21 @@ class BidModel extends Model
     }
 
     /**
+     * Rôle : Enregistrer une enchère validée par le contrôleur dans la transaction en cours.
+     * Paramètres : Identifiants de l'utilisateur et de l'annonce, puis montant proposé.
+     * Retour : true lorsque l'enchère est enregistrée, sinon false.
+     */
+    public function placeBid(int $userId, int $listingId, float $amount): bool
+    {
+        return $this->create([
+            'utilisateur_id' => $userId,
+            'annonce_id' => $listingId,
+            'montant' => number_format($amount, 2, '.', ''),
+            'date_heure_enchere' => gmdate('Y-m-d H:i:s'),
+        ]);
+    }
+
+    /**
      * Rôle : Récupérer l'historique détaillé et ordonné des enchères d'une annonce.
      * Paramètres : Identifiant de l'annonce.
      * Retour : Liste des enchères avec le pseudo de leur auteur.

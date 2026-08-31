@@ -19,6 +19,18 @@ $saleStatusLabel = 'Vente en cours';
 if ($listing['is_ended']) {
     $saleStatusLabel = 'Vente terminée';
 }
+
+$participationLabel = $saleStatusLabel;
+
+if ($viewer['is_best_bidder']) {
+    $participationLabel = 'Meilleure enchère';
+} elseif ($viewer['has_bid']) {
+    $participationLabel = 'Enchère dépassée';
+} elseif ($viewer['is_following']) {
+    $participationLabel = 'Annonce suivie';
+} elseif ($viewer['is_owner'] && !$listing['is_ended']) {
+    $participationLabel = 'Votre vente active';
+}
 $followRoute = 'follow_listing';
 $followLabel = 'Suivre';
 
@@ -71,7 +83,7 @@ if ($viewer['is_following']) {
             </div>
 
             <div class="listing-summary glass-panel">
-                <p class="status-badge"><?= $saleStatusLabel ?></p>
+                <p class="status-badge"><?= $participationLabel ?></p>
                 <dl class="listing-summary__facts">
                     <div><dt>État de l’objet</dt><dd><?= htmlspecialchars($listing['item_state'], ENT_QUOTES, 'UTF-8') ?></dd></div>
                     <div><dt>Prix courant</dt><dd class="listing-summary__price" data-current-price><?= htmlspecialchars($listing['current_price_label'], ENT_QUOTES, 'UTF-8') ?></dd></div>
