@@ -17,6 +17,12 @@ return [
         'action' => 'search',
         'response' => 'HTML ou JSON selon le paramètre de format',
     ],
+    'listing_detail' => [
+        'method' => 'GET',
+        'controller' => ListingController::class,
+        'action' => 'showDetail',
+        'response' => 'HTML',
+    ],
     'register_form' => [
         'method' => 'GET',
         'controller' => AuthController::class,

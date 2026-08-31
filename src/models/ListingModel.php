@@ -106,6 +106,22 @@ class ListingModel extends Model
     }
 
     /**
+     * Rôle : Récupérer toutes les informations publiques d'une annonce et le pseudo de son vendeur.
+     * Paramètres : Identifiant de l'annonce.
+     * Retour : Données de l'annonce ou null lorsqu'elle est absente.
+     */
+    public function getDetail(int $listingId): ?array
+    {
+        $sql = 'SELECT listing.id, listing.utilisateur_id, listing.titre, listing.description,'
+            . ' listing.etat_objet, listing.prix_depart, listing.date_heure_fin,'
+            . ' listing.categorie_id_externe, listing.categorie_libelle, seller.pseudo AS seller_pseudo'
+            . ' FROM `ANNONCE` listing'
+            . ' INNER JOIN `UTILISATEUR` seller ON seller.id = listing.utilisateur_id'
+            . ' WHERE listing.id = :listing_id LIMIT 1';
+        return $this->database->fetchOne($sql, ['listing_id' => $listingId]);
+    }
+
+    /**
      * Rôle : Ajouter chaque mot recherché comme condition obligatoire sur le titre ou la description.
      * Paramètres : Critères normalisés, conditions SQL et paramètres de requête à compléter.
      * Retour : Aucun.
