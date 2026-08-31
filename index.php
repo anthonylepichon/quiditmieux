@@ -1,51 +1,24 @@
 <?php
 
 /**
- * Description générale :
- * Démarrage technique de l'application QUIDITMIEUX.
- *
- * Rôle :
- * Charger les fichiers communs et créer la connexion PDO de la requête courante.
- *
- * Tâches :
- * Charger l'autoload, lire la configuration privée et initialiser PDO sans exposer de secret.
- *
- * Liens avec les autres fichiers :
- * Utilise vendor/autoload.php et private/database-secret.php avant le futur routage.
+ * Description générale : Point d'entrée unique de l'application.
+ * Rôle : Charger les ressources indispensables puis lancer la classe principale de l'application.
+ * Tâches : Définir l'encodage HTML, charger l'autoload puis démarrer App.
+ * Liens avec les autres fichiers : Utilise l'autoload et App.php.
  */
 
-// L'autoload permet de charger les futures classes du projet sans multiplier les inclusions manuelles.
+use App\core\App;
+
+// L'encodage UTF-8 est défini une seule fois pour toutes les réponses HTML de l'application.
+ini_set('default_charset', 'UTF-8');
+
+if (!headers_sent()) {
+    header('Content-Type: text/html; charset=UTF-8');
+}
+
+// L'autoload rend disponibles les classes du projet à partir de leur namespace.
 require_once __DIR__ . '/vendor/autoload.php';
 
-// La configuration réelle reste dans un fichier local exclu de Git afin de protéger les identifiants.
-$databaseConfigPath = __DIR__ . '/private/database-secret.php';
-
-if (!is_file($databaseConfigPath)) {
-    echo 'La configuration de la base de données est indisponible.';
-    exit;
-}
-
-$databaseConfig = require $databaseConfigPath;
-
-// Une seule connexion PDO est créée pour la requête en cours et sera transmise aux futurs contrôleurs et modèles.
-$dsn = 'mysql:host=' . $databaseConfig['host']
-    . ';port=' . $databaseConfig['port']
-    . ';dbname=' . $databaseConfig['database']
-    . ';charset=' . $databaseConfig['charset'];
-
-try {
-    $pdo = new PDO(
-        $dsn,
-        $databaseConfig['username'],
-        $databaseConfig['password'],
-        [
-            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-            PDO::ATTR_EMULATE_PREPARES => false,
-        ]
-    );
-} catch (PDOException) {
-    // Le message reste volontairement générique pour ne révéler ni identifiant ni détail technique.
-    echo 'La connexion à la base de données est momentanément indisponible.';
-    exit;
-}
+// La classe principale reçoit la racine du projet afin de retrouver les configurations nécessaires.
+$application = new App(__DIR__);
+$application->run();
