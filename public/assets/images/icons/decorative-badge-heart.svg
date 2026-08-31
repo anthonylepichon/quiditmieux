@@ -1,0 +1,19 @@
+<svg width="70" height="70" viewBox="0 0 70 70" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <g filter="url(#badge-shadow)">
+    <rect x="12" y="4" width="46" height="46" rx="23" fill="#942287"/>
+    <rect x="12.5" y="4.5" width="45" height="45" rx="22.5" stroke="white" stroke-opacity="0.8"/>
+    <path d="M35 35.5L33.7 34.32C29.08 30.14 26 27.34 26 23.9C26 21.1 28.2 19 31 19C32.58 19 34.1 19.74 35 20.9C35.9 19.74 37.42 19 39 19C41.8 19 44 21.1 44 23.9C44 27.34 40.92 30.14 36.3 34.32L35 35.5Z" fill="white"/>
+  </g>
+  <defs>
+    <filter id="badge-shadow" x="0" y="0" width="70" height="70" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+      <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+      <feMorphology radius="6" operator="erode" in="SourceAlpha" result="shadow"/>
+      <feOffset dy="8"/>
+      <feGaussianBlur stdDeviation="9"/>
+      <feColorMatrix type="matrix" values="0 0 0 0 0.235 0 0 0 0 0.071 0 0 0 0 0.447 0 0 0 0.18 0"/>
+      <feBlend mode="normal" in2="BackgroundImageFix" result="shadowBlend"/>
+      <feBlend mode="normal" in="SourceGraphic" in2="shadowBlend" result="shape"/>
+    </filter>
+  </defs>
+</svg>
