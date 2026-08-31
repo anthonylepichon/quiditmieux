@@ -215,6 +215,374 @@ class ListingController extends Controller
     }
 
     /**
+     * Rôle : Préparer le formulaire protégé de création d'une annonce.
+     * Paramètres : Aucun.
+     * Retour : Aucun, le formulaire ou une redirection vers la connexion est envoyé.
+     */
+    public function showCreateForm(): void
+    {
+        $userId = $this->session->obtenirIdentifiantUtilisateurConnecte();
+
+        if ($userId === null) {
+            $this->redirect('login_form', ['destination' => 'listing_create_form']);
+        }
+
+        $categories = $this->fetchCategories();
+        $errors = [];
+
+        if ($categories === null) {
+            $categories = [];
+            $errors['form'] = 'Les catégories sont indisponibles. La publication est temporairement bloquée.';
+        }
+
+        $this->renderListingForm('create', $this->emptyListingFormValues(), $errors, $categories, []);
+    }
+
+    /**
+     * Rôle : Valider les informations et photographies puis créer une annonce pour l'utilisateur connecté.
+     * Paramètres : Aucun, les données sont lues dans la requête POST et les fichiers téléversés.
+     * Retour : Aucun, le formulaire est réaffiché ou le détail créé est ouvert.
+     */
+    public function create(): void
+    {
+        $userId = $this->session->obtenirIdentifiantUtilisateurConnecte();
+
+        if ($userId === null) {
+            $this->redirect('login_form', ['destination' => 'listing_create_form']);
+        }
+
+        $categories = $this->fetchCategories();
+        $values = $this->readListingFormValues();
+        $errors = [];
+
+        if (!$this->session->estJetonCsrfValide($this->readPostString('csrf_token'))) {
+            $errors['form'] = 'Le formulaire a expiré. Rechargez la page puis recommencez.';
+        }
+
+        if ($categories === null) {
+            $categories = [];
+            $errors['form'] = 'Les catégories sont indisponibles. Aucune annonce ne peut être publiée.';
+        }
+
+        $normalizedData = $this->validateListingValues($values, $categories, $errors);
+        $uploadedPhotos = $this->validateUploadedPhotos($errors);
+
+        if ($errors !== []) {
+            $this->renderListingForm('create', $values, $errors, $categories, []);
+            return;
+        }
+
+        if (!$this->database->beginTransaction()) {
+            $errors['form'] = 'La publication ne peut pas démarrer pour le moment.';
+            $this->renderListingForm('create', $values, $errors, $categories, []);
+            return;
+        }
+
+        $listingModel = new ListingModel($this->database);
+        $created = $listingModel->create([
+            'utilisateur_id' => $userId,
+            'titre' => $normalizedData['title'],
+            'description' => $normalizedData['description'],
+            'etat_objet' => $normalizedData['item_state'],
+            'prix_depart' => $normalizedData['starting_price'],
+            'date_heure_fin' => $normalizedData['deadline_utc'],
+            'categorie_id_externe' => $normalizedData['category_id'],
+            'categorie_libelle' => $normalizedData['category_label'],
+        ]);
+        $listingId = $listingModel->getValue('id');
+        $storedFiles = [];
+
+        if (!$created || !is_int($listingId)) {
+            $this->database->rollback();
+            $errors['form'] = 'L’annonce ne peut pas être enregistrée pour le moment.';
+            $this->renderListingForm('create', $values, $errors, $categories, []);
+            return;
+        }
+
+        $photosStored = $this->storeUploadedPhotos($listingId, $uploadedPhotos, $storedFiles);
+
+        if (!$photosStored || !$this->database->commit()) {
+            $this->database->rollback();
+            $this->deleteStoredFiles($storedFiles);
+            $errors['form'] = 'L’annonce et ses photographies n’ont pas pu être enregistrées.';
+            $this->renderListingForm('create', $values, $errors, $categories, []);
+            return;
+        }
+
+        $this->session->enregistrerMessageTemporaire('success', 'Votre annonce a été publiée.');
+        $this->redirect('listing_detail', ['id' => $listingId]);
+    }
+
+    /**
+     * Rôle : Lire une valeur POST simple sans accepter de tableau inattendu.
+     * Paramètres : Nom du champ demandé.
+     * Retour : Valeur reçue ou chaîne vide lorsqu'elle est absente ou invalide.
+     */
+    private function readPostString(string $name): string
+    {
+        if (!isset($_POST[$name]) || !is_string($_POST[$name])) {
+            return '';
+        }
+
+        return trim($_POST[$name]);
+    }
+
+    /**
+     * Rôle : Rassembler les valeurs publiques du formulaire d'annonce.
+     * Paramètres : Aucun.
+     * Retour : Valeurs réaffichables indexées par champ.
+     */
+    private function readListingFormValues(): array
+    {
+        return [
+            'title' => $this->readPostString('title'),
+            'category' => $this->readPostString('category'),
+            'description' => $this->readPostString('description'),
+            'item_state' => $this->readPostString('item_state'),
+            'starting_price' => $this->readPostString('starting_price'),
+            'end_date' => $this->readPostString('end_date'),
+            'end_time' => $this->readPostString('end_time'),
+        ];
+    }
+
+    /**
+     * Rôle : Fournir les valeurs vides nécessaires au formulaire initial.
+     * Paramètres : Aucun.
+     * Retour : Valeurs vides indexées par champ.
+     */
+    private function emptyListingFormValues(): array
+    {
+        return [
+            'title' => '', 'category' => '', 'description' => '', 'item_state' => '',
+            'starting_price' => '', 'end_date' => '', 'end_time' => '',
+        ];
+    }
+
+    /**
+     * Rôle : Valider et normaliser toutes les données textuelles d'une annonce.
+     * Paramètres : Valeurs reçues, catégories disponibles et erreurs à compléter.
+     * Retour : Données normalisées destinées au modèle.
+     */
+    private function validateListingValues(array $values, array $categories, array &$errors): array
+    {
+        $title = trim($values['title']);
+        $description = trim($values['description']);
+        $categoryId = null;
+        $categoryLabel = '';
+
+        if (mb_strlen($title) < 3 || mb_strlen($title) > 255) {
+            $errors['title'] = 'Le titre doit contenir entre 3 et 255 caractères.';
+        }
+
+        if (mb_strlen($description) < 10 || mb_strlen($description) > 5000) {
+            $errors['description'] = 'La description doit contenir entre 10 et 5 000 caractères.';
+        }
+
+        if (preg_match('/^[1-9][0-9]*$/D', $values['category']) !== 1
+            || !isset($categories[$values['category']])
+        ) {
+            $errors['category'] = 'Choisissez une catégorie proposée dans la liste.';
+        } else {
+            $categoryId = (int) $values['category'];
+            $categoryLabel = $categories[$values['category']];
+        }
+
+        if (!in_array($values['item_state'], self::ITEM_STATES, true)) {
+            $errors['item_state'] = 'Choisissez un état proposé dans la liste.';
+        }
+
+        $price = $this->normalizePrice($values['starting_price'], 'starting_price', 'Le prix de départ', $errors);
+        $deadlineUtc = $this->normalizeParisDeadline($values['end_date'], $values['end_time'], $errors);
+
+        return [
+            'title' => $title,
+            'description' => $description,
+            'category_id' => $categoryId,
+            'category_label' => $categoryLabel,
+            'item_state' => $values['item_state'],
+            'starting_price' => $price,
+            'deadline_utc' => $deadlineUtc,
+        ];
+    }
+
+    /**
+     * Rôle : Convertir une date et une heure de Paris valides vers une date UTC de base de données.
+     * Paramètres : Date, heure et erreurs à compléter.
+     * Retour : Date UTC ou null lorsque la saisie est invalide.
+     */
+    private function normalizeParisDeadline(string $date, string $time, array &$errors): ?string
+    {
+        $parisTimezone = new DateTimeZone('Europe/Paris');
+        $utcTimezone = new DateTimeZone('UTC');
+        $deadline = DateTimeImmutable::createFromFormat('!Y-m-d H:i', $date . ' ' . $time, $parisTimezone);
+        $dateErrors = DateTimeImmutable::getLastErrors();
+
+        if (!$deadline instanceof DateTimeImmutable
+            || ($dateErrors !== false && ($dateErrors['warning_count'] > 0 || $dateErrors['error_count'] > 0))
+            || $deadline->format('Y-m-d H:i') !== $date . ' ' . $time
+        ) {
+            $errors['deadline'] = 'Saisissez une date et une heure de fin valides.';
+            return null;
+        }
+
+        if ($deadline <= new DateTimeImmutable('now', $parisTimezone)) {
+            $errors['deadline'] = 'La date et l’heure de fin doivent être situées dans le futur.';
+            return null;
+        }
+
+        return $deadline->setTimezone($utcTimezone)->format('Y-m-d H:i:s');
+    }
+
+    /**
+     * Rôle : Contrôler les fichiers reçus sans encore les déplacer dans le dossier public.
+     * Paramètres : Erreurs à compléter.
+     * Retour : Photographies validées avec leur fichier temporaire et leur extension sûre.
+     */
+    private function validateUploadedPhotos(array &$errors): array
+    {
+        if (!isset($_FILES['photos'])) {
+            return [];
+        }
+
+        $fileData = $_FILES['photos'];
+
+        if (!is_array($fileData)
+            || !isset($fileData['name'], $fileData['tmp_name'], $fileData['error'], $fileData['size'])
+            || !is_array($fileData['name'])
+            || !is_array($fileData['tmp_name'])
+            || !is_array($fileData['error'])
+            || !is_array($fileData['size'])
+        ) {
+            $errors['photos'] = 'Les photographies reçues ne sont pas utilisables.';
+            return [];
+        }
+
+        $photos = [];
+        $allowedMimeTypes = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp'];
+        $fileInfo = new \finfo(FILEINFO_MIME_TYPE);
+
+        foreach ($fileData['error'] as $index => $uploadError) {
+            if ($uploadError === UPLOAD_ERR_NO_FILE) {
+                continue;
+            }
+
+            if ($uploadError !== UPLOAD_ERR_OK
+                || !isset($fileData['tmp_name'][$index], $fileData['size'][$index])
+                || !is_string($fileData['tmp_name'][$index])
+                || !is_numeric($fileData['size'][$index])
+                || !is_uploaded_file($fileData['tmp_name'][$index])
+            ) {
+                $errors['photos'] = 'Une photographie n’a pas été reçue correctement.';
+                continue;
+            }
+
+            if ((int) $fileData['size'][$index] > 5 * 1024 * 1024) {
+                $errors['photos'] = 'Chaque photographie doit peser 5 Mo au maximum.';
+                continue;
+            }
+
+            $mimeType = $fileInfo->file($fileData['tmp_name'][$index]);
+
+            if (!is_string($mimeType)
+                || !isset($allowedMimeTypes[$mimeType])
+                || getimagesize($fileData['tmp_name'][$index]) === false
+            ) {
+                $errors['photos'] = 'Utilisez uniquement des images JPEG, PNG ou WebP valides.';
+                continue;
+            }
+
+            $photos[] = [
+                'temporary_path' => $fileData['tmp_name'][$index],
+                'extension' => $allowedMimeTypes[$mimeType],
+            ];
+        }
+
+        if (count($photos) > 3) {
+            $errors['photos'] = 'Trois photographies sont autorisées au maximum.';
+        }
+
+        return array_slice($photos, 0, 3);
+    }
+
+    /**
+     * Rôle : Déplacer les photographies validées et enregistrer leurs références ordonnées.
+     * Paramètres : Identifiant de l'annonce, photographies et chemins stockés à compléter.
+     * Retour : true lorsque toutes les photographies sont enregistrées, sinon false.
+     */
+    private function storeUploadedPhotos(
+        int $listingId,
+        array $photos,
+        array &$storedFiles,
+        int $startingOrder = 1
+    ): bool
+    {
+        $directory = dirname(__DIR__, 2) . '/public/assets/images/photos-objets';
+
+        if (!is_dir($directory) || !is_writable($directory)) {
+            return $photos === [];
+        }
+
+        $photoModel = new PhotoModel($this->database);
+
+        foreach ($photos as $index => $photo) {
+            $filename = 'annonce-' . $listingId . '-' . bin2hex(random_bytes(12)) . '.' . $photo['extension'];
+            $path = $directory . '/' . $filename;
+
+            if (!move_uploaded_file($photo['temporary_path'], $path)) {
+                return false;
+            }
+
+            $storedFiles[] = $path;
+
+            if (!$photoModel->create([
+                'annonce_id' => $listingId,
+                'ref_fichier' => $filename,
+                'ordre' => $startingOrder + $index,
+            ])) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Rôle : Supprimer les nouveaux fichiers déplacés lorsqu'une création échoue.
+     * Paramètres : Liste de chemins absolus créés pendant la demande.
+     * Retour : Aucun.
+     */
+    private function deleteStoredFiles(array $storedFiles): void
+    {
+        foreach ($storedFiles as $path) {
+            if (is_string($path) && is_file($path)) {
+                unlink($path);
+            }
+        }
+    }
+
+    /**
+     * Rôle : Afficher le formulaire partagé de création ou de modification d'annonce.
+     * Paramètres : Mode, valeurs, erreurs, catégories et photographies existantes.
+     * Retour : Aucun.
+     */
+    private function renderListingForm(
+        string $mode,
+        array $values,
+        array $errors,
+        array $categories,
+        array $existingPhotos
+    ): void {
+        $this->render('pages/listing-form.php', [
+            'mode' => $mode,
+            'values' => $values,
+            'errors' => $errors,
+            'categories' => $categories,
+            'existing_photos' => $existingPhotos,
+            'csrf_token' => $this->session->obtenirJetonCsrf(),
+        ]);
+    }
+
+    /**
      * Rôle : Lire un identifiant entier strictement positif dans la requête GET.
      * Paramètres : Nom du paramètre.
      * Retour : Identifiant validé ou null lorsque la valeur est absente ou invalide.
