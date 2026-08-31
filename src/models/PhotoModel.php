@@ -85,19 +85,44 @@ class PhotoModel extends Model
     }
 
     /**
-     * Rôle : Conserver uniquement des identifiants entiers strictement positifs et uniques.
-     * Paramètres : Valeurs candidates à normaliser.
-     * Retour : Liste d'identifiants utilisables dans une requête préparée.
+     * Rôle : Récupérer toutes les photographies d'une annonce dans leur ordre d'affichage.
+     * Paramètres : Identifiant de l'annonce.
+     * Retour : Liste des photographies avec un nom de fichier sûr.
+     */
+    public function getListingPhotos(int $listingId): array
+    {
+        $rows = $this->database->fetchAll(
+            'SELECT id, ref_fichier, ordre FROM `PHOTOGRAPHIE`'
+            . ' WHERE annonce_id = :listing_id ORDER BY ordre ASC, id ASC',
+            ['listing_id' => $listingId]
+        );
+        $photos = [];
+
+        foreach ($rows as $row) {
+            if (!isset($row['id'], $row['ref_fichier'], $row['ordre']) || !is_string($row['ref_fichier'])) {
+                continue;
+            }
+
+            $photos[] = [
+                'id' => (int) $row['id'],
+                'filename' => basename($row['ref_fichier']),
+                'order' => (int) $row['ordre'],
+            ];
+        }
+
+        return $photos;
+    }
+
+    /**
+     * Rôle : Nettoyer une liste d'identifiants avant de construire une requête préparée.
+     * Paramètres : Identifiants candidats.
+     * Retour : Identifiants entiers strictement positifs et uniques.
      */
     private function normalizeIdentifiers(array $identifiers): array
     {
         $normalizedIdentifiers = [];
 
         foreach ($identifiers as $identifier) {
-            if (!is_int($identifier) && !is_string($identifier)) {
-                continue;
-            }
-
             if (filter_var($identifier, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]) === false) {
                 continue;
             }
@@ -108,5 +133,3 @@ class PhotoModel extends Model
         return array_values($normalizedIdentifiers);
     }
 }
-
-
