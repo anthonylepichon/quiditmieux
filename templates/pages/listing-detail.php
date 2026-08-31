@@ -41,6 +41,7 @@ if ($viewer['is_following']) {
             <div class="site-header__actions">
                 <?php if ($viewer['is_connected']): ?>
                     <a class="button button--secondary button--compact" href="index.php?route=dashboard">Tableau de bord</a>
+                    <a class="button button--secondary button--compact" href="index.php?route=account_form">Mon compte</a>
                     <a class="button button--primary button--compact" href="index.php?route=listing_create_form">Publier</a>
                     <form class="site-header__logout" action="index.php?route=logout" method="post"><input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>"><button class="button button--ghost button--compact" type="submit">Déconnexion</button></form>
                 <?php else: ?>
