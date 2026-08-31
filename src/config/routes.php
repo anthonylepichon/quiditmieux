@@ -96,4 +96,10 @@ return [
         'action' => 'unfollow',
         'response' => 'JSON ou redirection interne',
     ],
+    'place_bid' => [
+        'method' => 'POST',
+        'controller' => ParticipationController::class,
+        'action' => 'placeBid',
+        'response' => 'JSON ou redirection interne',
+    ],
 ];

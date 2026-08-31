@@ -128,7 +128,7 @@ class ListingModel extends Model
      */
     public function getForUpdate(int $listingId): ?array
     {
-        $sql = 'SELECT id, utilisateur_id, date_heure_fin FROM `ANNONCE`'
+        $sql = 'SELECT id, utilisateur_id, prix_depart, date_heure_fin FROM `ANNONCE`'
             . ' WHERE id = :listing_id LIMIT 1 FOR UPDATE';
         return $this->database->fetchOne($sql, ['listing_id' => $listingId]);
     }
