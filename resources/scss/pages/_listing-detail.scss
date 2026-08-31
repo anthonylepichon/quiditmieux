@@ -1,0 +1,155 @@
+/*
+ * Description générale :
+ * Mise en page du détail d'une annonce.
+ *
+ * Rôle :
+ * Organiser la galerie, les informations de vente et les actions conditionnelles.
+ *
+ * Tâches :
+ * Présenter les photographies, le prix, le compte à rebours, les formulaires et l'historique.
+ *
+ * Liens avec les autres fichiers :
+ * Utilisé par listing-detail.php avec les composants communs.
+ */
+
+.listing-detail {
+  display: grid;
+  gap: var(--space-7);
+  padding-block: var(--space-6) var(--space-12);
+}
+
+.back-link {
+  color: var(--color-text-action);
+  font-weight: 800;
+}
+
+.listing-detail__hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(20rem, 0.9fr);
+  gap: var(--space-7);
+}
+
+.listing-gallery,
+.listing-gallery__empty {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.listing-gallery__main,
+.listing-gallery__empty {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  border-radius: var(--radius-card);
+  background: var(--color-surface-soft);
+  object-fit: cover;
+}
+
+.listing-gallery__empty {
+  place-items: center;
+}
+
+.listing-gallery__empty img {
+  width: min(60%, 20rem);
+}
+
+.listing-gallery__thumbnails {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-3);
+}
+
+.listing-gallery__thumbnails img {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  border-radius: var(--radius-field);
+  object-fit: cover;
+}
+
+.listing-summary,
+.listing-description,
+.bid-history {
+  padding: clamp(var(--space-5), 4vw, var(--space-8));
+}
+
+.listing-summary {
+  align-content: start;
+  display: grid;
+  gap: var(--space-5);
+}
+
+.listing-summary__facts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+.listing-summary__facts div {
+  padding: var(--space-3);
+  border-radius: var(--radius-field);
+  background: var(--color-surface-soft);
+}
+
+.listing-summary__facts dt {
+  color: var(--color-text-tertiary);
+  font-size: 0.75rem;
+}
+
+.listing-summary__facts dd {
+  margin: var(--space-1) 0 0;
+  font-weight: 800;
+}
+
+.listing-summary__price {
+  color: var(--color-text-brand);
+  font-size: 1.25rem;
+}
+
+.listing-summary__actions,
+.bid-form__row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.listing-summary__actions form {
+  margin: 0;
+}
+
+.bid-form {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.bid-form__row .form-control {
+  flex: 1;
+}
+
+.bid-history ul {
+  display: grid;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+  list-style: none;
+}
+
+.bid-history li {
+  padding: var(--space-3);
+  border-bottom: 0.0625rem solid var(--color-border-default);
+}
+
+@media (max-width: 48rem) {
+  .listing-detail__hero {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 30rem) {
+  .listing-summary__facts {
+    grid-template-columns: 1fr;
+  }
+
+  .listing-summary__actions,
+  .bid-form__row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}

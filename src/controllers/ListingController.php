@@ -11,6 +11,7 @@ namespace App\controllers;
 
 use App\core\Controller;
 use App\models\BidModel;
+use App\models\FollowModel;
 use App\models\ListingModel;
 use App\models\PhotoModel;
 use DateTimeImmutable;
@@ -106,6 +107,186 @@ class ListingController extends Controller
         }
 
         $this->render('pages/home.php', $response);
+    }
+
+    /**
+     * Rôle : Afficher le détail complet d'une annonce selon son état et les droits du visiteur.
+     * Paramètres : Aucun, l'identifiant est lu dans la requête GET.
+     * Retour : Aucun, le template de détail ou une redirection sûre est envoyé.
+     */
+    public function showDetail(): void
+    {
+        $listingId = $this->readPositiveIdentifier('id');
+
+        if ($listingId === null) {
+            $this->session->enregistrerMessageTemporaire('notice', 'L’annonce demandée est introuvable.');
+            $this->redirect('home');
+        }
+
+        $listingModel = new ListingModel($this->database);
+        $listing = $listingModel->getDetail($listingId);
+
+        if ($listing === null) {
+            $this->session->enregistrerMessageTemporaire('notice', 'L’annonce demandée est introuvable.');
+            $this->redirect('home');
+        }
+
+        $bidModel = new BidModel($this->database);
+        $photoModel = new PhotoModel($this->database);
+        $followModel = new FollowModel($this->database);
+        $summary = $bidModel->getSummary($listingId);
+        $viewerId = $this->session->obtenirIdentifiantUtilisateurConnecte();
+        $isOwner = $viewerId !== null && $viewerId === (int) $listing['utilisateur_id'];
+        $viewerHasBid = false;
+        $isFollowing = false;
+
+        if ($viewerId !== null && !$isOwner) {
+            $viewerHasBid = $bidModel->userHasBid($listingId, $viewerId);
+            $isFollowing = $followModel->isFollowing($viewerId, $listingId);
+        }
+
+        $utcTimezone = new DateTimeZone('UTC');
+        $parisTimezone = new DateTimeZone('Europe/Paris');
+        $deadline = DateTimeImmutable::createFromFormat(
+            'Y-m-d H:i:s',
+            (string) $listing['date_heure_fin'],
+            $utcTimezone
+        );
+
+        if (!$deadline instanceof DateTimeImmutable) {
+            $this->session->enregistrerMessageTemporaire('notice', 'Cette annonce ne peut pas être affichée.');
+            $this->redirect('home');
+        }
+
+        $isEnded = $deadline <= new DateTimeImmutable('now', $utcTimezone);
+        $currentPrice = (float) $listing['prix_depart'];
+
+        if ($summary['best_bid'] !== null) {
+            $currentPrice = (float) $summary['best_bid'];
+        }
+
+        $history = [];
+
+        if ($isOwner || $viewerHasBid) {
+            $history = $this->formatBidHistory($bidModel->getHistory($listingId), $parisTimezone);
+        }
+
+        $photos = [];
+
+        foreach ($photoModel->getListingPhotos($listingId) as $photo) {
+            $photo['url'] = 'public/assets/images/photos-objets/' . rawurlencode($photo['filename']);
+            $photos[] = $photo;
+        }
+
+        $this->render('pages/listing-detail.php', [
+            'listing' => [
+                'id' => $listingId,
+                'title' => (string) $listing['titre'],
+                'description' => (string) $listing['description'],
+                'item_state' => (string) $listing['etat_objet'],
+                'category' => (string) $listing['categorie_libelle'],
+                'seller' => (string) $listing['seller_pseudo'],
+                'seller_id' => (int) $listing['utilisateur_id'],
+                'current_price_label' => number_format($currentPrice, 2, ',', ' ') . ' €',
+                'minimum_bid' => number_format($currentPrice + 0.01, 2, '.', ''),
+                'bid_count' => (int) $summary['bid_count'],
+                'deadline_utc' => $deadline->format('Y-m-d\TH:i:s\Z'),
+                'deadline_label' => $deadline->setTimezone($parisTimezone)->format('d/m/Y à H:i'),
+                'is_ended' => $isEnded,
+                'final_state' => $this->determineFinalState($isEnded, (int) $summary['bid_count']),
+            ],
+            'photos' => $photos,
+            'history' => $history,
+            'viewer' => [
+                'is_connected' => $viewerId !== null,
+                'is_owner' => $isOwner,
+                'has_bid' => $viewerHasBid,
+                'is_best_bidder' => $viewerId !== null && $viewerId === $summary['best_bidder_id'],
+                'is_following' => $isFollowing,
+                'can_edit' => $isOwner && !$isEnded && (int) $summary['bid_count'] === 0,
+                'can_follow' => $viewerId !== null && !$isOwner && !$isEnded,
+                'can_bid' => $viewerId !== null && !$isOwner && !$isEnded,
+                'can_view_history' => $isOwner || $viewerHasBid,
+            ],
+            'csrf_token' => $this->session->obtenirJetonCsrf(),
+            'flash_success' => $this->session->recupererMessageTemporaire('success'),
+            'flash_notice' => $this->session->recupererMessageTemporaire('notice'),
+        ]);
+    }
+
+    /**
+     * Rôle : Lire un identifiant entier strictement positif dans la requête GET.
+     * Paramètres : Nom du paramètre.
+     * Retour : Identifiant validé ou null lorsque la valeur est absente ou invalide.
+     */
+    private function readPositiveIdentifier(string $name): ?int
+    {
+        if (!isset($_GET[$name]) || !is_string($_GET[$name])) {
+            return null;
+        }
+
+        $identifier = filter_var($_GET[$name], FILTER_VALIDATE_INT, [
+            'options' => ['min_range' => 1],
+        ]);
+
+        if ($identifier === false) {
+            return null;
+        }
+
+        return (int) $identifier;
+    }
+
+    /**
+     * Rôle : Convertir l'historique brut en informations limitées et affichables en heure de Paris.
+     * Paramètres : Lignes d'enchères et fuseau horaire d'affichage.
+     * Retour : Historique formaté et sûr pour le template.
+     */
+    private function formatBidHistory(array $rows, DateTimeZone $parisTimezone): array
+    {
+        $history = [];
+        $utcTimezone = new DateTimeZone('UTC');
+
+        foreach ($rows as $row) {
+            if (!isset($row['pseudo'], $row['montant'], $row['date_heure_enchere'])) {
+                continue;
+            }
+
+            $date = DateTimeImmutable::createFromFormat(
+                'Y-m-d H:i:s',
+                (string) $row['date_heure_enchere'],
+                $utcTimezone
+            );
+
+            if (!$date instanceof DateTimeImmutable) {
+                continue;
+            }
+
+            $history[] = [
+                'bidder' => (string) $row['pseudo'],
+                'amount' => number_format((float) $row['montant'], 2, ',', ' ') . ' €',
+                'date' => $date->setTimezone($parisTimezone)->format('d/m/Y à H:i'),
+            ];
+        }
+
+        return $history;
+    }
+
+    /**
+     * Rôle : Déterminer le libellé final public d'une vente terminée.
+     * Paramètres : Indication de fin et nombre d'enchères.
+     * Retour : Libellé final ou chaîne vide tant que la vente est active.
+     */
+    private function determineFinalState(bool $isEnded, int $bidCount): string
+    {
+        if (!$isEnded) {
+            return '';
+        }
+
+        if ($bidCount > 0) {
+            return 'Adjugée';
+        }
+
+        return 'Non adjugée';
     }
 
     /**
