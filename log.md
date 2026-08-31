@@ -8,3 +8,7 @@
 ## Spécifications HTTP
 
 - Certaines lignes JavaScript demandent des réponses 403, 404 ou 500, alors que les règles techniques de la phase 3 interdisent de déclarer explicitement ces statuts. Le code utilise des réponses fonctionnelles et des messages génériques sans ajouter ces statuts interdits.
+
+## Organisation des templates
+
+- Les sept pages prévues répètent actuellement une partie de l'en-tête et du pied de page. Des fragments partagés réduiraient cette duplication, mais leur création n'était pas prévue dans la liste initiale issue des spécifications. Ce point pourra être repris lors de l'audit final sans changer le périmètre fonctionnel.
