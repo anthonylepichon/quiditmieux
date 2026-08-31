@@ -13,3 +13,4 @@
 
 - La première réduction de `UserModel.php` à la seule inscription avait supprimé par erreur la fermeture de la classe. Le contrôle de syntaxe PHP l’a détecté ; le modèle a été reconstruit avec ses méthodes d’unicité et validé de nouveau.
 - La première réduction de `PhotoModel.php` aux lectures utiles au détail avait aussi retiré sa méthode de normalisation et la fermeture de la classe. Le contrôle de syntaxe l’a détecté ; la méthode commune et la fermeture ont été rétablies.
+- Le contrôle du compte remplaçait le message « mot de passe actuel requis » par « mot de passe incorrect » lorsque le champ était vide. La vérification de l’empreinte est désormais exécutée seulement lorsque le champ obligatoire a été renseigné.
