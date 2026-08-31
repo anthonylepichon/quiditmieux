@@ -23,6 +23,18 @@ return [
         'action' => 'showDetail',
         'response' => 'HTML',
     ],
+    'listing_create_form' => [
+        'method' => 'GET',
+        'controller' => ListingController::class,
+        'action' => 'showCreateForm',
+        'response' => 'HTML ou redirection interne',
+    ],
+    'listing_create' => [
+        'method' => 'POST',
+        'controller' => ListingController::class,
+        'action' => 'create',
+        'response' => 'HTML ou redirection interne',
+    ],
     'register_form' => [
         'method' => 'GET',
         'controller' => AuthController::class,

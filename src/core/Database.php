@@ -152,6 +152,64 @@ class Database
     }
 
     /**
+     * Rôle : Démarrer une transaction lorsqu'aucune transaction n'est déjà active.
+     * Paramètres : Aucun.
+     * Retour : true si la transaction est active, sinon false.
+     */
+    public function beginTransaction(): bool
+    {
+        if ($this->connection === null || $this->connection->inTransaction()) {
+            return false;
+        }
+
+        try {
+            return $this->connection->beginTransaction();
+        } catch (PDOException) {
+            return false;
+        }
+    }
+
+    /**
+     * Rôle : Valider la transaction active.
+     * Paramètres : Aucun.
+     * Retour : true si la validation réussit, sinon false.
+     */
+    public function commit(): bool
+    {
+        if ($this->connection === null || !$this->connection->inTransaction()) {
+            return false;
+        }
+
+        try {
+            return $this->connection->commit();
+        } catch (PDOException) {
+            return false;
+        }
+    }
+
+    /**
+     * Rôle : Annuler la transaction active afin de préserver la cohérence des données.
+     * Paramètres : Aucun.
+     * Retour : true si l'annulation réussit ou si aucune transaction n'est active, sinon false.
+     */
+    public function rollback(): bool
+    {
+        if ($this->connection === null) {
+            return false;
+        }
+
+        if (!$this->connection->inTransaction()) {
+            return true;
+        }
+
+        try {
+            return $this->connection->rollBack();
+        } catch (PDOException) {
+            return false;
+        }
+    }
+
+    /**
      * Rôle : Vérifier la présence et le type des paramètres nécessaires à PDO.
      * Paramètres : Tableau de configuration à contrôler.
      * Retour : true si la configuration est exploitable, sinon false.
