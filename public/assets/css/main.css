@@ -1876,6 +1876,139 @@ textarea.form-control {
 }
 /*
  * Description générale :
+ * Outils SCSS réutilisables du projet.
+ *
+ * Rôle :
+ * Éviter la répétition des règles structurelles et d'accessibilité.
+ *
+ * Tâches :
+ * Fournir les styles de conteneur, de focus et de panneau vitré.
+ *
+ * Liens avec les autres fichiers :
+ * Utilisé par les modules de mise en page et de composants.
+ */
+/*
+ * Description générale : Mise en page du formulaire de compte privé.
+ * Rôle : Reproduire le panneau en deux colonnes de la maquette.
+ * Tâches : Organiser le formulaire, l'illustration et leur adaptation responsive.
+ * Liens avec les autres fichiers : Transmis par pages/_index.scss et appliqué à account.php.
+ */
+.account-page {
+  padding-block: var(--space-8) var(--space-16);
+}
+
+.account-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 21.375rem;
+  gap: var(--space-8);
+  padding: var(--space-6);
+}
+
+.account-card__form-panel {
+  padding: var(--space-6);
+  border: 0.0625rem solid var(--color-border-default);
+  border-radius: 1.375rem;
+  background: var(--color-surface-soft);
+}
+
+.account-card__form-panel form {
+  display: grid;
+  gap: var(--space-5);
+  margin-top: var(--space-5);
+}
+
+.account-card__form-panel .alert {
+  margin-top: var(--space-5);
+}
+
+.account-card__form-panel .alert--info {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.account-card__password-rule {
+  margin: 0;
+  color: var(--color-text-tertiary);
+  font-size: 0.75rem;
+}
+
+.account-card__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+}
+
+.account-card__actions .button {
+  min-width: 18.75rem;
+}
+
+.account-card__actions p {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: 0.8125rem;
+}
+
+.account-card__illustration {
+  display: grid;
+  align-content: space-between;
+  justify-items: center;
+  padding: var(--space-5) var(--space-6);
+  border: 0.0625rem solid var(--color-border-accent);
+  border-radius: 1.375rem;
+  background: var(--color-surface-accent-soft);
+}
+
+.account-card__illustration img {
+  width: 14.375rem;
+  height: 23.625rem;
+  object-fit: contain;
+}
+
+.account-card__illustration h2 {
+  margin: 0;
+  color: var(--color-text-brand);
+  font-size: 1.6875rem;
+}
+
+.account-card__illustration > p {
+  color: var(--color-text-secondary);
+}
+
+.account-card__security {
+  width: 100%;
+  padding: var(--space-4);
+  border-radius: var(--radius-card);
+  background: var(--color-page);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.account-card__security span {
+  margin-right: var(--space-3);
+  color: var(--color-success);
+  font-size: 1.25rem;
+}
+
+@media (max-width: 48rem) {
+  .account-card {
+    grid-template-columns: 1fr;
+  }
+  .account-card__illustration {
+    min-height: auto;
+  }
+}
+@media (max-width: 30rem) {
+  .account-card__actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .account-card__actions .button {
+    min-width: 0;
+    width: 100%;
+  }
+}
+/*
+ * Description générale :
  * Classes utilitaires accessibles et limitées aux besoins communs.
  *
  * Rôle :

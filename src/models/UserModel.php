@@ -2,9 +2,9 @@
 
 /**
  * Description générale : Modèle des comptes utilisateurs de l'application.
- * Rôle : Créer les comptes et vérifier l'unicité de leurs informations publiques.
- * Tâches : Déclarer la table UTILISATEUR et rechercher un pseudo ou une adresse électronique normalisés.
- * Liens avec les autres fichiers : Étend Model.php et est utilisé par AuthController.php.
+ * Rôle : Créer, authentifier et modifier les comptes utilisateurs.
+ * Tâches : Déclarer la table UTILISATEUR, lire un compte et vérifier l'unicité de ses informations.
+ * Liens avec les autres fichiers : Étend Model.php et est utilisé par AuthController.php et UserController.php.
  */
 
 namespace App\models;
@@ -54,6 +54,33 @@ class UserModel extends Model
             . 'WHERE LOWER(' . $column . ') = LOWER(:login) LIMIT 1',
             ['login' => $login]
         );
+    }
+
+    /**
+     * Rôle : Récupérer les informations privées nécessaires au formulaire du compte.
+     * Paramètres : Identifiant de l'utilisateur connecté.
+     * Retour : Identité et empreinte du mot de passe, ou null lorsque le compte est absent.
+     */
+    public function getAccount(int $userId): ?array
+    {
+        return $this->database->fetchOne(
+            'SELECT id, pseudo, email, password_hash FROM `UTILISATEUR` WHERE id = :user_id LIMIT 1',
+            ['user_id' => $userId]
+        );
+    }
+
+    /**
+     * Rôle : Enregistrer les informations de compte déjà validées par le contrôleur.
+     * Paramètres : Identifiant du compte, pseudo, adresse et empreinte facultative du nouveau mot de passe.
+     * Retour : true lorsque la mise à jour est exécutée, sinon false.
+     */
+    public function updateAccount(int $userId, string $pseudo, string $email, ?string $passwordHash = null): bool
+    {
+        $data = ['pseudo' => $pseudo, 'email' => $email];
+        if ($passwordHash !== null) {
+            $data['password_hash'] = $passwordHash;
+        }
+        return $this->update($userId, $data);
     }
 
     /**
