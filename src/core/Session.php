@@ -70,8 +70,21 @@ class Session
     public function deconnecterUtilisateur(): void
     {
         $this->demarrerSession();
-        unset($_SESSION['user_id']);
-        session_regenerate_id(true);
+        $_SESSION = [];
+
+        if (ini_get('session.use_cookies')) {
+            $cookieParameters = session_get_cookie_params();
+            setcookie(session_name(), '', [
+                'expires' => time() - 42000,
+                'path' => $cookieParameters['path'],
+                'domain' => $cookieParameters['domain'],
+                'secure' => $cookieParameters['secure'],
+                'httponly' => true,
+                'samesite' => 'Lax',
+            ]);
+        }
+
+        session_destroy();
     }
 
     /**
