@@ -1,7 +1,7 @@
 /**
  * Description générale : Interactions AJAX du détail d'une annonce.
- * Rôle : Modifier le suivi volontaire sans perdre le repli HTML classique.
- * Tâches : Verrouiller le formulaire, envoyer le POST, appliquer la réponse serveur et annoncer le résultat.
+ * Rôle : Modifier le suivi et déposer une enchère sans perdre le repli HTML classique.
+ * Tâches : Verrouiller les formulaires, envoyer les POST, appliquer les réponses serveur et annoncer les résultats.
  * Liens avec les autres fichiers : Est chargé par listing-detail.php et appelle ParticipationController.php.
  */
 
@@ -76,4 +76,76 @@ async function qdmSubmitFollow(event) {
 
 document.querySelectorAll('[data-follow-form]').forEach(function prepareFollowForm(form) {
     form.addEventListener('submit', qdmSubmitFollow);
+});
+
+/**
+ * Rôle : Mettre à jour les montants visibles après une enchère confirmée.
+ * Paramètres : Formulaire et données JSON validées.
+ * Retour : Aucun.
+ */
+function qdmUpdateBidDisplay(form, data) {
+    const currentPrice = document.querySelector('[data-current-price]');
+    const bidCount = document.querySelector('[data-bid-count]');
+    const minimumText = form.querySelector('[data-minimum-bid]');
+    const amountInput = form.querySelector('[name="amount"]');
+
+    if (typeof data.current_price === 'string' && currentPrice) {
+        currentPrice.textContent = data.current_price;
+    }
+
+    if (Number.isInteger(data.bid_count) && bidCount) {
+        bidCount.textContent = String(data.bid_count);
+    }
+
+    if (typeof data.minimum_bid === 'string') {
+        amountInput.min = data.minimum_bid;
+        minimumText.textContent = 'Montant minimum : ' + data.minimum_bid.replace('.', ',') + ' €';
+    }
+
+    amountInput.value = '';
+    amountInput.focus();
+}
+
+/**
+ * Rôle : Envoyer une enchère et conserver le formulaire utilisable en cas d'échec.
+ * Paramètres : Événement de soumission.
+ * Retour : Aucun.
+ */
+async function qdmSubmitBid(event) {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const button = form.querySelector('button');
+    const status = form.querySelector('[data-bid-status]');
+    button.disabled = true;
+    status.textContent = 'Enregistrement de votre enchère…';
+
+    try {
+        const response = await fetch(qdmJsonAction(form), {
+            method: 'POST',
+            body: new FormData(form),
+            headers: {'Accept': 'application/json'}
+        });
+        const data = await response.json();
+
+        if (!data || typeof data.success !== 'boolean' || typeof data.message !== 'string') {
+            status.textContent = 'La réponse reçue ne permet pas de confirmer l’enchère.';
+            return;
+        }
+
+        status.textContent = data.message;
+
+        if (data.success) {
+            qdmUpdateBidDisplay(form, data);
+        } else if (typeof data.minimum_bid === 'string') {
+            qdmUpdateBidDisplay(form, data);
+        }
+    } catch (error) {
+        status.textContent = 'L’enchère n’a pas pu être envoyée. Utilisez de nouveau le bouton.';
+    } finally {
+        button.disabled = false;
+    }
+}
+
+document.querySelectorAll('[data-bid-form]').forEach(function prepareBidForm(form) {
+    form.addEventListener('submit', qdmSubmitBid);
 });

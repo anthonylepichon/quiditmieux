@@ -108,7 +108,8 @@ if ($viewer['is_following']) {
                         <input type="hidden" name="id" value="<?= (int) $listing['id'] ?>"><input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
                         <label class="form-field__label" for="bid-amount">Votre enchère</label>
                         <div class="bid-form__row"><input class="form-control" id="bid-amount" name="amount" type="number" min="<?= htmlspecialchars($listing['minimum_bid'], ENT_QUOTES, 'UTF-8') ?>" step="0.01" required><button class="button button--primary" type="submit">Enchérir</button></div>
-                        <p class="form-field__help">Montant minimum : <?= htmlspecialchars($listing['minimum_bid'], ENT_QUOTES, 'UTF-8') ?> €</p>
+                        <p class="form-field__help" data-minimum-bid>Montant minimum : <?= htmlspecialchars($listing['minimum_bid'], ENT_QUOTES, 'UTF-8') ?> €</p>
+                        <p class="form-field__help" data-bid-status role="status"></p>
                     </form>
                 <?php endif; ?>
             </div>
