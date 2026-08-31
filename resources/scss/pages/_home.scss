@@ -15,12 +15,14 @@
 @use "../abstracts/variables" as variables;
 
 .home-hero {
+  position: relative;
   display: grid;
-  min-height: 32rem;
+  min-height: 20.625rem;
   align-items: center;
-  grid-template-columns: minmax(0, 1.05fr) minmax(20rem, 0.95fr);
-  gap: clamp(var(--space-8), 6vw, var(--space-16));
-  padding-block: var(--space-8) var(--space-12);
+  grid-template-columns: minmax(0, 1fr) 31rem;
+  gap: var(--space-8);
+  overflow: hidden;
+  padding-block: var(--space-7);
 }
 
 .home-hero__content {
@@ -43,7 +45,7 @@
 .home-hero__visual {
   position: relative;
   display: grid;
-  min-height: 28rem;
+  min-height: 17rem;
   place-items: center;
   overflow: hidden;
   border-radius: var(--radius-panel);
@@ -76,9 +78,48 @@
 .home-hero__visual img {
   position: relative;
   z-index: 1;
-  width: min(100%, 34rem);
-  max-height: 31rem;
+  width: min(100%, 21.4375rem);
+  max-height: 19.625rem;
   object-fit: contain;
+}
+
+.hero-countdown {
+  position: absolute;
+  z-index: 2;
+  right: 0;
+  bottom: 0;
+  width: min(32.1875rem, 100%);
+  padding: var(--space-3) var(--space-5);
+  border-radius: var(--radius-card) 0 var(--radius-panel) 0;
+  background: var(--gradient-primary);
+  color: var(--color-text-on-action);
+  text-align: center;
+}
+
+.hero-countdown p {
+  margin: 0 0 var(--space-2);
+  font-weight: 700;
+}
+
+.hero-countdown__values {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-2);
+}
+
+.hero-countdown__values span {
+  display: grid;
+  gap: 0.125rem;
+  padding: var(--space-2);
+  border: 0.0625rem solid rgb(255 255 255 / 55%);
+  border-radius: var(--radius-control);
+  font-size: 1.25rem;
+  font-weight: 800;
+}
+
+.hero-countdown__values small {
+  font-size: 0.625rem;
+  font-weight: 700;
 }
 
 .search-panel,
@@ -123,9 +164,19 @@
 
 .search-form__grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-areas:
+    "keywords keywords category item"
+    "minimum maximum sale sale";
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: var(--space-5);
 }
+
+.search-form__keywords { grid-area: keywords; }
+.search-form__category { grid-area: category; }
+.search-form__item-state { grid-area: item; }
+.search-form__sale-state { grid-area: sale; }
+.search-form__minimum-price { grid-area: minimum; }
+.search-form__maximum-price { grid-area: maximum; }
 
 .search-form__text {
   grid-column: span 2;
@@ -213,6 +264,11 @@
   }
 
   .search-form__grid {
+    grid-template-areas:
+      "keywords keywords"
+      "category item"
+      "minimum maximum"
+      "sale sale";
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
@@ -239,7 +295,17 @@
 
 @media (max-width: variables.$breakpoint-mobile) {
   .search-form__grid {
+    grid-template-areas: none;
     grid-template-columns: 1fr;
+  }
+
+  .search-form__keywords,
+  .search-form__category,
+  .search-form__item-state,
+  .search-form__sale-state,
+  .search-form__minimum-price,
+  .search-form__maximum-price {
+    grid-area: auto;
   }
 
   .search-form__text {
