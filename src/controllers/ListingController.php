@@ -314,6 +314,235 @@ class ListingController extends Controller
     }
 
     /**
+     * Rôle : Vérifier les droits du vendeur puis afficher le formulaire prérempli d'une annonce modifiable.
+     * Paramètres : Aucun, l'identifiant est lu dans la requête GET.
+     * Retour : Aucun, le formulaire ou une redirection sûre est envoyé.
+     */
+    public function showEditForm(): void
+    {
+        $userId = $this->session->obtenirIdentifiantUtilisateurConnecte();
+
+        if ($userId === null) {
+            $this->redirect('login_form', ['destination' => 'dashboard']);
+        }
+
+        $listingId = $this->readPositiveIdentifier('id');
+        $listingModel = new ListingModel($this->database);
+        $listing = null;
+
+        if ($listingId !== null) {
+            $listing = $listingModel->getDetail($listingId);
+        }
+
+        if ($listing === null || (int) $listing['utilisateur_id'] !== $userId) {
+            $this->session->enregistrerMessageTemporaire('notice', 'Cette annonce ne peut pas être modifiée.');
+            $this->redirect('dashboard');
+        }
+
+        $bidModel = new BidModel($this->database);
+
+        if ($bidModel->listingHasBid($listingId)
+            || (string) $listing['date_heure_fin'] <= gmdate('Y-m-d H:i:s')
+        ) {
+            $this->session->enregistrerMessageTemporaire('notice', 'La modification de cette annonce est verrouillée.');
+            $this->redirect('listing_detail', ['id' => $listingId]);
+        }
+
+        $categories = $this->fetchCategories();
+        $errors = [];
+
+        if ($categories === null) {
+            $categories = [];
+            $errors['form'] = 'Les catégories sont indisponibles. La modification est temporairement bloquée.';
+        }
+
+        $photoModel = new PhotoModel($this->database);
+        $photos = $this->addPhotoUrls($photoModel->getListingPhotos($listingId));
+        $values = $this->listingToFormValues($listing, $categories);
+        $this->renderListingForm('edit', $values, $errors, $categories, $photos);
+    }
+
+    /**
+     * Rôle : Revalider les droits, les données et les photographies puis modifier l'annonce en transaction.
+     * Paramètres : Aucun, les données sont lues dans la requête POST.
+     * Retour : Aucun, le formulaire est réaffiché ou le détail mis à jour est ouvert.
+     */
+    public function update(): void
+    {
+        $userId = $this->session->obtenirIdentifiantUtilisateurConnecte();
+        $listingId = $this->readPositivePostIdentifier('id');
+
+        if ($userId === null) {
+            $this->redirect('login_form', ['destination' => 'dashboard']);
+        }
+
+        if ($listingId === null) {
+            $this->session->enregistrerMessageTemporaire('notice', 'L’annonce à modifier est introuvable.');
+            $this->redirect('dashboard');
+        }
+
+        $values = $this->readListingFormValues();
+        $values['id'] = $listingId;
+        $categories = $this->fetchCategories();
+        $errors = [];
+
+        if (!$this->session->estJetonCsrfValide($this->readPostString('csrf_token'))) {
+            $errors['form'] = 'Le formulaire a expiré. Rechargez la page puis recommencez.';
+        }
+
+        if ($categories === null) {
+            $categories = [];
+            $errors['form'] = 'Les catégories sont indisponibles. La modification est temporairement bloquée.';
+        }
+
+        $normalizedData = $this->validateListingValues($values, $categories, $errors);
+        $uploadedPhotos = $this->validateUploadedPhotos($errors);
+        $photoModel = new PhotoModel($this->database);
+        $existingPhotos = $photoModel->getListingPhotos($listingId);
+        $removeIds = $this->readPhotoIdentifiersToRemove();
+        $keptPhotos = [];
+        $removedPhotos = [];
+
+        foreach ($existingPhotos as $photo) {
+            if (in_array($photo['id'], $removeIds, true)) {
+                $removedPhotos[] = $photo;
+            } else {
+                $keptPhotos[] = $photo;
+            }
+        }
+
+        if (count($keptPhotos) + count($uploadedPhotos) > 3) {
+            $errors['photos'] = 'Trois photographies sont autorisées au maximum après modification.';
+        }
+
+        if ($errors !== []) {
+            $this->renderListingForm(
+                'edit',
+                $values,
+                $errors,
+                $categories,
+                $this->addPhotoUrls($existingPhotos)
+            );
+            return;
+        }
+
+        if (!$this->database->beginTransaction()) {
+            $errors['form'] = 'La modification ne peut pas démarrer pour le moment.';
+            $this->renderListingForm('edit', $values, $errors, $categories, $this->addPhotoUrls($existingPhotos));
+            return;
+        }
+
+        $listingModel = new ListingModel($this->database);
+        $lockedListing = $listingModel->getForUpdate($listingId);
+        $bidModel = new BidModel($this->database);
+
+        if ($lockedListing === null
+            || (int) $lockedListing['utilisateur_id'] !== $userId
+            || (string) $lockedListing['date_heure_fin'] <= gmdate('Y-m-d H:i:s')
+            || $bidModel->listingHasBid($listingId)
+        ) {
+            $this->database->rollback();
+            $this->session->enregistrerMessageTemporaire('notice', 'La modification est désormais verrouillée.');
+            $this->redirect('listing_detail', ['id' => $listingId]);
+        }
+
+        $updated = $listingModel->update($listingId, [
+            'titre' => $normalizedData['title'],
+            'description' => $normalizedData['description'],
+            'etat_objet' => $normalizedData['item_state'],
+            'prix_depart' => $normalizedData['starting_price'],
+            'date_heure_fin' => $normalizedData['deadline_utc'],
+            'categorie_id_externe' => $normalizedData['category_id'],
+            'categorie_libelle' => $normalizedData['category_label'],
+        ]);
+
+        foreach ($removedPhotos as $photo) {
+            if (!$photoModel->deleteFromListing((int) $photo['id'], $listingId)) {
+                $updated = false;
+            }
+        }
+
+        if ($updated && !$photoModel->reorder($listingId, $keptPhotos)) {
+            $updated = false;
+        }
+
+        $storedFiles = [];
+
+        if ($updated && !$this->storeUploadedPhotos(
+            $listingId,
+            $uploadedPhotos,
+            $storedFiles,
+            count($keptPhotos) + 1
+        )) {
+            $updated = false;
+        }
+
+        if (!$updated || !$this->database->commit()) {
+            $this->database->rollback();
+            $this->deleteStoredFiles($storedFiles);
+            $errors['form'] = 'Les modifications n’ont pas pu être enregistrées.';
+            $this->renderListingForm('edit', $values, $errors, $categories, $this->addPhotoUrls($existingPhotos));
+            return;
+        }
+
+        $this->deletePhotoFiles($removedPhotos);
+        $this->session->enregistrerMessageTemporaire('success', 'L’annonce a été mise à jour.');
+        $this->redirect('listing_detail', ['id' => $listingId]);
+    }
+
+    /**
+     * Rôle : Supprimer en transaction une annonce encore active, sans enchère et appartenant au vendeur connecté.
+     * Paramètres : Aucun, l'identifiant et le jeton sont lus dans la requête POST.
+     * Retour : Aucun, une redirection vers le tableau de bord ou le détail est envoyée.
+     */
+    public function delete(): void
+    {
+        $userId = $this->session->obtenirIdentifiantUtilisateurConnecte();
+        $listingId = $this->readPositivePostIdentifier('id');
+
+        if ($userId === null) {
+            $this->redirect('login_form', ['destination' => 'dashboard']);
+        }
+
+        if ($listingId === null || !$this->session->estJetonCsrfValide($this->readPostString('csrf_token'))) {
+            $this->session->enregistrerMessageTemporaire('notice', 'La suppression ne peut pas être confirmée.');
+            $this->redirect('dashboard');
+        }
+
+        if (!$this->database->beginTransaction()) {
+            $this->session->enregistrerMessageTemporaire('notice', 'La suppression est temporairement indisponible.');
+            $this->redirect('listing_detail', ['id' => $listingId]);
+        }
+
+        $listingModel = new ListingModel($this->database);
+        $lockedListing = $listingModel->getForUpdate($listingId);
+        $bidModel = new BidModel($this->database);
+
+        if ($lockedListing === null
+            || (int) $lockedListing['utilisateur_id'] !== $userId
+            || (string) $lockedListing['date_heure_fin'] <= gmdate('Y-m-d H:i:s')
+            || $bidModel->listingHasBid($listingId)
+        ) {
+            $this->database->rollback();
+            $this->session->enregistrerMessageTemporaire('notice', 'Cette annonce ne peut plus être supprimée.');
+            $this->redirect('listing_detail', ['id' => $listingId]);
+        }
+
+        $photoModel = new PhotoModel($this->database);
+        $photos = $photoModel->getListingPhotos($listingId);
+
+        if (!$listingModel->delete($listingId) || !$this->database->commit()) {
+            $this->database->rollback();
+            $this->session->enregistrerMessageTemporaire('notice', 'L’annonce n’a pas pu être supprimée.');
+            $this->redirect('listing_detail', ['id' => $listingId]);
+        }
+
+        $this->deletePhotoFiles($photos);
+        $this->session->enregistrerMessageTemporaire('success', 'L’annonce a été supprimée.');
+        $this->redirect('dashboard');
+    }
+
+    /**
      * Rôle : Lire une valeur POST simple sans accepter de tableau inattendu.
      * Paramètres : Nom du champ demandé.
      * Retour : Valeur reçue ou chaîne vide lorsqu'elle est absente ou invalide.
@@ -509,7 +738,12 @@ class ListingController extends Controller
      * Paramètres : Identifiant de l'annonce, photographies et chemins stockés à compléter.
      * Retour : true lorsque toutes les photographies sont enregistrées, sinon false.
      */
-    private function storeUploadedPhotos(int $listingId, array $photos, array &$storedFiles): bool
+    private function storeUploadedPhotos(
+        int $listingId,
+        array $photos,
+        array &$storedFiles,
+        int $startingOrder = 1
+    ): bool
     {
         $directory = dirname(__DIR__, 2) . '/public/assets/images/photos-objets';
 
@@ -532,7 +766,7 @@ class ListingController extends Controller
             if (!$photoModel->create([
                 'annonce_id' => $listingId,
                 'ref_fichier' => $filename,
-                'ordre' => $index + 1,
+                'ordre' => $startingOrder + $index,
             ])) {
                 return false;
             }
@@ -550,6 +784,134 @@ class ListingController extends Controller
     {
         foreach ($storedFiles as $path) {
             if (is_string($path) && is_file($path)) {
+                unlink($path);
+            }
+        }
+    }
+
+    /**
+     * Rôle : Lire et normaliser les identifiants de photographies demandées en suppression.
+     * Paramètres : Aucun.
+     * Retour : Liste unique d'identifiants strictement positifs.
+     */
+    private function readPhotoIdentifiersToRemove(): array
+    {
+        if (!isset($_POST['remove_photos']) || !is_array($_POST['remove_photos'])) {
+            return [];
+        }
+
+        $identifiers = [];
+
+        foreach ($_POST['remove_photos'] as $value) {
+            if (!is_string($value)) {
+                continue;
+            }
+
+            $identifier = filter_var($value, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+
+            if ($identifier !== false) {
+                $identifiers[(int) $identifier] = (int) $identifier;
+            }
+        }
+
+        return array_values($identifiers);
+    }
+
+    /**
+     * Rôle : Lire un identifiant entier strictement positif dans la requête POST.
+     * Paramètres : Nom du champ.
+     * Retour : Identifiant validé ou null.
+     */
+    private function readPositivePostIdentifier(string $name): ?int
+    {
+        $value = $this->readPostString($name);
+        $identifier = filter_var($value, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+
+        if ($identifier === false) {
+            return null;
+        }
+
+        return (int) $identifier;
+    }
+
+    /**
+     * Rôle : Transformer une annonce enregistrée en valeurs adaptées au formulaire de modification.
+     * Paramètres : Annonce et catégories actuellement disponibles.
+     * Retour : Valeurs réaffichables du formulaire.
+     */
+    private function listingToFormValues(array $listing, array $categories): array
+    {
+        $utcTimezone = new DateTimeZone('UTC');
+        $parisTimezone = new DateTimeZone('Europe/Paris');
+        $deadline = DateTimeImmutable::createFromFormat(
+            'Y-m-d H:i:s',
+            (string) $listing['date_heure_fin'],
+            $utcTimezone
+        );
+        $date = '';
+        $time = '';
+
+        if ($deadline instanceof DateTimeImmutable) {
+            $parisDeadline = $deadline->setTimezone($parisTimezone);
+            $date = $parisDeadline->format('Y-m-d');
+            $time = $parisDeadline->format('H:i');
+        }
+
+        $category = (string) $listing['categorie_id_externe'];
+
+        if (!isset($categories[$category])) {
+            foreach ($categories as $identifier => $label) {
+                if ($label === $listing['categorie_libelle']) {
+                    $category = (string) $identifier;
+                    break;
+                }
+            }
+        }
+
+        return [
+            'id' => (int) $listing['id'],
+            'title' => (string) $listing['titre'],
+            'category' => $category,
+            'description' => (string) $listing['description'],
+            'item_state' => (string) $listing['etat_objet'],
+            'starting_price' => number_format((float) $listing['prix_depart'], 2, '.', ''),
+            'end_date' => $date,
+            'end_time' => $time,
+        ];
+    }
+
+    /**
+     * Rôle : Ajouter une URL publique sûre à chaque photographie préparée par le modèle.
+     * Paramètres : Photographies ordonnées.
+     * Retour : Photographies complétées avec leur URL.
+     */
+    private function addPhotoUrls(array $photos): array
+    {
+        foreach ($photos as &$photo) {
+            $photo['url'] = 'public/assets/images/photos-objets/' . rawurlencode($photo['filename']);
+        }
+        unset($photo);
+
+        return $photos;
+    }
+
+    /**
+     * Rôle : Supprimer du stockage les fichiers de photographies devenus inutiles après validation en base.
+     * Paramètres : Photographies contenant des noms de fichiers sûrs.
+     * Retour : Aucun.
+     */
+    private function deletePhotoFiles(array $photos): void
+    {
+        $directory = dirname(__DIR__, 2) . '/public/assets/images/photos-objets/';
+
+        foreach ($photos as $photo) {
+            if (!isset($photo['filename']) || !is_string($photo['filename'])) {
+                continue;
+            }
+
+            $path = $directory . basename($photo['filename']);
+
+            if (is_file($path)) {
                 unlink($path);
             }
         }

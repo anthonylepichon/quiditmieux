@@ -152,6 +152,19 @@ class BidModel extends Model
     }
 
     /**
+     * Rôle : Indiquer si une annonce possède déjà au moins une enchère.
+     * Paramètres : Identifiant de l'annonce.
+     * Retour : true lorsqu'une enchère existe, sinon false.
+     */
+    public function listingHasBid(int $listingId): bool
+    {
+        return $this->database->fetchOne(
+            'SELECT id FROM `ENCHERE` WHERE annonce_id = :listing_id LIMIT 1',
+            ['listing_id' => $listingId]
+        ) !== null;
+    }
+
+    /**
      * Rôle : Récupérer l'historique détaillé et ordonné des enchères d'une annonce.
      * Paramètres : Identifiant de l'annonce.
      * Retour : Liste des enchères avec le pseudo de leur auteur.

@@ -114,6 +114,47 @@ class PhotoModel extends Model
     }
 
     /**
+     * Rôle : Supprimer une photographie uniquement lorsqu'elle appartient à l'annonce indiquée.
+     * Paramètres : Identifiants de la photographie et de l'annonce.
+     * Retour : true lorsque la requête est exécutée, sinon false.
+     */
+    public function deleteFromListing(int $photoId, int $listingId): bool
+    {
+        return $this->database->execute(
+            'DELETE FROM `PHOTOGRAPHIE` WHERE id = :photo_id AND annonce_id = :listing_id',
+            ['photo_id' => $photoId, 'listing_id' => $listingId]
+        );
+    }
+
+    /**
+     * Rôle : Refermer les éventuels écarts d'ordre après la suppression de photographies.
+     * Paramètres : Identifiant de l'annonce et photographies ordonnées.
+     * Retour : true lorsque tous les ordres sont enregistrés, sinon false.
+     */
+    public function reorder(int $listingId, array $photos): bool
+    {
+        foreach ($photos as $index => $photo) {
+            if (!isset($photo['id'])) {
+                return false;
+            }
+
+            if ((int) $photo['order'] === $index + 1) {
+                continue;
+            }
+
+            if (!$this->database->execute(
+                'UPDATE `PHOTOGRAPHIE` SET ordre = :photo_order'
+                . ' WHERE id = :photo_id AND annonce_id = :listing_id',
+                ['photo_order' => $index + 1, 'photo_id' => (int) $photo['id'], 'listing_id' => $listingId]
+            )) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
      * Rôle : Conserver uniquement des identifiants entiers strictement positifs et uniques.
      * Paramètres : Valeurs candidates à normaliser.
      * Retour : Liste d'identifiants utilisables dans une requête préparée.
