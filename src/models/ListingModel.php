@@ -134,6 +134,67 @@ class ListingModel extends Model
     }
 
     /**
+     * Rôle : Récupérer les annonces vendues par l'utilisateur avec leur prix courant.
+     * Paramètres : Identifiant de l'utilisateur connecté.
+     * Retour : Liste des ventes ordonnées des plus proches aux plus anciennes.
+     */
+    public function getDashboardSales(int $userId): array
+    {
+        $sql = 'SELECT listing.id, listing.titre, listing.etat_objet, listing.prix_depart,'
+            . ' listing.date_heure_fin, listing.categorie_libelle,'
+            . ' COUNT(bid.id) AS bid_count, MAX(bid.montant) AS best_bid'
+            . ' FROM `ANNONCE` listing'
+            . ' LEFT JOIN `ENCHERE` bid ON bid.annonce_id = listing.id'
+            . ' WHERE listing.utilisateur_id = :user_id'
+            . ' GROUP BY listing.id, listing.titre, listing.etat_objet, listing.prix_depart,'
+            . ' listing.date_heure_fin, listing.categorie_libelle'
+            . ' ORDER BY CASE WHEN listing.date_heure_fin > UTC_TIMESTAMP() THEN 0 ELSE 1 END,'
+            . ' listing.date_heure_fin ASC, listing.id ASC';
+        return $this->database->fetchAll($sql, ['user_id' => $userId]);
+    }
+
+    /**
+     * Rôle : Récupérer les suivis et enchères de l'utilisateur utiles au tableau de bord.
+     * Paramètres : Identifiant de l'utilisateur connecté.
+     * Retour : Participations actives, enchères perdues et enchères remportées.
+     */
+    public function getDashboardParticipations(int $userId): array
+    {
+        $winnerSql = '(SELECT winning_bid.utilisateur_id FROM `ENCHERE` winning_bid'
+            . ' WHERE winning_bid.annonce_id = listing.id'
+            . ' ORDER BY winning_bid.montant DESC, winning_bid.date_heure_enchere ASC,'
+            . ' winning_bid.id ASC LIMIT 1)';
+        $sql = 'SELECT listing.id, listing.titre, listing.etat_objet, listing.prix_depart,'
+            . ' listing.date_heure_fin, listing.categorie_libelle,'
+            . ' (SELECT MAX(all_bid.montant) FROM `ENCHERE` all_bid WHERE all_bid.annonce_id = listing.id) AS best_bid,'
+            . ' (SELECT COUNT(*) FROM `ENCHERE` counted_bid WHERE counted_bid.annonce_id = listing.id) AS bid_count,'
+            . ' (SELECT MAX(user_bid.montant) FROM `ENCHERE` user_bid WHERE user_bid.annonce_id = listing.id'
+            . ' AND user_bid.utilisateur_id = :best_user_id) AS user_best_bid,'
+            . ' ' . $winnerSql . ' AS winner_id,'
+            . ' EXISTS(SELECT 1 FROM `ASSOC_UTILISATEUR_ANNONCE` followed WHERE followed.annonce_id = listing.id'
+            . ' AND followed.utilisateur_id = :follow_user_id) AS is_following'
+            . ' FROM `ANNONCE` listing'
+            . ' WHERE listing.utilisateur_id <> :owner_user_id'
+            . ' AND ((listing.date_heure_fin > UTC_TIMESTAMP() AND ('
+            . ' EXISTS(SELECT 1 FROM `ASSOC_UTILISATEUR_ANNONCE` active_follow WHERE active_follow.annonce_id = listing.id'
+            . ' AND active_follow.utilisateur_id = :active_follow_user_id)'
+            . ' OR EXISTS(SELECT 1 FROM `ENCHERE` active_bid WHERE active_bid.annonce_id = listing.id'
+            . ' AND active_bid.utilisateur_id = :active_bid_user_id)))'
+            . ' OR (listing.date_heure_fin <= UTC_TIMESTAMP() AND EXISTS(SELECT 1 FROM `ENCHERE` ended_bid'
+            . ' WHERE ended_bid.annonce_id = listing.id AND ended_bid.utilisateur_id = :ended_bid_user_id)))'
+            . ' ORDER BY CASE WHEN listing.date_heure_fin > UTC_TIMESTAMP() THEN 0 ELSE 1 END,'
+            . ' listing.date_heure_fin ASC, listing.id ASC';
+        return $this->database->fetchAll($sql, [
+            'best_user_id' => $userId,
+            'follow_user_id' => $userId,
+            'owner_user_id' => $userId,
+            'active_follow_user_id' => $userId,
+            'active_bid_user_id' => $userId,
+            'ended_bid_user_id' => $userId,
+        ]);
+    }
+
+    /**
      * Rôle : Ajouter chaque mot recherché comme condition obligatoire sur le titre ou la description.
      * Paramètres : Critères normalisés, conditions SQL et paramètres de requête à compléter.
      * Retour : Aucun.

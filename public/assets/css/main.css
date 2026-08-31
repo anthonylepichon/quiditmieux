@@ -30,6 +30,9 @@
   --color-page: #fff6fc;
   --color-surface: #ffffff;
   --color-surface-soft: #fff9fd;
+  --color-surface-accent-soft: #ffe4f3;
+  --color-surface-cyan-soft: #e8fffe;
+  --color-surface-gold-soft: #fff4d6;
   --color-surface-glass: rgb(255 255 255 / 60%);
   --color-text-primary: #120d34;
   --color-text-secondary: #433451;
@@ -1677,25 +1680,27 @@ textarea.form-control {
  */
 /*
  * Description générale : Mise en page du tableau de bord utilisateur.
- * Rôle : Organiser les ventes, participations et enchères remportées dans des zones lisibles.
- * Tâches : Styliser l'en-tête, les grilles actualisables, les cartes et les états vides.
+ * Rôle : Reproduire les trois zones d'activité et leurs états selon la maquette.
+ * Tâches : Styliser l'en-tête, les cartes, les états vides et l'adaptation responsive.
  * Liens avec les autres fichiers : Transmis par pages/_index.scss et appliqué à dashboard.php.
  */
 .dashboard {
   display: grid;
-  gap: var(--space-8);
-  padding-block: var(--space-10) var(--space-16);
+  gap: var(--space-5);
+  padding-block: var(--space-8) var(--space-16);
 }
 
 .dashboard__heading {
   display: flex;
-  min-height: 12rem;
+  min-height: 10.625rem;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-6);
-  padding: var(--space-8);
+  padding: var(--space-6) var(--space-8);
+  border: 0.0625rem solid var(--color-border-accent);
   border-radius: var(--radius-panel);
-  background: var(--gradient-soft);
+  background: var(--color-surface-accent-soft);
+  overflow: hidden;
 }
 
 .dashboard__heading h1, .dashboard__heading p {
@@ -1703,20 +1708,78 @@ textarea.form-control {
 }
 
 .dashboard__heading img {
-  width: min(11.25rem, 30vw);
+  align-self: flex-end;
+  width: min(11.25rem, 25vw);
   object-fit: contain;
 }
 
+.dashboard__metrics {
+  display: flex;
+  gap: var(--space-3);
+  margin: var(--space-4) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dashboard__metrics li {
+  min-width: 10rem;
+  padding: 0.4rem 1rem;
+  border-radius: 999px;
+  background: var(--color-background-page);
+  color: var(--color-text-brand);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.dashboard .alert--info {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-1);
+}
+
 .dashboard__status {
-  min-height: 1.5rem;
+  min-height: 0;
   margin: 0;
   color: var(--color-warning);
 }
 
+.dashboard__status:empty {
+  display: none;
+}
+
 .dashboard-zone {
   display: grid;
-  gap: var(--space-5);
+  gap: var(--space-4);
   padding: var(--space-6);
+  border: 0.0625rem solid var(--color-border-default);
+  border-radius: var(--radius-panel);
+}
+
+.dashboard-zone--sales {
+  background: var(--color-surface-accent-soft);
+}
+
+.dashboard-zone--participations {
+  background: var(--color-surface-cyan-soft);
+}
+
+.dashboard-zone--wins {
+  background: var(--color-surface-gold-soft);
+}
+
+.dashboard-zone__heading {
+  padding-inline: var(--space-8);
+}
+
+.dashboard-zone__heading h2, .dashboard-zone__heading p {
+  margin: 0;
+}
+
+.dashboard-zone__heading p {
+  margin-top: var(--space-2);
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
 }
 
 .dashboard-grid {
@@ -1763,25 +1826,52 @@ textarea.form-control {
 }
 
 .dashboard-zone__empty {
+  grid-column: 1/-1;
+  display: flex;
+  min-height: 7.5rem;
+  align-items: center;
+  gap: var(--space-6);
   margin: 0;
-  padding: var(--space-8);
+  padding: var(--space-6) var(--space-8);
+  border: 0.0625rem dashed var(--color-border-default);
   border-radius: var(--radius-card);
-  background: var(--color-surface-soft);
+  background: var(--color-background-page);
   color: var(--color-text-secondary);
-  text-align: center;
+}
+
+.dashboard-zone__empty > span {
+  color: var(--color-text-action);
+  font-size: 2.5rem;
+}
+
+.dashboard-zone__empty strong {
+  color: var(--color-text-primary);
+}
+
+.dashboard-zone__empty p {
+  margin: var(--space-3) 0 0;
 }
 
 @media (max-width: 48rem) {
   .dashboard-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+  .dashboard__metrics {
+    flex-wrap: wrap;
+  }
 }
 @media (max-width: 30rem) {
   .dashboard__heading img {
     display: none;
   }
+  .dashboard__metrics {
+    display: none;
+  }
   .dashboard-grid {
     grid-template-columns: 1fr;
+  }
+  .dashboard-zone__heading {
+    padding-inline: 0;
   }
 }
 /*
