@@ -1,7 +1,7 @@
 /**
  * Description générale : Comportements JavaScript partagés par les pages de l'application.
- * Rôle : Actualiser les comptes à rebours à partir des échéances fournies par le serveur.
- * Tâches : Afficher le temps restant et recharger une seule fois la page lorsqu'une vente se termine.
+ * Rôle : Gérer les comportements partagés de navigation et de compte à rebours.
+ * Tâches : Actualiser les échéances et rendre le menu principal utilisable sur petit écran.
  * Liens avec les autres fichiers : Est chargé par home.php et utilise les attributs produits par les templates.
  */
 
@@ -20,6 +20,22 @@ function qdmFormatRemainingTime(remainingMilliseconds) {
     const seconds = totalSeconds % 60;
 
     return days + ' j ' + hours + ' h ' + minutes + ' min ' + seconds + ' s';
+}
+
+/**
+ * Rôle : Décomposer une durée restante en quatre valeurs numériques.
+ * Paramètres : Durée positive exprimée en millisecondes.
+ * Retour : Tableau contenant les jours, heures, minutes et secondes.
+ */
+function qdmRemainingTimeParts(remainingMilliseconds) {
+    const totalSeconds = Math.max(0, Math.floor(remainingMilliseconds / 1000));
+
+    return [
+        Math.floor(totalSeconds / 86400),
+        Math.floor((totalSeconds % 86400) / 3600),
+        Math.floor((totalSeconds % 3600) / 60),
+        totalSeconds % 60
+    ];
 }
 
 /**
@@ -42,7 +58,32 @@ function qdmUpdateCountdowns() {
         const remainingMilliseconds = deadlineTime - currentTime;
 
         if (remainingMilliseconds > 0) {
-            countdown.textContent = qdmFormatRemainingTime(remainingMilliseconds);
+            const valuesContainer = countdown.querySelector('[data-countdown-values]');
+
+            if (valuesContainer !== null) {
+                const valueElements = valuesContainer.querySelectorAll('span');
+                const timeParts = qdmRemainingTimeParts(remainingMilliseconds);
+
+                valueElements.forEach(function updateTimePart(valueElement, index) {
+                    const label = valueElement.querySelector('small');
+                    let labelText = '';
+
+                    if (label !== null) {
+                        labelText = label.textContent;
+                    }
+
+                    valueElement.textContent = String(timeParts[index]).padStart(2, '0');
+
+                    if (labelText !== '') {
+                        const restoredLabel = document.createElement('small');
+                        restoredLabel.textContent = labelText;
+                        valueElement.append(restoredLabel);
+                    }
+                });
+            } else {
+                countdown.textContent = qdmFormatRemainingTime(remainingMilliseconds);
+            }
+
             return;
         }
 
@@ -59,5 +100,27 @@ function qdmUpdateCountdowns() {
     });
 }
 
+/**
+ * Rôle : Ouvrir ou fermer la navigation compacte.
+ * Paramètres : Aucun.
+ * Retour : Aucun.
+ */
+function qdmInitializeMenu() {
+    const menuButton = document.querySelector('[data-menu-button]');
+    const menuPanel = document.querySelector('[data-menu-panel]');
+
+    if (menuButton === null || menuPanel === null) {
+        return;
+    }
+
+    menuButton.addEventListener('click', function toggleMenu() {
+        const isOpen = menuButton.getAttribute('aria-expanded') === 'true';
+
+        menuButton.setAttribute('aria-expanded', String(!isOpen));
+        menuPanel.classList.toggle('site-header__navigation--open', !isOpen);
+    });
+}
+
+qdmInitializeMenu();
 qdmUpdateCountdowns();
 window.setInterval(qdmUpdateCountdowns, 1000);

@@ -19,6 +19,12 @@ $isConnected = $data['is_connected'];
 $csrfToken = $data['csrf_token'];
 $flashSuccess = $data['flash_success'];
 $flashNotice = $data['flash_notice'];
+$currentPage = 'home';
+$featuredListing = null;
+
+if ($listings !== []) {
+    $featuredListing = $listings[0];
+}
 ?>
 <!doctype html>
 <html lang="fr">
@@ -35,46 +41,25 @@ $flashNotice = $data['flash_notice'];
     <script src="public/assets/js/home.js" defer></script>
 </head>
 <body>
-    <!-- ==================== EN-TÊTE ==================== -->
-    <header class="site-header">
-        <div class="site-header__inner">
-            <a class="brand" href="index.php?route=home" aria-label="QUIDITMIEUX — Accueil">
-                <img src="public/assets/images/svg/logo-quiditmieux.svg" alt="QUIDITMIEUX" width="260" height="54">
-            </a>
-            <nav class="site-navigation" aria-label="Navigation principale">
-                <ul class="site-navigation__list">
-                    <li><a href="index.php?route=home" aria-current="page">Accueil</a></li>
-                    <li><a href="#annonces">Annonces</a></li>
-                </ul>
-            </nav>
-            <div class="site-header__actions">
-                <?php if ($isConnected): ?>
-                    <a class="button button--secondary button--compact" href="index.php?route=dashboard">Tableau de bord</a>
-                    <a class="button button--secondary button--compact" href="index.php?route=account_form">Mon compte</a>
-                    <a class="button button--primary button--compact" href="index.php?route=listing_create_form">Publier</a>
-                    <form class="site-header__logout" action="index.php?route=logout" method="post">
-                        <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
-                        <button class="button button--ghost button--compact" type="submit">Déconnexion</button>
-                    </form>
-                <?php else: ?>
-                    <a class="button button--secondary button--compact" href="index.php?route=login_form">Connexion</a>
-                    <a class="button button--primary button--compact" href="index.php?route=register_form">Créer un compte</a>
-                <?php endif; ?>
-            </div>
-        </div>
-    </header>
+    <?php require dirname(__DIR__) . '/layout/header.php'; ?>
 
     <main>
         <!-- ==================== PRÉSENTATION ==================== -->
-        <section class="home-hero container" aria-labelledby="home-title">
+        <section class="home-hero container glass-panel" aria-labelledby="home-title">
             <div class="home-hero__content">
-                <p class="eyebrow">Ventes aux enchères accessibles à tous</p>
+                <p class="eyebrow">Ventes aux enchères entre particuliers</p>
                 <h1 id="home-title">Donnez une seconde vie aux objets qui comptent.</h1>
-                <p>Découvrez des annonces, suivez les échéances et trouvez votre prochaine opportunité.</p>
-                <a class="button button--primary" href="#annonces">Découvrir les annonces</a>
+                <p>Découvrez des annonces, suivez les ventes et proposez le juste prix, simplement et en toute sécurité.</p>
+                <a class="button button--primary" href="#annonces">Découvrir les enchères</a>
             </div>
-            <div class="home-hero__visual" aria-hidden="true">
-                <img src="public/assets/images/illustrations/character-hero.png" alt="" width="613" height="560">
+            <div class="home-hero__visual">
+                <img src="public/assets/images/illustrations/character-hero.png" alt="" width="343" height="314">
+                <?php if ($featuredListing !== null && $featuredListing['sale_state'] === 'active'): ?>
+                    <div class="hero-countdown" data-countdown data-deadline-utc="<?= htmlspecialchars((string) $featuredListing['deadline_utc'], ENT_QUOTES, 'UTF-8') ?>">
+                        <p>Cette vente se termine dans</p>
+                        <div class="hero-countdown__values" data-countdown-values><span>--<small>JOURS</small></span><span>--<small>HEURES</small></span><span>--<small>MINUTES</small></span><span>--<small>SECONDES</small></span></div>
+                    </div>
+                <?php endif; ?>
             </div>
         </section>
 
@@ -102,7 +87,7 @@ $flashNotice = $data['flash_notice'];
                 <form class="search-form" id="search-form" action="index.php" method="get" novalidate>
                     <input type="hidden" name="route" value="home">
                     <div class="search-form__grid">
-                        <div class="form-field search-form__text">
+                        <div class="form-field search-form__keywords">
                             <label class="form-field__label" for="search-text">Mots-clés</label>
                             <input
                                 class="form-control"
@@ -118,7 +103,7 @@ $flashNotice = $data['flash_notice'];
                             <span class="form-field__error" id="error-q" data-error-for="q"><?= isset($errors['q']) ? htmlspecialchars((string) $errors['q'], ENT_QUOTES, 'UTF-8') : '' ?></span>
                         </div>
 
-                        <div class="form-field">
+                        <div class="form-field search-form__category">
                             <label class="form-field__label" for="search-category">Catégorie</label>
                             <select
                                 class="form-control"
@@ -139,7 +124,7 @@ $flashNotice = $data['flash_notice'];
                             <span class="form-field__error" id="error-category" data-error-for="category"><?= isset($errors['category']) ? htmlspecialchars((string) $errors['category'], ENT_QUOTES, 'UTF-8') : '' ?></span>
                         </div>
 
-                        <div class="form-field">
+                        <div class="form-field search-form__item-state">
                             <label class="form-field__label" for="search-item-state">État de l’objet</label>
                             <select
                                 class="form-control"
@@ -156,7 +141,7 @@ $flashNotice = $data['flash_notice'];
                             <span class="form-field__error" id="error-item-state" data-error-for="item_state"><?= isset($errors['item_state']) ? htmlspecialchars((string) $errors['item_state'], ENT_QUOTES, 'UTF-8') : '' ?></span>
                         </div>
 
-                        <div class="form-field">
+                        <div class="form-field search-form__sale-state">
                             <label class="form-field__label" for="search-sale-state">État de la vente</label>
                             <select
                                 class="form-control"
@@ -172,7 +157,7 @@ $flashNotice = $data['flash_notice'];
                             <span class="form-field__error" id="error-sale-state" data-error-for="sale_state"><?= isset($errors['sale_state']) ? htmlspecialchars((string) $errors['sale_state'], ENT_QUOTES, 'UTF-8') : '' ?></span>
                         </div>
 
-                        <div class="form-field">
+                        <div class="form-field search-form__minimum-price">
                             <label class="form-field__label" for="search-minimum-price">Prix courant minimum</label>
                             <input
                                 class="form-control"
@@ -191,7 +176,7 @@ $flashNotice = $data['flash_notice'];
                             <span class="form-field__error" id="error-minimum-price" data-error-for="minimum_price"><?= isset($errors['minimum_price']) ? htmlspecialchars((string) $errors['minimum_price'], ENT_QUOTES, 'UTF-8') : '' ?></span>
                         </div>
 
-                        <div class="form-field">
+                        <div class="form-field search-form__maximum-price">
                             <label class="form-field__label" for="search-maximum-price">Prix courant maximum</label>
                             <input
                                 class="form-control"
@@ -290,16 +275,6 @@ $flashNotice = $data['flash_notice'];
         </div>
     </main>
 
-    <!-- ==================== PIED DE PAGE ==================== -->
-    <footer class="site-footer">
-        <div class="site-footer__inner">
-            <img src="public/assets/images/svg/logo-quiditmieux.svg" alt="QUIDITMIEUX" width="195" height="41">
-            <ul class="site-footer__links">
-                <li><a href="index.php?route=home">Accueil</a></li>
-                <li><a href="index.php?route=privacy">Politique de confidentialité</a></li>
-            </ul>
-            <p class="site-footer__legal">Ventes aux enchères entre particuliers.</p>
-        </div>
-    </footer>
+    <?php require dirname(__DIR__) . '/layout/footer.php'; ?>
 </body>
 </html>
