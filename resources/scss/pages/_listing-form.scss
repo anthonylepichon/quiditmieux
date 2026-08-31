@@ -20,6 +20,24 @@
   padding: clamp(var(--space-5), 4vw, var(--space-10));
 }
 
+.listing-form-panel__introduction {
+  display: flex;
+  min-height: 9.375rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-6);
+  overflow: hidden;
+  padding: var(--space-5) var(--space-7);
+  border: 0.0625rem solid var(--color-border-accent);
+  border-radius: 1.375rem;
+  background: var(--color-surface-accent-soft);
+}
+
+.listing-form-panel__introduction img {
+  align-self: flex-start;
+  object-fit: contain;
+}
+
 .listing-form-panel form {
   display: grid;
   gap: var(--space-8);
