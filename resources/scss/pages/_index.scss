@@ -1,13 +1,15 @@
 /*
  * Description générale :
- * Point de regroupement réservé aux styles spécifiques des pages.
+ * Point de regroupement des styles spécifiques des pages.
  *
  * Rôle :
- * Maintenir l'emplacement prévu pour l'intégration progressive des interfaces.
+ * Charger les modules de page créés pendant le développement fonctionnel.
  *
  * Tâches :
- * Ne charger aucun style de page avant la création des templates correspondants.
+ * Transmettre actuellement les styles de la page d'accueil au point d'entrée principal.
  *
  * Liens avec les autres fichiers :
- * Chargé par main.scss et complété pendant le développement fonctionnel.
+ * Chargé par main.scss et transmet les règles définies dans _home.scss.
  */
+
+@forward "home";

@@ -7,5 +7,13 @@
  * Liens avec les autres fichiers : Est chargé par App.php puis transmis à Router.php pour orienter les demandes.
  */
 
-// Les routes métier seront ajoutées uniquement avec les contrôleurs correspondants issus des spécifications validées.
-return [];
+use App\controllers\ListingController;
+
+return [
+    'home' => [
+        'method' => 'GET',
+        'controller' => ListingController::class,
+        'action' => 'search',
+        'response' => 'HTML ou JSON selon le paramètre de format',
+    ],
+];

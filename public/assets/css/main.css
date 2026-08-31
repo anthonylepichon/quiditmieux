@@ -882,17 +882,273 @@ textarea.form-control {
 
 /*
  * Description générale :
- * Point de regroupement réservé aux styles spécifiques des pages.
+ * Point de regroupement des styles spécifiques des pages.
  *
  * Rôle :
- * Maintenir l'emplacement prévu pour l'intégration progressive des interfaces.
+ * Charger les modules de page créés pendant le développement fonctionnel.
  *
  * Tâches :
- * Ne charger aucun style de page avant la création des templates correspondants.
+ * Transmettre actuellement les styles de la page d'accueil au point d'entrée principal.
  *
  * Liens avec les autres fichiers :
- * Chargé par main.scss et complété pendant le développement fonctionnel.
+ * Chargé par main.scss et transmet les règles définies dans _home.scss.
  */
+/*
+ * Description générale :
+ * Outils SCSS réutilisables du projet.
+ *
+ * Rôle :
+ * Éviter la répétition des règles structurelles et d'accessibilité.
+ *
+ * Tâches :
+ * Fournir les styles de conteneur, de focus et de panneau vitré.
+ *
+ * Liens avec les autres fichiers :
+ * Utilisé par les modules de mise en page et de composants.
+ */
+/*
+ * Description générale :
+ * Mise en page spécifique de l'accueil et de la recherche des annonces.
+ *
+ * Rôle :
+ * Organiser la présentation, les critères, les états de résultats et la pagination.
+ *
+ * Tâches :
+ * Adapter la maquette validée aux contenus réels et aux différentes largeurs d'écran.
+ *
+ * Liens avec les autres fichiers :
+ * Transmis par pages/_index.scss et appliqué au template home.php.
+ */
+.home-hero {
+  display: grid;
+  min-height: 32rem;
+  align-items: center;
+  grid-template-columns: minmax(0, 1.05fr) minmax(20rem, 0.95fr);
+  gap: clamp(var(--space-8), 6vw, var(--space-16));
+  padding-block: var(--space-8) var(--space-12);
+}
+
+.home-hero__content {
+  display: grid;
+  max-width: 39rem;
+  justify-items: start;
+  gap: var(--space-5);
+}
+
+.home-hero__content h1,
+.home-hero__content p {
+  margin: 0;
+}
+
+.home-hero__content > p:not(.eyebrow) {
+  max-width: 35rem;
+  font-size: 1.125rem;
+}
+
+.home-hero__visual {
+  position: relative;
+  display: grid;
+  min-height: 28rem;
+  place-items: center;
+  overflow: hidden;
+  border-radius: var(--radius-panel);
+  background: var(--gradient-soft);
+}
+
+.home-hero__visual::before,
+.home-hero__visual::after {
+  position: absolute;
+  width: 4.5rem;
+  height: 4.5rem;
+  border-radius: var(--radius-round);
+  content: "";
+  filter: blur(0.125rem);
+  opacity: 0.5;
+}
+
+.home-hero__visual::before {
+  top: 2rem;
+  right: 2rem;
+  background: var(--color-accent-cyan);
+}
+
+.home-hero__visual::after {
+  bottom: 2.5rem;
+  left: 2.5rem;
+  background: var(--color-border-accent);
+}
+
+.home-hero__visual img {
+  position: relative;
+  z-index: 1;
+  width: min(100%, 34rem);
+  max-height: 31rem;
+  object-fit: contain;
+}
+
+.search-panel,
+.results-section {
+  display: grid;
+  gap: var(--space-8);
+}
+
+.section-heading {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.section-heading h2,
+.section-heading p {
+  margin: 0;
+}
+
+.section-heading--row {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: var(--space-6);
+}
+
+.section-heading--row > div {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.results-summary {
+  max-width: 28rem;
+  color: var(--color-text-tertiary);
+  font-size: 0.9375rem;
+  text-align: right;
+}
+
+.search-form {
+  display: grid;
+  gap: var(--space-6);
+}
+
+.search-form__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-5);
+}
+
+.search-form__text {
+  grid-column: span 2;
+}
+
+.search-form__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-3);
+}
+
+.results-section[aria-busy=true] {
+  opacity: 0.65;
+  pointer-events: none;
+}
+
+.empty-state {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-3);
+  padding: var(--space-10);
+  border: 0.0625rem dashed var(--color-border-accent);
+  border-radius: var(--radius-card);
+  background: var(--color-surface-glass);
+  text-align: center;
+}
+
+.empty-state img {
+  width: 7rem;
+  height: 7rem;
+  object-fit: contain;
+}
+
+.empty-state h3,
+.empty-state p {
+  margin: 0;
+}
+
+.auction-card__placeholder {
+  padding: var(--space-5);
+  object-fit: contain !important;
+}
+
+.auction-card__state,
+.auction-card__deadline {
+  color: var(--color-text-tertiary);
+  font-size: 0.8125rem;
+}
+
+.auction-card__meta > div {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.auction-card__deadline {
+  max-width: 8rem;
+  text-align: right;
+}
+
+.auction-card__link {
+  font-weight: 800;
+}
+
+.pagination {
+  display: flex;
+  min-height: 3.25rem;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+}
+
+.pagination:empty {
+  display: none;
+}
+
+.pagination__status {
+  color: var(--color-text-secondary);
+  font-size: 0.9375rem;
+  font-weight: 700;
+}
+
+@media (max-width: 64rem) {
+  .home-hero {
+    grid-template-columns: minmax(0, 1fr) minmax(18rem, 0.75fr);
+  }
+  .search-form__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 48rem) {
+  .home-hero {
+    min-height: auto;
+    grid-template-columns: 1fr;
+  }
+  .home-hero__visual {
+    min-height: 22rem;
+  }
+  .section-heading--row {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .results-summary {
+    text-align: left;
+  }
+}
+@media (max-width: 30rem) {
+  .search-form__grid {
+    grid-template-columns: 1fr;
+  }
+  .search-form__text {
+    grid-column: auto;
+  }
+  .search-form__actions,
+  .pagination {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}
 /*
  * Description générale :
  * Classes utilitaires accessibles et limitées aux besoins communs.
