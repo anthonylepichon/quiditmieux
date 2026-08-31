@@ -29,4 +29,22 @@ return [
         'action' => 'register',
         'response' => 'HTML ou redirection interne',
     ],
+    'login_form' => [
+        'method' => 'GET',
+        'controller' => AuthController::class,
+        'action' => 'showLoginForm',
+        'response' => 'HTML',
+    ],
+    'login' => [
+        'method' => 'POST',
+        'controller' => AuthController::class,
+        'action' => 'login',
+        'response' => 'HTML ou redirection interne',
+    ],
+    'logout' => [
+        'method' => 'POST',
+        'controller' => AuthController::class,
+        'action' => 'logout',
+        'response' => 'Redirection interne',
+    ],
 ];

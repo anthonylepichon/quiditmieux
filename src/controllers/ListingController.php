@@ -90,6 +90,10 @@ class ListingController extends Controller
             'listings' => $searchResult['listings'],
             'pagination' => $pagination,
             'total_items' => $searchResult['total_items'],
+            'is_connected' => $this->session->estUtilisateurConnecte(),
+            'csrf_token' => $this->session->obtenirJetonCsrf(),
+            'flash_success' => $this->session->recupererMessageTemporaire('success'),
+            'flash_notice' => $this->session->recupererMessageTemporaire('notice'),
         ];
 
         if ($this->isJsonRequest()) {

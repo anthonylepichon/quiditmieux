@@ -15,6 +15,10 @@ $pagination = $data['pagination'];
 $stateKey = $data['state_key'];
 $message = $data['message'];
 $categoriesAvailable = $data['categories_available'];
+$isConnected = $data['is_connected'];
+$csrfToken = $data['csrf_token'];
+$flashSuccess = $data['flash_success'];
+$flashNotice = $data['flash_notice'];
 ?>
 <!doctype html>
 <html lang="fr">
@@ -44,8 +48,17 @@ $categoriesAvailable = $data['categories_available'];
                 </ul>
             </nav>
             <div class="site-header__actions">
-                <a class="button button--secondary button--compact" href="index.php?route=login_form">Connexion</a>
-                <a class="button button--primary button--compact" href="index.php?route=register_form">Créer un compte</a>
+                <?php if ($isConnected): ?>
+                    <a class="button button--secondary button--compact" href="index.php?route=dashboard">Tableau de bord</a>
+                    <a class="button button--primary button--compact" href="index.php?route=listing_create_form">Publier</a>
+                    <form class="site-header__logout" action="index.php?route=logout" method="post">
+                        <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
+                        <button class="button button--ghost button--compact" type="submit">Déconnexion</button>
+                    </form>
+                <?php else: ?>
+                    <a class="button button--secondary button--compact" href="index.php?route=login_form">Connexion</a>
+                    <a class="button button--primary button--compact" href="index.php?route=register_form">Créer un compte</a>
+                <?php endif; ?>
             </div>
         </div>
     </header>
@@ -65,6 +78,12 @@ $categoriesAvailable = $data['categories_available'];
         </section>
 
         <div class="container section-stack">
+            <?php if ($flashSuccess !== null): ?>
+                <div class="alert alert--success" role="status"><?= htmlspecialchars($flashSuccess, ENT_QUOTES, 'UTF-8') ?></div>
+            <?php endif; ?>
+            <?php if ($flashNotice !== null): ?>
+                <div class="alert alert--warning" role="status"><?= htmlspecialchars($flashNotice, ENT_QUOTES, 'UTF-8') ?></div>
+            <?php endif; ?>
             <!-- ==================== RECHERCHE ==================== -->
             <section class="search-panel glass-panel" aria-labelledby="search-title">
                 <div class="section-heading">
