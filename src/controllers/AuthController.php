@@ -81,6 +81,107 @@ class AuthController extends Controller
     }
 
     /**
+     * Rôle : Préparer et afficher le formulaire public de connexion.
+     * Paramètres : Aucun, la destination interne éventuelle est lue dans la requête GET.
+     * Retour : Aucun, le template de connexion est affiché.
+     */
+    public function showLoginForm(): void
+    {
+        if ($this->session->estUtilisateurConnecte()) {
+            $this->redirect('dashboard');
+        }
+
+        $destination = $this->sanitizeDestination($this->readGetString('destination'));
+        $this->renderLoginForm(
+            ['login' => '', 'destination' => $destination],
+            [],
+            $this->session->recupererMessageTemporaire('success')
+        );
+    }
+
+    /**
+     * Rôle : Vérifier les identifiants reçus, ouvrir la session et choisir une destination sûre.
+     * Paramètres : Aucun, les identifiants sont lus dans la requête POST.
+     * Retour : Aucun, une redirection interne ou le formulaire est envoyé.
+     */
+    public function login(): void
+    {
+        $login = $this->readPostString('login');
+        $password = $this->readPostString('password');
+        $csrfToken = $this->readPostString('csrf_token');
+        $destination = $this->sanitizeDestination($this->readPostString('destination'));
+        $errors = [];
+
+        if (!$this->session->estJetonCsrfValide($csrfToken)) {
+            $errors['form'] = 'Le formulaire a expiré. Rechargez la page puis recommencez.';
+        }
+
+        if ($login === '' || $password === '') {
+            $errors['form'] = 'Saisissez votre identifiant et votre mot de passe.';
+        }
+
+        $account = null;
+
+        if ($errors === []) {
+            $userModel = new UserModel($this->database);
+            $account = $userModel->findByLogin($login, str_contains($login, '@'));
+
+            if ($account === null
+                || !isset($account['id'], $account['password_hash'])
+                || !is_string($account['password_hash'])
+                || !password_verify($password, $account['password_hash'])
+            ) {
+                $errors['form'] = 'L’identifiant ou le mot de passe est incorrect.';
+            }
+        }
+
+        if ($errors !== [] || $account === null) {
+            $this->renderLoginForm(['login' => $login, 'destination' => $destination], $errors, null);
+            return;
+        }
+
+        $this->session->connecterUtilisateur((int) $account['id']);
+        $this->session->enregistrerMessageTemporaire('success', 'Vous êtes maintenant connecté.');
+        $this->redirect($destination);
+    }
+
+    /**
+     * Rôle : Fermer complètement la session authentifiée puis revenir à l'accueil.
+     * Paramètres : Aucun, le jeton de sécurité est lu dans la requête POST.
+     * Retour : Aucun, une redirection vers l'accueil est envoyée.
+     */
+    public function logout(): void
+    {
+        $csrfToken = $this->readPostString('csrf_token');
+
+        if (!$this->session->estUtilisateurConnecte()
+            || !$this->session->estJetonCsrfValide($csrfToken)
+        ) {
+            $this->session->enregistrerMessageTemporaire('notice', 'La déconnexion ne peut pas être confirmée.');
+            $this->redirect('home');
+        }
+
+        $this->session->deconnecterUtilisateur();
+        $this->session->enregistrerMessageTemporaire('success', 'Vous êtes maintenant déconnecté.');
+        $this->redirect('home');
+    }
+
+    /**
+     * Rôle : Afficher le formulaire de connexion avec ses valeurs réaffichables et ses messages.
+     * Paramètres : Valeurs publiques, erreurs de validation et message temporaire éventuel.
+     * Retour : Aucun.
+     */
+    private function renderLoginForm(array $values, array $errors, ?string $successMessage): void
+    {
+        $this->render('pages/login.php', [
+            'values' => $values,
+            'errors' => $errors,
+            'success_message' => $successMessage,
+            'csrf_token' => $this->session->obtenirJetonCsrf(),
+        ]);
+    }
+
+    /**
      * Rôle : Afficher le formulaire d'inscription avec ses valeurs réaffichables et ses messages.
      * Paramètres : Valeurs publiques, erreurs de validation et message temporaire éventuel.
      * Retour : Aucun.
@@ -107,6 +208,36 @@ class AuthController extends Controller
         }
 
         return trim($_POST[$name]);
+    }
+
+    /**
+     * Rôle : Lire une valeur GET simple sans accepter de tableau inattendu.
+     * Paramètres : Nom du champ demandé.
+     * Retour : Valeur reçue ou chaîne vide lorsqu'elle est absente ou invalide.
+     */
+    private function readGetString(string $name): string
+    {
+        if (!isset($_GET[$name]) || !is_string($_GET[$name])) {
+            return '';
+        }
+
+        return trim($_GET[$name]);
+    }
+
+    /**
+     * Rôle : Limiter une destination de connexion aux routes internes protégées prévues.
+     * Paramètres : Nom de destination candidat.
+     * Retour : Route interne autorisée ou tableau de bord par défaut.
+     */
+    private function sanitizeDestination(string $destination): string
+    {
+        $allowedDestinations = ['dashboard', 'listing_create_form', 'account_form'];
+
+        if (in_array($destination, $allowedDestinations, true)) {
+            return $destination;
+        }
+
+        return 'dashboard';
     }
 
     /**
@@ -170,6 +301,5 @@ class AuthController extends Controller
             && preg_match('/[^A-Za-z0-9]/', $password) === 1;
     }
 }
-
 
 
