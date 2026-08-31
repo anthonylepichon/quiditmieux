@@ -1,0 +1,9 @@
+<svg width="34" height="34" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="17" cy="17" r="17" fill="url(#brand-orb-gradient)"/>
+  <defs>
+    <radialGradient id="brand-orb-gradient" cx="0" cy="0" r="1" gradientTransform="matrix(43.0667 10.2 -10.2 306.252 0 12.8445)" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#ED329C"/>
+      <stop offset="1" stop-color="#3C1272"/>
+    </radialGradient>
+  </defs>
+</svg>
