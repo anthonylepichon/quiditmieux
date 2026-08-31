@@ -101,6 +101,7 @@ if ($viewer['is_following']) {
                         <form action="index.php?route=<?= $followRoute ?>" method="post" data-follow-form><input type="hidden" name="id" value="<?= (int) $listing['id'] ?>"><input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>"><button class="button button--secondary" type="submit"><?= $followLabel ?></button></form>
                     <?php endif; ?>
                 </div>
+                <p class="form-field__help" data-participation-status role="status"></p>
 
                 <?php if ($viewer['can_bid']): ?>
                     <form class="bid-form" action="index.php?route=place_bid" method="post" data-bid-form>
