@@ -42,4 +42,32 @@ class FollowModel extends Model
             'listing_id' => $listingId,
         ]) !== null;
     }
+
+    /**
+     * Rôle : Créer un suivi volontaire lorsqu'il n'existe pas encore.
+     * Paramètres : Identifiants de l'utilisateur et de l'annonce.
+     * Retour : true si le suivi existe après l'opération, sinon false.
+     */
+    public function follow(int $userId, int $listingId): bool
+    {
+        if ($this->isFollowing($userId, $listingId)) {
+            return true;
+        }
+
+        return $this->create(['utilisateur_id' => $userId, 'annonce_id' => $listingId]);
+    }
+
+    /**
+     * Rôle : Retirer uniquement le suivi volontaire d'un utilisateur sur une annonce.
+     * Paramètres : Identifiants de l'utilisateur et de l'annonce.
+     * Retour : true lorsque la requête de retrait est exécutée, sinon false.
+     */
+    public function unfollow(int $userId, int $listingId): bool
+    {
+        return $this->database->execute(
+            'DELETE FROM `ASSOC_UTILISATEUR_ANNONCE`'
+            . ' WHERE utilisateur_id = :user_id AND annonce_id = :listing_id',
+            ['user_id' => $userId, 'listing_id' => $listingId]
+        );
+    }
 }

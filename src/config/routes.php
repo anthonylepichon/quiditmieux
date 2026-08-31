@@ -9,6 +9,7 @@
 
 use App\controllers\AuthController;
 use App\controllers\ListingController;
+use App\controllers\ParticipationController;
 
 return [
     'home' => [
@@ -82,5 +83,17 @@ return [
         'controller' => AuthController::class,
         'action' => 'logout',
         'response' => 'Redirection interne',
+    ],
+    'follow_listing' => [
+        'method' => 'POST',
+        'controller' => ParticipationController::class,
+        'action' => 'follow',
+        'response' => 'JSON ou redirection interne',
+    ],
+    'unfollow_listing' => [
+        'method' => 'POST',
+        'controller' => ParticipationController::class,
+        'action' => 'unfollow',
+        'response' => 'JSON ou redirection interne',
     ],
 ];
