@@ -10,6 +10,7 @@
 use App\controllers\AuthController;
 use App\controllers\ListingController;
 use App\controllers\ParticipationController;
+use App\controllers\UserController;
 
 return [
     'home' => [
@@ -101,5 +102,23 @@ return [
         'controller' => ParticipationController::class,
         'action' => 'placeBid',
         'response' => 'JSON ou redirection interne',
+    ],
+    'dashboard' => [
+        'method' => 'GET',
+        'controller' => UserController::class,
+        'action' => 'showDashboard',
+        'response' => 'HTML ou redirection interne',
+    ],
+    'dashboard_sales' => [
+        'method' => 'GET',
+        'controller' => UserController::class,
+        'action' => 'refreshSales',
+        'response' => 'JSON',
+    ],
+    'dashboard_participations' => [
+        'method' => 'GET',
+        'controller' => UserController::class,
+        'action' => 'refreshParticipations',
+        'response' => 'JSON',
     ],
 ];

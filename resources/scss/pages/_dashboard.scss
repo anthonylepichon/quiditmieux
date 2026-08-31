@@ -1,0 +1,26 @@
+/*
+ * Description générale : Mise en page du tableau de bord utilisateur.
+ * Rôle : Organiser les ventes, participations et enchères remportées dans des zones lisibles.
+ * Tâches : Styliser l'en-tête, les grilles actualisables, les cartes et les états vides.
+ * Liens avec les autres fichiers : Transmis par pages/_index.scss et appliqué à dashboard.php.
+ */
+
+@use "../abstracts/variables" as variables;
+
+.dashboard { display: grid; gap: var(--space-8); padding-block: var(--space-10) var(--space-16); }
+.dashboard__heading { display: flex; min-height: 12rem; align-items: center; justify-content: space-between; gap: var(--space-6); padding: var(--space-8); border-radius: var(--radius-panel); background: var(--gradient-soft); }
+.dashboard__heading h1, .dashboard__heading p { margin: 0; }
+.dashboard__heading img { width: min(11.25rem, 30vw); object-fit: contain; }
+.dashboard__status { min-height: 1.5rem; margin: 0; color: var(--color-warning); }
+.dashboard-zone { display: grid; gap: var(--space-5); padding: var(--space-6); }
+.dashboard-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-5); }
+.dashboard-card { overflow: hidden; border: 0.0625rem solid var(--color-border-default); border-radius: var(--radius-card); background: var(--color-surface); box-shadow: var(--shadow-card); }
+.dashboard-card__media { display: block; aspect-ratio: 16 / 10; overflow: hidden; background: var(--gradient-soft); }
+.dashboard-card__media img { width: 100%; height: 100%; object-fit: cover; }
+.dashboard-card__body { display: grid; gap: var(--space-2); padding: var(--space-5); }
+.dashboard-card__body h3, .dashboard-card__body p { margin: 0; }
+.dashboard-card__price { color: var(--color-text-brand); font-size: 1.25rem; font-weight: 900; }
+.dashboard-zone__empty { margin: 0; padding: var(--space-8); border-radius: var(--radius-card); background: var(--color-surface-soft); color: var(--color-text-secondary); text-align: center; }
+
+@media (max-width: variables.$breakpoint-tablet) { .dashboard-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: variables.$breakpoint-mobile) { .dashboard__heading img { display: none; } .dashboard-grid { grid-template-columns: 1fr; } }
