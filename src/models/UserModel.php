@@ -37,6 +37,26 @@ class UserModel extends Model
     }
 
     /**
+     * Rôle : Rechercher un compte à partir du pseudo ou de l'adresse électronique.
+     * Paramètres : Identifiant saisi et indication précisant s'il s'agit d'une adresse électronique.
+     * Retour : Compte avec son empreinte de mot de passe ou null lorsqu'il est absent.
+     */
+    public function findByLogin(string $login, bool $isEmail): ?array
+    {
+        $column = 'pseudo';
+
+        if ($isEmail) {
+            $column = 'email';
+        }
+
+        return $this->database->fetchOne(
+            'SELECT id, pseudo, email, password_hash FROM UTILISATEUR '
+            . 'WHERE LOWER(' . $column . ') = LOWER(:login) LIMIT 1',
+            ['login' => $login]
+        );
+    }
+
+    /**
      * Rôle : Vérifier si un pseudo est déjà enregistré sans tenir compte de la casse.
      * Paramètres : Pseudo recherché et éventuel identifiant de compte à exclure.
      * Retour : true si le pseudo existe, sinon false.
@@ -80,4 +100,3 @@ class UserModel extends Model
         return $this->database->fetchOne($sql, $parameters) !== null;
     }
 }
-
