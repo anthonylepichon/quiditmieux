@@ -121,4 +121,16 @@ return [
         'action' => 'refreshParticipations',
         'response' => 'JSON',
     ],
+    'account_form' => [
+        'method' => 'GET',
+        'controller' => UserController::class,
+        'action' => 'showAccountForm',
+        'response' => 'HTML ou redirection interne',
+    ],
+    'account_update' => [
+        'method' => 'POST',
+        'controller' => UserController::class,
+        'action' => 'updateAccount',
+        'response' => 'HTML ou redirection interne',
+    ],
 ];

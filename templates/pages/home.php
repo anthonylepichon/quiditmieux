@@ -50,6 +50,7 @@ $flashNotice = $data['flash_notice'];
             <div class="site-header__actions">
                 <?php if ($isConnected): ?>
                     <a class="button button--secondary button--compact" href="index.php?route=dashboard">Tableau de bord</a>
+                    <a class="button button--secondary button--compact" href="index.php?route=account_form">Mon compte</a>
                     <a class="button button--primary button--compact" href="index.php?route=listing_create_form">Publier</a>
                     <form class="site-header__logout" action="index.php?route=logout" method="post">
                         <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">

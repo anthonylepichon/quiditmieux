@@ -12,11 +12,106 @@ namespace App\controllers;
 use App\core\Controller;
 use App\models\ListingModel;
 use App\models\PhotoModel;
+use App\models\UserModel;
 use DateTimeImmutable;
 use DateTimeZone;
 
 class UserController extends Controller
 {
+    /**
+     * Rôle : Afficher le formulaire privé avec les informations actuelles du compte.
+     * Paramètres : Aucun.
+     * Retour : Aucun, le formulaire est affiché ou une redirection est envoyée.
+     */
+    public function showAccountForm(): void
+    {
+        $userId = $this->requireConnectedUser('account_form');
+
+        if ($userId === null) {
+            return;
+        }
+
+        $userModel = new UserModel($this->database);
+        $account = $userModel->getAccount($userId);
+
+        if ($account === null) {
+            $this->session->deconnecterUtilisateur();
+            $this->session->enregistrerMessageTemporaire('notice', 'Le compte demandé est indisponible.');
+            $this->redirect('home');
+        }
+
+        $this->renderAccountForm(
+            ['pseudo' => (string) $account['pseudo'], 'email' => (string) $account['email']],
+            [],
+            $this->session->recupererMessageTemporaire('success')
+        );
+    }
+
+    /**
+     * Rôle : Valider puis modifier l'identité et éventuellement le mot de passe du compte connecté.
+     * Paramètres : Aucun, les informations sont lues dans la requête POST.
+     * Retour : Aucun, le formulaire est réaffiché ou une redirection est envoyée.
+     */
+    public function updateAccount(): void
+    {
+        $userId = $this->requireConnectedUser('account_form');
+
+        if ($userId === null) {
+            return;
+        }
+
+        $values = [
+            'pseudo' => trim($this->readPostString('pseudo')),
+            'email' => mb_strtolower(trim($this->readPostString('email'))),
+        ];
+        $currentPassword = $this->readPostString('current_password');
+        $newPassword = $this->readPostString('new_password');
+        $confirmation = $this->readPostString('new_password_confirmation');
+        $errors = $this->validateAccountValues($values, $currentPassword, $newPassword, $confirmation);
+        $userModel = new UserModel($this->database);
+        $account = $userModel->getAccount($userId);
+
+        if ($account === null) {
+            $errors['form'] = 'Le compte ne peut pas être modifié pour le moment.';
+        } elseif (!isset($account['password_hash'])
+            || !is_string($account['password_hash'])
+            || !password_verify($currentPassword, $account['password_hash'])
+        ) {
+            $errors['current_password'] = 'Le mot de passe actuel est incorrect.';
+        }
+
+        if ($errors === []) {
+            if ($userModel->pseudoExists($values['pseudo'], $userId)) {
+                $errors['pseudo'] = 'Ce nom d’utilisateur est déjà utilisé.';
+            }
+
+            if ($userModel->emailExists($values['email'], $userId)) {
+                $errors['email'] = 'Cette adresse électronique est déjà utilisée.';
+            }
+        }
+
+        if ($errors !== []) {
+            $this->renderAccountForm($values, $errors, null);
+            return;
+        }
+
+        $passwordHash = null;
+
+        if ($newPassword !== '') {
+            $passwordHash = password_hash($newPassword, PASSWORD_DEFAULT);
+        }
+
+        if (!$userModel->updateAccount($userId, $values['pseudo'], $values['email'], $passwordHash)) {
+            $errors['form'] = 'Les modifications ne peuvent pas être enregistrées pour le moment.';
+            $this->renderAccountForm($values, $errors, null);
+            return;
+        }
+
+        $this->session->connecterUtilisateur($userId);
+        $this->session->enregistrerMessageTemporaire('success', 'Les informations de votre compte sont à jour.');
+        $this->redirect('account_form');
+    }
+
     /**
      * Rôle : Afficher les ventes, participations et enchères remportées de l'utilisateur connecté.
      * Paramètres : Aucun.
@@ -224,5 +319,94 @@ class UserController extends Controller
 
         $this->redirect('login_form', ['destination' => $destination]);
         return null;
+    }
+
+    /**
+     * Rôle : Afficher le formulaire de compte sans jamais réafficher les mots de passe reçus.
+     * Paramètres : Valeurs publiques, erreurs et message de réussite éventuel.
+     * Retour : Aucun.
+     */
+    private function renderAccountForm(array $values, array $errors, ?string $successMessage): void
+    {
+        $this->render('pages/account.php', [
+            'values' => $values,
+            'errors' => $errors,
+            'success_message' => $successMessage,
+            'csrf_token' => $this->session->obtenirJetonCsrf(),
+        ]);
+    }
+
+    /**
+     * Rôle : Appliquer les règles de validation des informations modifiables du compte.
+     * Paramètres : Valeurs publiques, mot de passe actuel, nouveau mot de passe et confirmation.
+     * Retour : Erreurs indexées par champ, éventuellement vides.
+     */
+    private function validateAccountValues(
+        array $values,
+        string $currentPassword,
+        string $newPassword,
+        string $confirmation
+    ): array {
+        $errors = [];
+
+        if (!$this->session->estJetonCsrfValide($this->readPostString('csrf_token'))) {
+            $errors['form'] = 'Le formulaire a expiré. Rechargez la page puis recommencez.';
+        }
+
+        if (mb_strlen($values['pseudo']) < 3 || mb_strlen($values['pseudo']) > 30) {
+            $errors['pseudo'] = 'Le nom d’utilisateur doit contenir entre 3 et 30 caractères.';
+        } elseif (preg_match('/^[A-Za-z0-9_-]+$/D', $values['pseudo']) !== 1) {
+            $errors['pseudo'] = 'Utilisez uniquement des lettres, chiffres, tirets ou tirets bas.';
+        }
+
+        if (mb_strlen($values['email']) > 254
+            || filter_var($values['email'], FILTER_VALIDATE_EMAIL) === false
+        ) {
+            $errors['email'] = 'Saisissez une adresse électronique valide de 254 caractères au maximum.';
+        }
+
+        if ($currentPassword === '') {
+            $errors['current_password'] = 'Saisissez votre mot de passe actuel pour confirmer les modifications.';
+        }
+
+        if ($newPassword !== '' || $confirmation !== '') {
+            if (!$this->isStrongPassword($newPassword)) {
+                $errors['new_password'] = 'Le nouveau mot de passe doit contenir au moins 8 caractères, une majuscule, une minuscule, un chiffre et un caractère spécial.';
+            }
+
+            if ($confirmation === '' || !hash_equals($newPassword, $confirmation)) {
+                $errors['new_password_confirmation'] = 'La confirmation doit être identique au nouveau mot de passe.';
+            }
+        }
+
+        return $errors;
+    }
+
+    /**
+     * Rôle : Vérifier la robustesse minimale du nouveau mot de passe.
+     * Paramètres : Mot de passe à contrôler.
+     * Retour : true lorsque toutes les règles sont respectées, sinon false.
+     */
+    private function isStrongPassword(string $password): bool
+    {
+        return strlen($password) >= 8
+            && preg_match('/[A-Z]/', $password) === 1
+            && preg_match('/[a-z]/', $password) === 1
+            && preg_match('/[0-9]/', $password) === 1
+            && preg_match('/[^A-Za-z0-9]/', $password) === 1;
+    }
+
+    /**
+     * Rôle : Lire une valeur POST simple sans accepter de tableau inattendu.
+     * Paramètres : Nom du champ demandé.
+     * Retour : Valeur reçue ou chaîne vide lorsqu'elle est absente ou invalide.
+     */
+    private function readPostString(string $name): string
+    {
+        if (!isset($_POST[$name]) || !is_string($_POST[$name])) {
+            return '';
+        }
+
+        return trim($_POST[$name]);
     }
 }

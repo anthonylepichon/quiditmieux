@@ -12,3 +12,4 @@
 ## Organisation des templates
 
 - Les sept pages prévues répètent actuellement une partie de l'en-tête et du pied de page. Des fragments partagés réduiraient cette duplication, mais leur création n'était pas prévue dans la liste initiale issue des spécifications. Ce point pourra être repris lors de l'audit final sans changer le périmètre fonctionnel.
+- Le pied de page validé demande un lien « Politique de confidentialité », mais aucune route, aucun contrôleur, aucun template ni contenu juridique correspondant ne figure parmi les dix fonctionnalités ordonnées. Le lien est présent comme prévu dans l'interface, mais sa page de destination reste à définir.
