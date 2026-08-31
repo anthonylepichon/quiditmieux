@@ -122,6 +122,18 @@ class ListingModel extends Model
     }
 
     /**
+     * Rôle : Verrouiller et récupérer une annonce pendant une opération concurrente.
+     * Paramètres : Identifiant de l'annonce.
+     * Retour : Données essentielles verrouillées ou null lorsque l'annonce est absente.
+     */
+    public function getForUpdate(int $listingId): ?array
+    {
+        $sql = 'SELECT id, utilisateur_id, prix_depart, date_heure_fin FROM `ANNONCE`'
+            . ' WHERE id = :listing_id LIMIT 1 FOR UPDATE';
+        return $this->database->fetchOne($sql, ['listing_id' => $listingId]);
+    }
+
+    /**
      * Rôle : Ajouter chaque mot recherché comme condition obligatoire sur le titre ou la description.
      * Paramètres : Critères normalisés, conditions SQL et paramètres de requête à compléter.
      * Retour : Aucun.
@@ -252,4 +264,3 @@ class ListingModel extends Model
         ];
     }
 }
-
