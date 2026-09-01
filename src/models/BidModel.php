@@ -32,11 +32,11 @@ class BidModel extends Model
     // ====================
 
     /**
-     * Rôle : Obtenir le montant courant d'une annonce en centimes sans calcul décimal flottant.
+     * Rôle : Obtenir le montant courant d'une annonce en euros entiers.
      * Paramètres : Identifiant de l'annonce.
-     * Retour : Montant courant en centimes ou null si l'annonce est absente ou la requête échoue.
+     * Retour : Montant courant en euros ou null si l'annonce est absente ou la requête échoue.
      */
-    public function getCurrentAmountInCents(int $listingId): ?int
+    public function getCurrentAmountInEuros(int $listingId): ?int
     {
         $row = $this->database->fetchOne(
             'SELECT COALESCE(MAX(bid.montant), listing.prix_depart) AS current_amount'
@@ -51,17 +51,17 @@ class BidModel extends Model
             return null;
         }
 
-        return Money::decimalToCents((string) $row['current_amount']);
+        return Money::databaseValueToEuros((string) $row['current_amount']);
     }
 
     /**
      * Rôle : Obtenir le prochain montant minimal accepté pour une annonce.
      * Paramètres : Identifiant de l'annonce.
-     * Retour : Montant minimal en centimes ou null si le montant courant est indisponible.
+     * Retour : Montant minimal en euros ou null si le montant courant est indisponible.
      */
-    public function getMinimumAmountInCents(int $listingId): ?int
+    public function getMinimumAmountInEuros(int $listingId): ?int
     {
-        $currentAmount = $this->getCurrentAmountInCents($listingId);
+        $currentAmount = $this->getCurrentAmountInEuros($listingId);
 
         if ($currentAmount === null) {
             return null;
@@ -72,49 +72,49 @@ class BidModel extends Model
 
     /**
      * Rôle : Vérifier qu'une proposition atteint le prochain montant minimal de l'annonce.
-     * Paramètres : Identifiant de l'annonce et montant proposé en centimes.
+     * Paramètres : Identifiant de l'annonce et montant proposé en euros.
      * Retour : Décision métier et minimum attendu, ou null si le montant courant est indisponible.
      */
-    public function evaluateBidAmountInCents(int $listingId, int $amountInCents): ?array
+    public function evaluateBidAmountInEuros(int $listingId, int $amountInEuros): ?array
     {
-        $minimumAmount = $this->getMinimumAmountInCents($listingId);
+        $minimumAmount = $this->getMinimumAmountInEuros($listingId);
 
         if ($minimumAmount === null) {
             return null;
         }
 
         return [
-            'accepted' => $amountInCents >= $minimumAmount,
-            'minimum_amount_in_cents' => $minimumAmount,
+            'accepted' => $amountInEuros >= $minimumAmount,
+            'minimum_amount_in_euros' => $minimumAmount,
         ];
     }
 
     /**
-     * Rôle : Calculer en centimes le prix courant de chaque annonce demandée.
-     * Paramètres : Liste d'identifiants d'annonces et prix de départ décimaux indexés par annonce.
-     * Retour : Prix courants en centimes indexés par annonce ou false en cas de donnée invalide ou d'erreur SQL.
+     * Rôle : Calculer en euros entiers le prix courant de chaque annonce demandée.
+     * Paramètres : Liste d'identifiants d'annonces et prix de départ indexés par annonce.
+     * Retour : Prix courants en euros indexés par annonce ou false en cas de donnée invalide ou d'erreur SQL.
      */
-    public function getCurrentAmountsInCents(array $listingIds, array $startingPrices): array|false
+    public function getCurrentAmountsInEuros(array $listingIds, array $startingPrices): array|false
     {
         $identifiers = $this->normalizeIdentifiers($listingIds);
-        $currentAmountsInCents = [];
+        $currentAmountsInEuros = [];
 
         foreach ($identifiers as $identifier) {
             if (!isset($startingPrices[$identifier])) {
                 return false;
             }
 
-            $startingAmountInCents = Money::decimalToCents((string) $startingPrices[$identifier]);
+            $startingAmountInEuros = Money::databaseValueToEuros((string) $startingPrices[$identifier]);
 
-            if ($startingAmountInCents === null) {
+            if ($startingAmountInEuros === null) {
                 return false;
             }
 
-            $currentAmountsInCents[$identifier] = $startingAmountInCents;
+            $currentAmountsInEuros[$identifier] = $startingAmountInEuros;
         }
 
         if ($identifiers === []) {
-            return $currentAmountsInCents;
+            return $currentAmountsInEuros;
         }
 
         $parameters = [];
@@ -142,16 +142,16 @@ class BidModel extends Model
             }
 
             $identifier = (int) $row['annonce_id'];
-            $bestBidInCents = Money::decimalToCents((string) $row['best_bid']);
+            $bestBidInEuros = Money::databaseValueToEuros((string) $row['best_bid']);
 
-            if ($bestBidInCents === null) {
+            if ($bestBidInEuros === null) {
                 return false;
             }
 
-            $currentAmountsInCents[$identifier] = $bestBidInCents;
+            $currentAmountsInEuros[$identifier] = $bestBidInEuros;
         }
 
-        return $currentAmountsInCents;
+        return $currentAmountsInEuros;
     }
 
     /**
@@ -170,7 +170,7 @@ class BidModel extends Model
         }
 
         if ($summary === null) {
-            return ['bid_count' => 0, 'best_bid_in_cents' => null, 'best_bidder_id' => null];
+            return ['bid_count' => 0, 'best_bid_in_euros' => null, 'best_bidder_id' => null];
         }
 
         $bestBidderId = null;
@@ -193,23 +193,23 @@ class BidModel extends Model
         }
 
         $bidCount = 0;
-        $bestBidInCents = null;
+        $bestBidInEuros = null;
 
         if (isset($summary['bid_count'])) {
             $bidCount = (int) $summary['bid_count'];
         }
 
         if (isset($summary['best_bid'])) {
-            $bestBidInCents = Money::decimalToCents((string) $summary['best_bid']);
+            $bestBidInEuros = Money::databaseValueToEuros((string) $summary['best_bid']);
 
-            if ($bestBidInCents === null) {
+            if ($bestBidInEuros === null) {
                 return false;
             }
         }
 
         return [
             'bid_count' => $bidCount,
-            'best_bid_in_cents' => $bestBidInCents,
+            'best_bid_in_euros' => $bestBidInEuros,
             'best_bidder_id' => $bestBidderId,
         ];
     }
@@ -256,15 +256,15 @@ class BidModel extends Model
 
     /**
      * Rôle : Enregistrer une enchère validée par le modèle dans la transaction en cours.
-     * Paramètres : Identifiants de l'utilisateur et de l'annonce, puis montant proposé en centimes.
+     * Paramètres : Identifiants de l'utilisateur et de l'annonce, puis montant proposé en euros.
      * Retour : true lorsque l'enchère est enregistrée, sinon false.
      */
-    public function placeBid(int $userId, int $listingId, int $amountInCents): bool
+    public function placeBid(int $userId, int $listingId, int $amountInEuros): bool
     {
         return $this->create([
             'utilisateur_id' => $userId,
             'annonce_id' => $listingId,
-            'montant' => Money::centsToDecimal($amountInCents),
+            'montant' => Money::eurosToDatabaseValue($amountInEuros),
             'date_heure_enchere' => gmdate('Y-m-d H:i:s'),
         ]);
     }

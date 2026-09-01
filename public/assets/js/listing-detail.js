@@ -363,7 +363,7 @@ function qdmUpdateBidDisplay(form, data) {
 
     if (typeof data.minimum_bid === 'string') {
         amountInput.min = data.minimum_bid;
-        minimumText.textContent = 'Montant supérieur d’au moins 0,01 € au prix courant.';
+        minimumText.textContent = 'Montant supérieur d’au moins 1 € au prix courant.';
     }
 
     amountInput.value = '';
@@ -418,17 +418,14 @@ function qdmUpdateRejectedBidDisplay(form, data, attemptedAmount) {
     if (typeof data.minimum_bid === 'string') {
         amountInput.min = data.minimum_bid;
         minimumText.textContent = 'Montant insuffisant : minimum '
-            + data.minimum_bid.replace('.', ',')
+            + data.minimum_bid
             + ' €.';
     }
 
-    const numericAmount = Number.parseFloat(attemptedAmount);
+    const numericAmount = Number.parseInt(attemptedAmount, 10);
 
-    if (Number.isFinite(numericAmount) && historySubtitle) {
-        const formattedAmount = numericAmount.toLocaleString('fr-FR', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
-        });
+    if (Number.isInteger(numericAmount) && historySubtitle) {
+        const formattedAmount = numericAmount.toLocaleString('fr-FR');
         historySubtitle.textContent = 'L’offre de '
             + formattedAmount
             + ' € n’a pas été enregistrée.';
@@ -500,7 +497,7 @@ async function qdmSubmitBid(event) {
         } else if (typeof data.minimum_bid === 'string') {
             qdmUpdateRejectedBidDisplay(form, data, attemptedAmount);
             status.textContent = 'Enchère refusée : saisissez au minimum '
-                + data.minimum_bid.replace('.', ',')
+                + data.minimum_bid
                 + ' €.';
         } else {
             status.textContent = 'Enchère refusée';

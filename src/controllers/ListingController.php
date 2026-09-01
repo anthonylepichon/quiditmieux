@@ -203,15 +203,15 @@ class ListingController extends Controller
         }
 
         $isEnded = $deadline <= new DateTimeImmutable('now', $utcTimezone);
-        $currentAmountInCents = Money::decimalToCents((string) $listing['prix_depart']);
+        $currentAmountInEuros = Money::databaseValueToEuros((string) $listing['prix_depart']);
 
-        if ($currentAmountInCents === null) {
+        if ($currentAmountInEuros === null) {
             $this->session->enregistrerMessageTemporaire('notice', 'Cette annonce ne peut pas être affichée.');
             $this->redirect('home');
         }
 
-        if ($summary['best_bid_in_cents'] !== null) {
-            $currentAmountInCents = $summary['best_bid_in_cents'];
+        if ($summary['best_bid_in_euros'] !== null) {
+            $currentAmountInEuros = $summary['best_bid_in_euros'];
         }
 
         $history = [];
@@ -272,9 +272,9 @@ class ListingController extends Controller
                 'category' => $categoryLabel,
                 'seller' => (string) $listing['seller_pseudo'],
                 'seller_id' => (int) $listing['utilisateur_id'],
-                'current_price_label' => Money::formatCentsForDisplay($currentAmountInCents),
-                'minimum_bid' => Money::centsToDecimal($currentAmountInCents + 1),
-                'minimum_bid_label' => Money::formatCentsForDisplay($currentAmountInCents + 1),
+                'current_price_label' => Money::formatEurosForDisplay($currentAmountInEuros),
+                'minimum_bid' => Money::eurosToDatabaseValue($currentAmountInEuros + 1),
+                'minimum_bid_label' => Money::formatEurosForDisplay($currentAmountInEuros + 1),
                 'bid_count' => (int) $summary['bid_count'],
                 'deadline_utc' => $deadline->format('Y-m-d\TH:i:s\Z'),
                 'deadline_label' => $this->formatFrenchDateTime(
@@ -375,7 +375,7 @@ class ListingController extends Controller
             $normalizedData['title'],
             $normalizedData['description'],
             $normalizedData['item_state'],
-            $normalizedData['starting_price_in_cents'],
+            $normalizedData['starting_price_in_euros'],
             $normalizedData['deadline_utc'],
             $normalizedData['category_id']
         );
@@ -588,7 +588,7 @@ class ListingController extends Controller
             $normalizedData['title'],
             $normalizedData['description'],
             $normalizedData['item_state'],
-            $normalizedData['starting_price_in_cents'],
+            $normalizedData['starting_price_in_euros'],
             $normalizedData['deadline_utc'],
             $normalizedData['category_id']
         );
@@ -803,18 +803,18 @@ class ListingController extends Controller
             $errors['item_state'] = 'Choisissez un état proposé dans la liste.';
         }
 
-        $priceInCents = $this->normalizePriceInCents(
+        $priceInEuros = $this->normalizePriceInEuros(
             $values['starting_price'],
             'starting_price',
             'Le prix de départ',
             $errors
         );
 
-        if ($priceInCents === null) {
+        if ($priceInEuros === null) {
             if ($mode === 'edit') {
-                $errors['starting_price'] = 'Le prix de départ doit être strictement positif.';
+                $errors['starting_price'] = 'Le prix de départ doit être strictement positif et saisi sans décimale.';
             } else {
-                $errors['starting_price'] = 'Montant strictement positif, 2 décimales maximum.';
+                $errors['starting_price'] = 'Montant strictement positif, sans décimale.';
             }
         }
 
@@ -825,7 +825,7 @@ class ListingController extends Controller
             'description' => $description,
             'category_id' => $categoryId,
             'item_state' => $values['item_state'],
-            'starting_price_in_cents' => $priceInCents,
+            'starting_price_in_euros' => $priceInEuros,
             'deadline_utc' => $deadlineUtc,
         ];
     }
@@ -1049,11 +1049,11 @@ class ListingController extends Controller
         }
 
         $category = (string) $listing['categorie_id'];
-        $startingPriceInCents = Money::decimalToCents((string) $listing['prix_depart']);
+        $startingPriceInEuros = Money::databaseValueToEuros((string) $listing['prix_depart']);
         $startingPrice = '';
 
-        if ($startingPriceInCents !== null) {
-            $startingPrice = Money::centsToDecimal($startingPriceInCents);
+        if ($startingPriceInEuros !== null) {
+            $startingPrice = Money::eurosToDatabaseValue($startingPriceInEuros);
         }
 
         return [
@@ -1099,19 +1099,19 @@ class ListingController extends Controller
         $data = json_decode($encodedData, true);
 
         if (!is_array($data)
-            || !isset($data['listing_id'], $data['minimum_in_cents'], $data['amount_in_cents'])
+            || !isset($data['listing_id'], $data['minimum_in_euros'], $data['amount_in_euros'])
             || (int) $data['listing_id'] !== $listingId
-            || !is_int($data['minimum_in_cents'])
-            || !is_int($data['amount_in_cents'])
+            || !is_int($data['minimum_in_euros'])
+            || !is_int($data['amount_in_euros'])
         ) {
             return null;
         }
 
         return [
-            'minimum' => Money::centsToDecimal($data['minimum_in_cents']),
-            'minimum_label' => Money::formatCentsForDisplay($data['minimum_in_cents']),
-            'amount' => Money::centsToDecimal($data['amount_in_cents']),
-            'amount_label' => Money::formatCentsForDisplay($data['amount_in_cents']),
+            'minimum' => Money::eurosToDatabaseValue($data['minimum_in_euros']),
+            'minimum_label' => Money::formatEurosForDisplay($data['minimum_in_euros']),
+            'amount' => Money::eurosToDatabaseValue($data['amount_in_euros']),
+            'amount_label' => Money::formatEurosForDisplay($data['amount_in_euros']),
         ];
     }
 
@@ -1186,15 +1186,15 @@ class ListingController extends Controller
                 continue;
             }
 
-            $amountInCents = Money::decimalToCents((string) $row['montant']);
+            $amountInEuros = Money::databaseValueToEuros((string) $row['montant']);
 
-            if ($amountInCents === null) {
+            if ($amountInEuros === null) {
                 continue;
             }
 
             $history[] = [
                 'bidder' => (string) $row['pseudo'],
-                'amount' => Money::formatCentsForDisplay($amountInCents),
+                'amount' => Money::formatEurosForDisplay($amountInEuros),
                 'date' => $this->formatFrenchDateTime(
                     $date->setTimezone($parisTimezone),
                     true,
@@ -1284,30 +1284,30 @@ class ListingController extends Controller
             }
         }
 
-        $minimumPriceInCents = $this->normalizePriceInCents(
+        $minimumPriceInEuros = $this->normalizePriceInEuros(
             $minimumPriceInput,
             'minimum_price',
             'Le prix minimum',
             $errors
         );
-        $maximumPriceInCents = $this->normalizePriceInCents(
+        $maximumPriceInEuros = $this->normalizePriceInEuros(
             $maximumPriceInput,
             'maximum_price',
             'Le prix maximum',
             $errors
         );
 
-        if ($minimumPriceInCents !== null) {
-            $minimumPriceInput = Money::centsToDecimal($minimumPriceInCents);
+        if ($minimumPriceInEuros !== null) {
+            $minimumPriceInput = Money::eurosToDatabaseValue($minimumPriceInEuros);
         }
 
-        if ($maximumPriceInCents !== null) {
-            $maximumPriceInput = Money::centsToDecimal($maximumPriceInCents);
+        if ($maximumPriceInEuros !== null) {
+            $maximumPriceInput = Money::eurosToDatabaseValue($maximumPriceInEuros);
         }
 
-        if ($minimumPriceInCents !== null
-            && $maximumPriceInCents !== null
-            && $minimumPriceInCents > $maximumPriceInCents
+        if ($minimumPriceInEuros !== null
+            && $maximumPriceInEuros !== null
+            && $minimumPriceInEuros > $maximumPriceInEuros
         ) {
             $errors['minimum_price'] = 'Le prix minimum doit être inférieur ou égal au prix maximum.';
             $errors['maximum_price'] = 'Le prix maximum doit être supérieur ou égal au prix minimum.';
@@ -1348,8 +1348,8 @@ class ListingController extends Controller
                 'words' => $words,
                 'category_id' => $categoryId,
                 'item_state' => $itemState,
-                'minimum_price_in_cents' => $minimumPriceInCents,
-                'maximum_price_in_cents' => $maximumPriceInCents,
+                'minimum_price_in_euros' => $minimumPriceInEuros,
+                'maximum_price_in_euros' => $maximumPriceInEuros,
                 'minimum_price_input' => $minimumPriceInput,
                 'maximum_price_input' => $maximumPriceInput,
                 'sale_state' => $saleState,
@@ -1380,11 +1380,11 @@ class ListingController extends Controller
     }
 
     /**
-     * Rôle : Valider et convertir une limite de prix facultative en centimes entiers.
+     * Rôle : Valider et convertir une limite de prix facultative en euros entiers.
      * Paramètres : Valeur reçue, nom du champ, libellé compréhensible et erreurs à compléter.
-     * Retour : Prix en centimes ou null lorsque le champ est vide ou invalide.
+     * Retour : Prix en euros ou null lorsque le champ est vide ou invalide.
      */
-    private function normalizePriceInCents(
+    private function normalizePriceInEuros(
         string $value,
         string $field,
         string $label,
@@ -1394,21 +1394,19 @@ class ListingController extends Controller
             return null;
         }
 
-        $normalizedValue = str_replace(',', '.', $value);
-
-        if (preg_match('/^[0-9]+(?:\.[0-9]{1,2})?$/D', $normalizedValue) !== 1) {
-            $errors[$field] = $label . ' doit être un montant positif avec deux décimales au maximum.';
+        if (preg_match('/^[0-9]+$/D', $value) !== 1) {
+            $errors[$field] = $label . ' doit être un nombre entier d’euros, sans décimale.';
             return null;
         }
 
-        $priceInCents = Money::decimalToCents($normalizedValue);
+        $priceInEuros = Money::userInputToEuros($value);
 
-        if ($priceInCents === null || $priceInCents <= 0) {
+        if ($priceInEuros === null || $priceInEuros <= 0) {
             $errors[$field] = $label . ' doit être strictement positif et rester dans la limite autorisée.';
             return null;
         }
 
-        return $priceInCents;
+        return $priceInEuros;
     }
 
     /**
@@ -1433,10 +1431,10 @@ class ListingController extends Controller
 
         $bidModel = new BidModel($this->database);
         $photoModel = new PhotoModel($this->database);
-        $currentAmountsInCents = $bidModel->getCurrentAmountsInCents($listingIds, $startingPrices);
+        $currentAmountsInEuros = $bidModel->getCurrentAmountsInEuros($listingIds, $startingPrices);
         $primaryPhotos = $photoModel->getPrimaryPhotos($listingIds);
 
-        if ($currentAmountsInCents === false || $primaryPhotos === false) {
+        if ($currentAmountsInEuros === false || $primaryPhotos === false) {
             return false;
         }
 
@@ -1473,11 +1471,11 @@ class ListingController extends Controller
                     . rawurlencode($primaryPhotos[$identifier]);
             }
 
-            if (!isset($currentAmountsInCents[$identifier])) {
+            if (!isset($currentAmountsInEuros[$identifier])) {
                 return false;
             }
 
-            $currentAmountInCents = $currentAmountsInCents[$identifier];
+            $currentAmountInEuros = $currentAmountsInEuros[$identifier];
             $categoryId = (int) $listing['categorie_id'];
             $categoryLabel = 'Catégorie indisponible';
 
@@ -1490,8 +1488,8 @@ class ListingController extends Controller
                 'title' => (string) $listing['titre'],
                 'category' => $categoryLabel,
                 'item_state' => (string) $listing['etat_objet'],
-                'current_price' => Money::centsToDecimal($currentAmountInCents),
-                'current_price_label' => Money::formatCentsForDisplay($currentAmountInCents),
+                'current_price' => Money::eurosToDatabaseValue($currentAmountInEuros),
+                'current_price_label' => Money::formatEurosForDisplay($currentAmountInEuros),
                 'deadline_utc' => $deadline->format('Y-m-d\TH:i:s\Z'),
                 'deadline_label' => $this->formatFrenchDateTime(
                     $deadline->setTimezone($parisTimezone),

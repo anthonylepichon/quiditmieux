@@ -38,9 +38,9 @@ class ParticipationController extends Controller
             return;
         }
 
-        $amountInCents = Money::userInputToCents($amountText);
+        $amountInEuros = Money::userInputToEuros($amountText);
 
-        if ($amountInCents === null) {
+        if ($amountInEuros === null) {
             $this->respondBid(false, 'Enchère refusée', $listingId);
             return;
         }
@@ -82,7 +82,7 @@ class ParticipationController extends Controller
             return;
         }
 
-        $decision = $bidModel->evaluateBidAmountInCents($listingId, $amountInCents);
+        $decision = $bidModel->evaluateBidAmountInEuros($listingId, $amountInEuros);
 
         if ($decision === null) {
             $this->database->rollback();
@@ -90,18 +90,18 @@ class ParticipationController extends Controller
             return;
         }
 
-        $minimumBidInCents = $decision['minimum_amount_in_cents'];
+        $minimumBidInEuros = $decision['minimum_amount_in_euros'];
 
         if (!$decision['accepted']) {
             $this->database->rollback();
             $message = 'Montant insuffisant : minimum '
-                . Money::formatCentsForDisplay($minimumBidInCents)
+                . Money::formatEurosForDisplay($minimumBidInEuros)
                 . '.';
-            $this->respondBid(false, $message, $listingId, $summary, $minimumBidInCents, $amountInCents);
+            $this->respondBid(false, $message, $listingId, $summary, $minimumBidInEuros, $amountInEuros);
             return;
         }
 
-        if (!$bidModel->placeBid($userId, $listingId, $amountInCents)) {
+        if (!$bidModel->placeBid($userId, $listingId, $amountInEuros)) {
             $this->database->rollback();
             $this->respondBid(false, 'Enchère refusée', $listingId);
             return;
@@ -115,9 +115,9 @@ class ParticipationController extends Controller
             return;
         }
 
-        $nextMinimumInCents = $bidModel->getMinimumAmountInCents($listingId);
+        $nextMinimumInEuros = $bidModel->getMinimumAmountInEuros($listingId);
 
-        if ($nextMinimumInCents === null) {
+        if ($nextMinimumInEuros === null) {
             $this->database->rollback();
             $this->respondBid(false, 'Enchère refusée', $listingId);
             return;
@@ -134,7 +134,7 @@ class ParticipationController extends Controller
             'Vous êtes actuellement le mieux-disant. Vous pouvez enchérir de nouveau si nécessaire.',
             $listingId,
             $updatedSummary,
-            $nextMinimumInCents
+            $nextMinimumInEuros
         );
     }
 
@@ -254,7 +254,7 @@ class ParticipationController extends Controller
 
     /**
      * Rôle : Envoyer le résultat d'une enchère en JSON ou appliquer le repli POST-Redirect-GET.
-     * Paramètres : Succès, message, annonce, résumé, minimum et montant refusé en centimes éventuels.
+     * Paramètres : Succès, message, annonce, résumé, minimum et montant refusé en euros éventuels.
      * Retour : Aucun.
      */
     private function respondBid(
@@ -262,15 +262,15 @@ class ParticipationController extends Controller
         string $message,
         ?int $listingId,
         array $summary = [],
-        ?int $minimumBidInCents = null,
-        ?int $attemptedAmountInCents = null
+        ?int $minimumBidInEuros = null,
+        ?int $attemptedAmountInEuros = null
     ): void {
         if ($this->isJsonRequest()) {
             $currentPrice = null;
             $bidCount = null;
 
-            if (isset($summary['best_bid_in_cents']) && is_int($summary['best_bid_in_cents'])) {
-                $currentPrice = Money::formatCentsForDisplay($summary['best_bid_in_cents']);
+            if (isset($summary['best_bid_in_euros']) && is_int($summary['best_bid_in_euros'])) {
+                $currentPrice = Money::formatEurosForDisplay($summary['best_bid_in_euros']);
             }
 
             if (isset($summary['bid_count']) && is_numeric($summary['bid_count'])) {
@@ -279,8 +279,8 @@ class ParticipationController extends Controller
 
             $minimumBidValue = null;
 
-            if ($minimumBidInCents !== null) {
-                $minimumBidValue = Money::centsToDecimal($minimumBidInCents);
+            if ($minimumBidInEuros !== null) {
+                $minimumBidValue = Money::eurosToDatabaseValue($minimumBidInEuros);
             }
 
             $this->json([
@@ -296,13 +296,13 @@ class ParticipationController extends Controller
 
         if (!$success
             && $listingId !== null
-            && $minimumBidInCents !== null
-            && $attemptedAmountInCents !== null
+            && $minimumBidInEuros !== null
+            && $attemptedAmountInEuros !== null
         ) {
             $rejectionData = json_encode([
                 'listing_id' => $listingId,
-                'minimum_in_cents' => $minimumBidInCents,
-                'amount_in_cents' => $attemptedAmountInCents,
+                'minimum_in_euros' => $minimumBidInEuros,
+                'amount_in_euros' => $attemptedAmountInEuros,
             ]);
 
             if (is_string($rejectionData)) {
