@@ -10,6 +10,7 @@
 namespace App\controllers;
 
 use App\core\Controller;
+use App\core\Money;
 use App\models\CategoryModel;
 use App\models\ListingModel;
 use App\models\PhotoModel;
@@ -367,13 +368,32 @@ class UserController extends Controller
             }
 
             $id = (int) $row['id'];
-            $price = (float) $row['prix_depart'];
-            if (isset($row['best_bid']) && is_numeric($row['best_bid'])) {
-                $price = (float) $row['best_bid'];
+            $currentAmountInCents = Money::decimalToCents((string) $row['prix_depart']);
+
+            if ($currentAmountInCents === null) {
+                return false;
             }
+
+            if (isset($row['best_bid'])) {
+                $bestBidInCents = Money::decimalToCents((string) $row['best_bid']);
+
+                if ($bestBidInCents === null) {
+                    return false;
+                }
+
+                $currentAmountInCents = $bestBidInCents;
+            }
+
             $userBestBid = null;
-            if (isset($row['user_best_bid']) && is_numeric($row['user_best_bid'])) {
-                $userBestBid = number_format((float) $row['user_best_bid'], 2, ',', ' ') . ' €';
+
+            if (isset($row['user_best_bid'])) {
+                $userBestBidInCents = Money::decimalToCents((string) $row['user_best_bid']);
+
+                if ($userBestBidInCents === null) {
+                    return false;
+                }
+
+                $userBestBid = Money::formatCentsForDisplay($userBestBidInCents);
             }
 
             $categoryId = (int) $row['categorie_id'];
@@ -387,7 +407,7 @@ class UserController extends Controller
                 'id' => $id,
                 'title' => (string) $row['titre'],
                 'category' => $categoryLabel,
-                'current_price' => number_format($price, 2, ',', ' ') . ' €',
+                'current_price' => Money::formatCentsForDisplay($currentAmountInCents),
                 'bid_count' => $this->readBidCount($row),
                 'user_best_bid' => $userBestBid,
                 'winner_id' => $this->readWinnerId($row),

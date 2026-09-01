@@ -9,6 +9,7 @@
 
 namespace App\models;
 
+use App\core\Money;
 use App\core\Model;
 
 class ListingModel extends Model
@@ -37,7 +38,7 @@ class ListingModel extends Model
 
     /**
      * Rôle : Créer une annonce à partir des informations déjà validées par le contrôleur.
-     * Paramètres : Auteur, titre, description, état, prix, échéance UTC et catégorie.
+     * Paramètres : Auteur, titre, description, état, prix en centimes, échéance UTC et catégorie.
      * Retour : Identifiant de l'annonce créée ou null lorsque la création échoue.
      */
     public function createListing(
@@ -45,7 +46,7 @@ class ListingModel extends Model
         string $title,
         string $description,
         string $itemState,
-        float $startingPrice,
+        int $startingPriceInCents,
         string $deadlineUtc,
         int $categoryId
     ): ?int {
@@ -54,7 +55,7 @@ class ListingModel extends Model
             'titre' => $title,
             'description' => $description,
             'etat_objet' => $itemState,
-            'prix_depart' => $startingPrice,
+            'prix_depart' => Money::centsToDecimal($startingPriceInCents),
             'date_heure_fin' => $deadlineUtc,
             'categorie_id' => $categoryId,
         ]);
@@ -74,7 +75,7 @@ class ListingModel extends Model
 
     /**
      * Rôle : Modifier les informations autorisées d'une annonce déjà validées par le contrôleur.
-     * Paramètres : Identifiant, titre, description, état, prix, échéance UTC et catégorie.
+     * Paramètres : Identifiant, titre, description, état, prix en centimes, échéance UTC et catégorie.
      * Retour : true lorsque la mise à jour est exécutée, sinon false.
      */
     public function updateListing(
@@ -82,7 +83,7 @@ class ListingModel extends Model
         string $title,
         string $description,
         string $itemState,
-        float $startingPrice,
+        int $startingPriceInCents,
         string $deadlineUtc,
         int $categoryId
     ): bool {
@@ -90,7 +91,7 @@ class ListingModel extends Model
             'titre' => $title,
             'description' => $description,
             'etat_objet' => $itemState,
-            'prix_depart' => $startingPrice,
+            'prix_depart' => Money::centsToDecimal($startingPriceInCents),
             'date_heure_fin' => $deadlineUtc,
             'categorie_id' => $categoryId,
         ]);
@@ -429,14 +430,14 @@ class ListingModel extends Model
         array &$parameters,
         string $currentPriceSql
     ): void {
-        if ($criteria['minimum_price'] !== null) {
+        if ($criteria['minimum_price_in_cents'] !== null) {
             $whereParts[] = $currentPriceSql . ' >= :minimum_price';
-            $parameters['minimum_price'] = $criteria['minimum_price'];
+            $parameters['minimum_price'] = Money::centsToDecimal($criteria['minimum_price_in_cents']);
         }
 
-        if ($criteria['maximum_price'] !== null) {
+        if ($criteria['maximum_price_in_cents'] !== null) {
             $whereParts[] = $currentPriceSql . ' <= :maximum_price';
-            $parameters['maximum_price'] = $criteria['maximum_price'];
+            $parameters['maximum_price'] = Money::centsToDecimal($criteria['maximum_price_in_cents']);
         }
     }
 

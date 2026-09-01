@@ -10,6 +10,7 @@
 namespace App\controllers;
 
 use App\core\Controller;
+use App\core\Money;
 use App\models\BidModel;
 use App\models\FollowModel;
 use App\models\ListingModel;
@@ -37,7 +38,7 @@ class ParticipationController extends Controller
             return;
         }
 
-        $amountInCents = $this->parseBidAmountInCents($amountText);
+        $amountInCents = Money::userInputToCents($amountText);
 
         if ($amountInCents === null) {
             $this->respondBid(false, 'Enchère refusée', $listingId);
@@ -89,15 +90,14 @@ class ParticipationController extends Controller
             return;
         }
 
-        $minimumBid = $decision['minimum_amount_in_cents'] / 100;
-        $attemptedAmount = $amountInCents / 100;
+        $minimumBidInCents = $decision['minimum_amount_in_cents'];
 
         if (!$decision['accepted']) {
             $this->database->rollback();
             $message = 'Montant insuffisant : minimum '
-                . number_format($minimumBid, 2, ',', ' ')
-                . ' €.';
-            $this->respondBid(false, $message, $listingId, $summary, $minimumBid, $attemptedAmount);
+                . Money::formatCentsForDisplay($minimumBidInCents)
+                . '.';
+            $this->respondBid(false, $message, $listingId, $summary, $minimumBidInCents, $amountInCents);
             return;
         }
 
@@ -129,13 +129,12 @@ class ParticipationController extends Controller
             return;
         }
 
-        $nextMinimum = $nextMinimumInCents / 100;
         $this->respondBid(
             true,
             'Vous êtes actuellement le mieux-disant. Vous pouvez enchérir de nouveau si nécessaire.',
             $listingId,
             $updatedSummary,
-            $nextMinimum
+            $nextMinimumInCents
         );
     }
 
@@ -255,7 +254,7 @@ class ParticipationController extends Controller
 
     /**
      * Rôle : Envoyer le résultat d'une enchère en JSON ou appliquer le repli POST-Redirect-GET.
-     * Paramètres : Succès, message, annonce, résumé, minimum et montant refusé éventuels.
+     * Paramètres : Succès, message, annonce, résumé, minimum et montant refusé en centimes éventuels.
      * Retour : Aucun.
      */
     private function respondBid(
@@ -263,15 +262,15 @@ class ParticipationController extends Controller
         string $message,
         ?int $listingId,
         array $summary = [],
-        ?float $minimumBid = null,
-        ?float $attemptedAmount = null
+        ?int $minimumBidInCents = null,
+        ?int $attemptedAmountInCents = null
     ): void {
         if ($this->isJsonRequest()) {
             $currentPrice = null;
             $bidCount = null;
 
-            if (isset($summary['best_bid']) && is_numeric($summary['best_bid'])) {
-                $currentPrice = number_format((float) $summary['best_bid'], 2, ',', ' ') . ' €';
+            if (isset($summary['best_bid_in_cents']) && is_int($summary['best_bid_in_cents'])) {
+                $currentPrice = Money::formatCentsForDisplay($summary['best_bid_in_cents']);
             }
 
             if (isset($summary['bid_count']) && is_numeric($summary['bid_count'])) {
@@ -280,8 +279,8 @@ class ParticipationController extends Controller
 
             $minimumBidValue = null;
 
-            if ($minimumBid !== null) {
-                $minimumBidValue = number_format($minimumBid, 2, '.', '');
+            if ($minimumBidInCents !== null) {
+                $minimumBidValue = Money::centsToDecimal($minimumBidInCents);
             }
 
             $this->json([
@@ -297,13 +296,13 @@ class ParticipationController extends Controller
 
         if (!$success
             && $listingId !== null
-            && $minimumBid !== null
-            && $attemptedAmount !== null
+            && $minimumBidInCents !== null
+            && $attemptedAmountInCents !== null
         ) {
             $rejectionData = json_encode([
                 'listing_id' => $listingId,
-                'minimum' => $minimumBid,
-                'amount' => $attemptedAmount,
+                'minimum_in_cents' => $minimumBidInCents,
+                'amount_in_cents' => $attemptedAmountInCents,
             ]);
 
             if (is_string($rejectionData)) {
@@ -318,26 +317,6 @@ class ParticipationController extends Controller
         }
 
         $this->redirect('home');
-    }
-
-    /**
-     * Rôle : Valider le format d'un montant reçu et le convertir en centimes.
-     * Paramètres : Montant textuel issu du formulaire d'enchère.
-     * Retour : Montant en centimes ou null lorsque le format est invalide.
-     */
-    private function parseBidAmountInCents(string $amount): ?int
-    {
-        if (preg_match('/^(0|[1-9][0-9]{0,7})(?:\.([0-9]{1,2}))?$/D', $amount, $matches) !== 1) {
-            return null;
-        }
-
-        $fraction = '00';
-
-        if (isset($matches[2])) {
-            $fraction = str_pad($matches[2], 2, '0');
-        }
-
-        return ((int) $matches[1] * 100) + (int) $fraction;
     }
 
     /**

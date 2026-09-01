@@ -9,6 +9,7 @@
 
 namespace App\models;
 
+use App\core\Money;
 use App\core\Model;
 
 class BidModel extends Model
@@ -50,7 +51,7 @@ class BidModel extends Model
             return null;
         }
 
-        return $this->decimalAmountToCents((string) $row['current_amount']);
+        return Money::decimalToCents((string) $row['current_amount']);
     }
 
     /**
@@ -89,23 +90,31 @@ class BidModel extends Model
     }
 
     /**
-     * Rôle : Calculer le prix courant de chaque annonce demandée.
-     * Paramètres : Liste d'identifiants d'annonces et prix de départ indexés par annonce.
-     * Retour : Prix courants indexés par annonce ou false en cas d'erreur SQL.
+     * Rôle : Calculer en centimes le prix courant de chaque annonce demandée.
+     * Paramètres : Liste d'identifiants d'annonces et prix de départ décimaux indexés par annonce.
+     * Retour : Prix courants en centimes indexés par annonce ou false en cas de donnée invalide ou d'erreur SQL.
      */
-    public function getCurrentPrices(array $listingIds, array $startingPrices): array|false
+    public function getCurrentAmountsInCents(array $listingIds, array $startingPrices): array|false
     {
         $identifiers = $this->normalizeIdentifiers($listingIds);
-        $currentPrices = [];
+        $currentAmountsInCents = [];
 
         foreach ($identifiers as $identifier) {
-            if (isset($startingPrices[$identifier]) && is_numeric($startingPrices[$identifier])) {
-                $currentPrices[$identifier] = (float) $startingPrices[$identifier];
+            if (!isset($startingPrices[$identifier])) {
+                return false;
             }
+
+            $startingAmountInCents = Money::decimalToCents((string) $startingPrices[$identifier]);
+
+            if ($startingAmountInCents === null) {
+                return false;
+            }
+
+            $currentAmountsInCents[$identifier] = $startingAmountInCents;
         }
 
         if ($identifiers === []) {
-            return $currentPrices;
+            return $currentAmountsInCents;
         }
 
         $parameters = [];
@@ -128,15 +137,21 @@ class BidModel extends Model
         }
 
         foreach ($rows as $row) {
-            if (!isset($row['annonce_id'], $row['best_bid']) || !is_numeric($row['best_bid'])) {
-                continue;
+            if (!isset($row['annonce_id'], $row['best_bid'])) {
+                return false;
             }
 
             $identifier = (int) $row['annonce_id'];
-            $currentPrices[$identifier] = (float) $row['best_bid'];
+            $bestBidInCents = Money::decimalToCents((string) $row['best_bid']);
+
+            if ($bestBidInCents === null) {
+                return false;
+            }
+
+            $currentAmountsInCents[$identifier] = $bestBidInCents;
         }
 
-        return $currentPrices;
+        return $currentAmountsInCents;
     }
 
     /**
@@ -155,7 +170,7 @@ class BidModel extends Model
         }
 
         if ($summary === null) {
-            return ['bid_count' => 0, 'best_bid' => null, 'best_bidder_id' => null];
+            return ['bid_count' => 0, 'best_bid_in_cents' => null, 'best_bidder_id' => null];
         }
 
         $bestBidderId = null;
@@ -178,19 +193,23 @@ class BidModel extends Model
         }
 
         $bidCount = 0;
-        $bestBid = null;
+        $bestBidInCents = null;
 
         if (isset($summary['bid_count'])) {
             $bidCount = (int) $summary['bid_count'];
         }
 
-        if (isset($summary['best_bid']) && is_numeric($summary['best_bid'])) {
-            $bestBid = (float) $summary['best_bid'];
+        if (isset($summary['best_bid'])) {
+            $bestBidInCents = Money::decimalToCents((string) $summary['best_bid']);
+
+            if ($bestBidInCents === null) {
+                return false;
+            }
         }
 
         return [
             'bid_count' => $bidCount,
-            'best_bid' => $bestBid,
+            'best_bid_in_cents' => $bestBidInCents,
             'best_bidder_id' => $bestBidderId,
         ];
     }
@@ -245,7 +264,7 @@ class BidModel extends Model
         return $this->create([
             'utilisateur_id' => $userId,
             'annonce_id' => $listingId,
-            'montant' => $this->formatCentsAsDecimal($amountInCents),
+            'montant' => Money::centsToDecimal($amountInCents),
             'date_heure_enchere' => gmdate('Y-m-d H:i:s'),
         ]);
     }
@@ -289,36 +308,5 @@ class BidModel extends Model
         return array_values($normalizedIdentifiers);
     }
 
-    /**
-     * Rôle : Convertir une valeur décimale issue de PDO en nombre entier de centimes.
-     * Paramètres : Montant décimal positif provenant de la base.
-     * Retour : Montant en centimes ou null lorsque le format est inexploitable.
-     */
-    private function decimalAmountToCents(string $amount): ?int
-    {
-        if (preg_match('/^([0-9]+)(?:\.([0-9]{1,2}))?$/D', $amount, $matches) !== 1) {
-            return null;
-        }
-
-        $fraction = '00';
-
-        if (isset($matches[2])) {
-            $fraction = str_pad($matches[2], 2, '0');
-        }
-
-        return ((int) $matches[1] * 100) + (int) $fraction;
-    }
-
-    /**
-     * Rôle : Convertir un montant entier en chaîne décimale compatible avec la colonne SQL.
-     * Paramètres : Montant positif exprimé en centimes.
-     * Retour : Montant avec exactement deux décimales.
-     */
-    private function formatCentsAsDecimal(int $amountInCents): string
-    {
-        $euros = intdiv($amountInCents, 100);
-        $cents = $amountInCents % 100;
-        return $euros . '.' . str_pad((string) $cents, 2, '0', STR_PAD_LEFT);
-    }
 }
 
