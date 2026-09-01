@@ -13,6 +13,12 @@ $values = $data['values'];
 $errors = $data['errors'];
 $successMessage = $data['success_message'];
 $csrfToken = $data['csrf_token'];
+$hasErrors = $errors !== [];
+$globalErrorMessage = 'Corrigez les champs signalés avant d’enregistrer vos modifications.';
+
+if (isset($errors['form'])) {
+    $globalErrorMessage = (string) $errors['form'];
+}
 $isConnected = true;
 $currentPage = 'account';
 $pageTitle = 'Mon compte — QUIDITMIEUX';
@@ -28,9 +34,13 @@ foreach ($invalid as $field => $attribute) {
         <section class="account-card glass-panel" aria-labelledby="account-title">
             <div class="account-card__form-panel">
                 <div class="section-heading"><p class="eyebrow">Vos informations</p><h1 id="account-title">Mon compte</h1></div>
-                <div class="alert alert--info"><strong>Protégez vos modifications</strong><span>Votre mot de passe actuel est requis pour enregistrer toute modification.</span></div>
-                <?php if ($successMessage !== null): ?><div class="alert alert--success" role="status"><?= htmlspecialchars($successMessage, ENT_QUOTES, 'UTF-8') ?></div><?php endif; ?>
-                <?php if (isset($errors['form'])): ?><div class="alert alert--error" role="alert"><?= htmlspecialchars((string) $errors['form'], ENT_QUOTES, 'UTF-8') ?></div><?php endif; ?>
+                <?php if ($hasErrors): ?>
+                    <div class="alert alert--error alert--illustrated" role="alert"><strong>Modifications à vérifier</strong><span><?= htmlspecialchars($globalErrorMessage, ENT_QUOTES, 'UTF-8') ?></span></div>
+                <?php elseif ($successMessage !== null): ?>
+                    <div class="alert alert--success alert--illustrated" role="status"><strong>Modifications enregistrées</strong><span><?= htmlspecialchars($successMessage, ENT_QUOTES, 'UTF-8') ?></span></div>
+                <?php else: ?>
+                    <div class="alert alert--info" role="note"><strong>Protégez vos modifications</strong><span>Votre mot de passe actuel est requis pour enregistrer toute modification.</span></div>
+                <?php endif; ?>
 
                 <form action="index.php?route=account_update" method="post" novalidate>
                     <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">

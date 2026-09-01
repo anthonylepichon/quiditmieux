@@ -16,8 +16,8 @@ function qdmCreateElement(tagName, className, textContent) {
     return element;
 }
 
-/** Rôle : Construire une carte. Paramètres : Données JSON de l'annonce. Retour : Article DOM. */
-function qdmBuildDashboardCard(listing) {
+/** Rôle : Construire une ligne d'annonce. Paramètres : Données JSON de l'annonce et clé de zone. Retour : Article DOM. */
+function qdmBuildDashboardCard(listing, zoneKey) {
     const article = qdmCreateElement('article', 'dashboard-card');
     article.dataset.listingId = String(listing.id);
     const mediaLink = qdmCreateElement('a', 'dashboard-card__media');
@@ -27,19 +27,37 @@ function qdmBuildDashboardCard(listing) {
     else { image.src = 'public/assets/images/illustrations/shopping-cart.png'; image.alt = 'Aucune photographie disponible'; }
     mediaLink.appendChild(image);
     const body = qdmCreateElement('div', 'dashboard-card__body');
-    body.appendChild(qdmCreateElement('p', 'eyebrow', listing.category));
-    const heading = qdmCreateElement('h3');
-    const link = qdmCreateElement('a', '', listing.title);
-    link.href = listing.detail_url;
-    heading.appendChild(link);
-    body.appendChild(heading);
-    body.appendChild(qdmCreateElement('p', 'dashboard-card__price', listing.current_price));
-    body.appendChild(qdmCreateElement('p', '', String(listing.bid_count) + ' enchère(s)'));
-    if (typeof listing.user_best_bid === 'string') { body.appendChild(qdmCreateElement('p', '', 'Votre meilleure enchère : ' + listing.user_best_bid)); }
-    let prefix = 'Terminée le ';
-    if (listing.is_active) { prefix = 'Fin le '; }
-    body.appendChild(qdmCreateElement('p', '', prefix + listing.deadline));
-    article.appendChild(mediaLink); article.appendChild(body);
+    body.appendChild(qdmCreateElement('h3', '', listing.title));
+
+    let deadlinePrefix = 'Terminée le ';
+    let refreshLabel = '';
+    let statusLabel = 'Vente terminée';
+
+    if (listing.is_active) {
+        deadlinePrefix = 'Se termine le ';
+        refreshLabel = zoneKey === 'sales' ? ' · actualisation 10 s' : ' · actualisation 2 s';
+        statusLabel = 'Vente active';
+    }
+
+    if (zoneKey === 'sales' && !listing.is_active) {
+        statusLabel = Number(listing.bid_count) > 0 ? 'Vente adjugée' : 'Non adjugée';
+    }
+
+    if (zoneKey === 'participations') {
+        statusLabel = 'Enchère perdue';
+        if (listing.is_active && listing.user_best_bid === null) { statusLabel = 'Annonce suivie'; }
+        else if (listing.is_active && listing.is_current_winner === true) { statusLabel = 'Meilleure enchère'; }
+        else if (listing.is_active) { statusLabel = 'Enchère dépassée'; }
+    }
+
+    if (zoneKey === 'wins') { statusLabel = 'Enchère remportée'; }
+
+    body.appendChild(qdmCreateElement('p', '', deadlinePrefix + listing.deadline + ' — Europe/Paris' + refreshLabel));
+    body.appendChild(qdmCreateElement('p', 'dashboard-card__status', '●  ' + statusLabel));
+    const price = qdmCreateElement('strong', 'dashboard-card__price', listing.current_price);
+    const detailLink = qdmCreateElement('a', 'dashboard-card__link', 'Voir l’annonce  →');
+    detailLink.href = listing.detail_url;
+    article.append(mediaLink, body, price, detailLink);
     return article;
 }
 
@@ -47,15 +65,26 @@ function qdmBuildDashboardCard(listing) {
 function qdmRenderDashboardZone(zoneKey, listings, emptyMessage) {
     const zone = document.querySelector('[data-dashboard-zone="' + zoneKey + '"]');
     if (!zone || !Array.isArray(listings)) { return; }
+    const zoneSection = zone.closest('.dashboard-zone');
+    if (zoneSection) { zoneSection.classList.toggle('dashboard-zone--populated', listings.length > 0); }
     zone.replaceChildren();
     if (listings.length === 0) {
         const empty = qdmCreateElement('div', 'dashboard-zone__empty');
+        const copy = qdmCreateElement('div');
+        let emptyTitle = 'Aucun résultat';
+
+        if (zoneKey === 'sales') { emptyTitle = 'Aucune vente'; }
+        if (zoneKey === 'participations') { emptyTitle = 'Aucune annonce suivie ou enchérie'; }
+        if (zoneKey === 'wins') { emptyTitle = 'Aucune enchère remportée'; }
+
         empty.dataset.emptyMessage = '';
         empty.appendChild(qdmCreateElement('span', '', '◇'));
-        empty.appendChild(qdmCreateElement('p', '', emptyMessage));
+        copy.appendChild(qdmCreateElement('strong', '', emptyTitle));
+        copy.appendChild(qdmCreateElement('p', '', emptyMessage));
+        empty.appendChild(copy);
         zone.appendChild(empty); return;
     }
-    listings.forEach(function appendListing(listing) { zone.appendChild(qdmBuildDashboardCard(listing)); });
+    listings.forEach(function appendListing(listing) { zone.appendChild(qdmBuildDashboardCard(listing, zoneKey)); });
 }
 
 /** Rôle : Charger un flux sans chevauchement. Paramètres : Clé et adresse JSON. Retour : Aucun. */

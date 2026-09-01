@@ -1,28 +1,247 @@
 /*
- * Description générale : Mise en page du formulaire de compte privé.
- * Rôle : Reproduire le panneau en deux colonnes de la maquette.
- * Tâches : Organiser le formulaire, l'illustration et leur adaptation responsive.
- * Liens avec les autres fichiers : Transmis par pages/_index.scss et appliqué à account.php.
+ * Description générale :
+ * Mise en page du formulaire de compte privé.
+ *
+ * Rôle :
+ * Reproduire le panneau en deux colonnes de la maquette utilisateur.
+ *
+ * Tâches :
+ * Positionner le formulaire, l'illustration et le rappel de sécurité.
+ *
+ * Liens avec les autres fichiers :
+ * Transmis par pages/_index.scss et appliqué à account.php.
  */
 
 @use "../abstracts/variables" as variables;
 
-.account-page { padding-block: var(--space-8) var(--space-16); }
-.account-card { display: grid; grid-template-columns: minmax(0, 1fr) 21.375rem; gap: var(--space-8); padding: var(--space-6); }
-.account-card__form-panel { padding: var(--space-6); border: .0625rem solid var(--color-border-default); border-radius: 1.375rem; background: var(--color-surface-soft); }
-.account-card__form-panel form { display: grid; gap: var(--space-5); margin-top: var(--space-5); }
-.account-card__form-panel .alert { margin-top: var(--space-5); }
-.account-card__form-panel .alert--info { display: grid; gap: var(--space-1); }
-.account-card__password-rule { margin: 0; color: var(--color-text-tertiary); font-size: .75rem; }
-.account-card__actions { display: flex; align-items: center; gap: var(--space-6); }
-.account-card__actions .button { min-width: 18.75rem; }
-.account-card__actions p { margin: 0; color: var(--color-text-secondary); font-size: .8125rem; }
-.account-card__illustration { display: grid; align-content: space-between; justify-items: center; padding: var(--space-5) var(--space-6); border: .0625rem solid var(--color-border-accent); border-radius: 1.375rem; background: var(--color-surface-accent-soft); }
-.account-card__illustration img { width: 14.375rem; height: 23.625rem; object-fit: contain; }
-.account-card__illustration h2 { margin: 0; color: var(--color-text-brand); font-size: 1.6875rem; }
-.account-card__illustration > p { color: var(--color-text-secondary); }
-.account-card__security { width: 100%; padding: var(--space-4); border-radius: var(--radius-card); background: var(--color-page); font-size: .75rem; font-weight: 700; }
-.account-card__security span { margin-right: var(--space-3); color: var(--color-success); font-size: 1.25rem; }
+.account-page {
+  padding-block: 0.25rem 4.75rem;
+}
 
-@media (max-width: variables.$breakpoint-tablet) { .account-card { grid-template-columns: 1fr; } .account-card__illustration { min-height: auto; } }
-@media (max-width: variables.$breakpoint-mobile) { .account-card__actions { align-items: stretch; flex-direction: column; } .account-card__actions .button { min-width: 0; width: 100%; } }
+.account-card {
+  position: relative;
+  height: 45rem;
+  overflow: hidden;
+  backdrop-filter: none;
+  box-shadow: none;
+}
+
+.account-card__form-panel {
+  position: absolute;
+  top: 1.6875rem;
+  left: 1.9375rem;
+  width: 47.625rem;
+  height: 41.5rem;
+  padding: 1rem 1.6875rem;
+  overflow: hidden;
+  border: 0.0625rem solid var(--color-border-default);
+  border-radius: 1.375rem;
+  background: var(--color-surface-soft);
+}
+
+.account-card__form-panel .section-heading {
+  display: block;
+}
+
+.account-card__form-panel .section-heading h1 {
+  margin-top: 0.625rem;
+  font-size: 2.125rem;
+  line-height: normal;
+}
+
+.account-card__form-panel > .alert {
+  width: 44.125rem;
+  height: 6.25rem;
+  margin-top: 0.9375rem;
+}
+
+.account-card__form-panel > .alert--error,
+.account-card__form-panel > .alert--success {
+  flex-wrap: wrap;
+  align-content: center;
+  gap: 0.25rem;
+}
+
+.account-card__form-panel > .alert--error > strong,
+.account-card__form-panel > .alert--error > span,
+.account-card__form-panel > .alert--success > strong,
+.account-card__form-panel > .alert--success > span {
+  display: block;
+  width: 100%;
+}
+
+.account-card__form-panel > .alert--error > span,
+.account-card__form-panel > .alert--success > span {
+  font-size: 0.8125rem;
+}
+
+.account-card__form-panel form {
+  display: block;
+  width: 44.125rem;
+  margin-top: 1.3125rem;
+}
+
+.account-card__form-panel .form-grid {
+  grid-template-columns: repeat(2, 21.125rem);
+  grid-auto-rows: 5.5rem;
+  gap: 1.25rem 1.875rem;
+}
+
+.account-card__form-panel .form-field {
+  height: 5.5rem;
+}
+
+.account-card__form-panel .form-field__help,
+.account-card__form-panel .form-field__error {
+  line-height: 1.2;
+}
+
+.account-card__password-rule {
+  height: 2.25rem;
+  margin-top: 0.75rem;
+  color: var(--color-text-tertiary);
+  font-size: 0.75rem;
+  line-height: 1.125rem;
+}
+
+.account-card__actions {
+  display: flex;
+  height: 3.25rem;
+  align-items: center;
+  gap: 1.5rem;
+  margin-top: 0.875rem;
+}
+
+.account-card__actions .button {
+  width: 18.75rem;
+  flex: none;
+}
+
+.account-card__actions p {
+  width: 23.875rem;
+  color: var(--color-text-secondary);
+  font-size: 0.8125rem;
+}
+
+.account-card__illustration {
+  position: absolute;
+  top: 1.6875rem;
+  left: 51.5625rem;
+  width: 21.375rem;
+  height: 41.5rem;
+  overflow: hidden;
+  border: 0.0625rem solid var(--color-border-accent);
+  border-radius: 1.375rem;
+  background: var(--color-surface-accent-soft);
+}
+
+.account-card__illustration img {
+  position: absolute;
+  top: 1.0625rem;
+  left: 3.4375rem;
+  width: 14.375rem;
+  height: 23.625rem;
+  max-width: none;
+  object-fit: cover;
+}
+
+.account-card__illustration h2 {
+  position: absolute;
+  top: 25.1875rem;
+  left: 1.6875rem;
+  width: 17.875rem;
+  margin: 0;
+  color: var(--color-text-brand);
+  font-size: 1.6875rem;
+  line-height: 2rem;
+}
+
+.account-card__illustration > p:not(.account-card__security) {
+  position: absolute;
+  top: 29.25rem;
+  left: 1.6875rem;
+  width: 17.875rem;
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
+  line-height: normal;
+}
+
+.account-card__security {
+  position: absolute;
+  top: 35.3125rem;
+  left: 1.6875rem;
+  display: flex;
+  width: 17.875rem;
+  height: 4.125rem;
+  align-items: center;
+  padding: 0 1rem;
+  border: 0.0625rem solid var(--color-border-default);
+  border-radius: 1rem;
+  background: var(--color-page);
+  color: var(--color-text-primary);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.account-card__security span {
+  margin-right: 0.75rem;
+  color: var(--color-success);
+  font-size: 1.25rem;
+}
+
+@media (max-width: variables.$breakpoint-tablet) {
+  .account-page {
+    padding-block: 1rem 3rem;
+  }
+
+  .account-card {
+    display: grid;
+    height: auto;
+    gap: 1.5rem;
+    padding: 1.5rem;
+    overflow: visible;
+  }
+
+  .account-card__form-panel,
+  .account-card__illustration {
+    position: relative;
+    inset: auto;
+    width: 100%;
+    height: auto;
+  }
+
+  .account-card__form-panel {
+    padding: 1.5rem;
+  }
+
+  .account-card__form-panel > .alert,
+  .account-card__form-panel form {
+    width: 100%;
+  }
+
+  .account-card__form-panel .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .account-card__actions {
+    height: auto;
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .account-card__actions .button,
+  .account-card__actions p {
+    width: 100%;
+  }
+
+  .account-card__illustration {
+    min-height: 41.5rem;
+  }
+}
+
+@media (max-width: variables.$breakpoint-mobile) {
+  .account-card,
+  .account-card__form-panel {
+    padding: 1rem;
+  }
+}

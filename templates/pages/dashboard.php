@@ -10,9 +10,9 @@
 /** @var array<string, mixed> $data Données préparées par le contrôleur. */
 
 $zones = [
-    ['key' => 'sales', 'title' => 'Mes ventes', 'description' => 'Annonces dont vous êtes le vendeur.', 'empty_title' => 'Aucune vente', 'empty' => 'Vos annonces publiées apparaîtront ici.', 'class' => 'dashboard-zone--sales'],
-    ['key' => 'participations', 'title' => 'Annonces suivies ou enchéries', 'description' => 'Suivis actifs et historique de vos enchères.', 'empty_title' => 'Aucune annonce suivie ou enchérie', 'empty' => 'Suivez une annonce ou enchérissez pour la retrouver ici.', 'class' => 'dashboard-zone--participations'],
-    ['key' => 'wins', 'title' => 'Enchères remportées', 'description' => 'Résultats finaux de vos ventes gagnées.', 'empty_title' => 'Aucune enchère remportée', 'empty' => 'Les ventes que vous remportez apparaîtront ici.', 'class' => 'dashboard-zone--wins'],
+    ['key' => 'sales', 'title' => 'Mes ventes', 'description' => 'Annonces dont vous êtes le vendeur.', 'empty_title' => 'Aucune vente', 'empty' => 'Vos annonces publiées apparaîtront ici.', 'class' => 'dashboard-zone--sales', 'asset' => 'shopping-cart.png'],
+    ['key' => 'participations', 'title' => 'Annonces suivies ou enchéries', 'description' => 'Suivis actifs et historique de vos enchères.', 'empty_title' => 'Aucune annonce suivie ou enchérie', 'empty' => 'Suivez une annonce ou enchérissez pour la retrouver ici.', 'class' => 'dashboard-zone--participations', 'asset' => 'growth-chart.png'],
+    ['key' => 'wins', 'title' => 'Enchères remportées', 'description' => 'Résultats finaux de vos ventes gagnées.', 'empty_title' => 'Aucune enchère remportée', 'empty' => 'Les ventes que vous remportez apparaîtront ici.', 'class' => 'dashboard-zone--wins', 'asset' => 'coin-vault.png'],
 ];
 $isConnected = true;
 $csrfToken = $data['csrf_token'];
@@ -40,7 +40,8 @@ $pageScripts = ['public/assets/js/dashboard.js'];
         <p class="dashboard__status" data-dashboard-status role="status"></p>
 
         <?php foreach ($zones as $zone): ?>
-            <section class="dashboard-zone <?= $zone['class'] ?>" aria-labelledby="<?= $zone['key'] ?>-title">
+            <section class="dashboard-zone <?= $zone['class'] ?><?php if ($data[$zone['key']] !== []): ?> dashboard-zone--populated<?php endif; ?>" aria-labelledby="<?= $zone['key'] ?>-title">
+                <img class="dashboard-zone__asset" src="public/assets/images/illustrations/<?= htmlspecialchars($zone['asset'], ENT_QUOTES, 'UTF-8') ?>" alt="" width="54" height="54">
                 <div class="dashboard-zone__heading">
                     <h2 id="<?= $zone['key'] ?>-title"><?= htmlspecialchars($zone['title'], ENT_QUOTES, 'UTF-8') ?></h2>
                     <p><?= htmlspecialchars($zone['description'], ENT_QUOTES, 'UTF-8') ?></p>
@@ -50,12 +51,46 @@ $pageScripts = ['public/assets/js/dashboard.js'];
                         <div class="dashboard-zone__empty" data-empty-message><span aria-hidden="true">◇</span><div><strong><?= htmlspecialchars($zone['empty_title'], ENT_QUOTES, 'UTF-8') ?></strong><p><?= htmlspecialchars($zone['empty'], ENT_QUOTES, 'UTF-8') ?></p></div></div>
                     <?php else: ?>
                         <?php foreach ($data[$zone['key']] as $listing): ?>
-                            <?php $deadlinePrefix = 'Terminée le '; if ($listing['is_active']) { $deadlinePrefix = 'Fin le '; } ?>
+                            <?php
+                            $deadlinePrefix = 'Terminée le ';
+                            $refreshLabel = '';
+                            $statusLabel = 'Vente terminée';
+
+                            if ($listing['is_active']) {
+                                $deadlinePrefix = 'Se termine le ';
+                                $statusLabel = 'Vente active';
+                            }
+
+                            if ($zone['key'] === 'sales' && !$listing['is_active']) {
+                                $statusLabel = (int) $listing['bid_count'] > 0 ? 'Vente adjugée' : 'Non adjugée';
+                            }
+
+                            if ($zone['key'] === 'participations') {
+                                $statusLabel = 'Enchère perdue';
+                                if ($listing['is_active'] && $listing['user_best_bid'] === null) {
+                                    $statusLabel = 'Annonce suivie';
+                                } elseif ($listing['is_active'] && !empty($listing['is_current_winner'])) {
+                                    $statusLabel = 'Meilleure enchère';
+                                } elseif ($listing['is_active']) {
+                                    $statusLabel = 'Enchère dépassée';
+                                }
+                            }
+
+                            if ($zone['key'] === 'wins') {
+                                $statusLabel = 'Enchère remportée';
+                            }
+
+                            if ($listing['is_active']) {
+                                $refreshLabel = $zone['key'] === 'sales' ? ' · actualisation 10 s' : ' · actualisation 2 s';
+                            }
+                            ?>
                             <article class="dashboard-card" data-listing-id="<?= (int) $listing['id'] ?>">
                                 <a class="dashboard-card__media" href="<?= htmlspecialchars($listing['detail_url'], ENT_QUOTES, 'UTF-8') ?>">
                                     <?php if ($listing['photo_url'] !== null): ?><img src="<?= htmlspecialchars($listing['photo_url'], ENT_QUOTES, 'UTF-8') ?>" alt="Photographie de <?= htmlspecialchars($listing['title'], ENT_QUOTES, 'UTF-8') ?>"><?php else: ?><img src="public/assets/images/illustrations/shopping-cart.png" alt="Aucune photographie disponible"><?php endif; ?>
                                 </a>
-                                <div class="dashboard-card__body"><p class="eyebrow"><?= htmlspecialchars($listing['category'], ENT_QUOTES, 'UTF-8') ?></p><h3><a href="<?= htmlspecialchars($listing['detail_url'], ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($listing['title'], ENT_QUOTES, 'UTF-8') ?></a></h3><p class="dashboard-card__price"><?= htmlspecialchars($listing['current_price'], ENT_QUOTES, 'UTF-8') ?></p><p><?= (int) $listing['bid_count'] ?> enchère(s)</p><?php if ($listing['user_best_bid'] !== null): ?><p>Votre meilleure enchère : <?= htmlspecialchars($listing['user_best_bid'], ENT_QUOTES, 'UTF-8') ?></p><?php endif; ?><p><?= $deadlinePrefix ?><?= htmlspecialchars($listing['deadline'], ENT_QUOTES, 'UTF-8') ?></p></div>
+                                <div class="dashboard-card__body"><h3><?= htmlspecialchars($listing['title'], ENT_QUOTES, 'UTF-8') ?></h3><p><?= $deadlinePrefix ?><?= htmlspecialchars($listing['deadline'], ENT_QUOTES, 'UTF-8') ?> — Europe/Paris<?= $refreshLabel ?></p><p class="dashboard-card__status">●&nbsp; <?= htmlspecialchars($statusLabel, ENT_QUOTES, 'UTF-8') ?></p></div>
+                                <strong class="dashboard-card__price"><?= htmlspecialchars($listing['current_price'], ENT_QUOTES, 'UTF-8') ?></strong>
+                                <a class="dashboard-card__link" href="<?= htmlspecialchars($listing['detail_url'], ENT_QUOTES, 'UTF-8') ?>">Voir l’annonce&nbsp; →</a>
                             </article>
                         <?php endforeach; ?>
                     <?php endif; ?>

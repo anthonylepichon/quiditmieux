@@ -14,13 +14,60 @@
 
 .alert {
   display: flex;
-  align-items: flex-start;
-  gap: var(--space-3);
+  align-items: center;
+  gap: 1rem;
   padding: var(--space-4) var(--space-5);
   border: 0.0625rem solid currentColor;
-  border-radius: var(--radius-field);
+  border-radius: 1rem;
   font-size: 0.9375rem;
   line-height: 1.5;
+}
+
+.alert--info {
+  position: relative;
+  min-height: 6.25rem;
+  flex-wrap: wrap;
+  align-content: center;
+  padding-left: 4.75rem;
+  background: var(--color-info-surface);
+  color: var(--color-info);
+}
+
+.alert--info::before {
+  position: absolute;
+  top: 50%;
+  left: 1.25rem;
+  width: 2.5rem;
+  height: 2.5rem;
+  background: url("../../assets/images/icons/info-icon.svg") center / contain no-repeat;
+  content: "";
+  transform: translateY(-50%);
+}
+
+.alert--info::after {
+  position: absolute;
+  top: 50%;
+  left: 2.34375rem;
+  color: var(--color-on-action);
+  content: "i";
+  font-size: 1.125rem;
+  font-weight: 700;
+  transform: translate(-50%, -50%);
+}
+
+.alert--info strong,
+.alert--info span {
+  display: block;
+  width: calc(100% - 0.25rem);
+}
+
+.alert--info strong {
+  font-size: 0.875rem;
+}
+
+.alert--info span {
+  color: var(--color-text-secondary);
+  font-size: 0.8125rem;
 }
 
 .alert--success {
@@ -36,4 +83,55 @@
 .alert--error {
   background: var(--color-error-surface);
   color: var(--color-error);
+}
+
+.alert--illustrated {
+  position: relative;
+  min-height: 6.25rem;
+  flex-wrap: wrap;
+  align-content: center;
+  gap: 0.25rem 1rem;
+  padding-left: 4.75rem;
+}
+
+.alert--illustrated::before {
+  position: absolute;
+  top: 50%;
+  left: 1.25rem;
+  width: 2.5rem;
+  height: 2.5rem;
+  background: url("../../assets/images/icons/info-icon.svg") center / contain no-repeat;
+  content: "";
+  transform: translateY(-50%);
+}
+
+.alert--illustrated::after {
+  position: absolute;
+  top: 50%;
+  left: 2.5rem;
+  color: var(--color-on-action);
+  content: "!";
+  font-size: 1.125rem;
+  font-weight: 700;
+  transform: translate(-50%, -50%);
+}
+
+.alert--illustrated.alert--success::after {
+  content: "✓";
+}
+
+.alert--illustrated strong,
+.alert--illustrated span {
+  display: block;
+  width: 100%;
+}
+
+.alert--illustrated strong {
+  font-size: 0.875rem;
+}
+
+.alert--illustrated span {
+  color: var(--color-text-secondary);
+  font-size: 0.8125rem;
+  line-height: normal;
 }

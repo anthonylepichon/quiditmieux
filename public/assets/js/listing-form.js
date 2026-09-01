@@ -8,7 +8,27 @@
 const qdmPhotoInput = document.querySelector('[data-photo-input]');
 const qdmPhotoPreviews = document.querySelector('[data-photo-previews]');
 const qdmPhotoStatus = document.querySelector('[data-photo-status]');
+const qdmPhotoCounter = document.querySelector('[data-photo-counter]');
+const qdmPhotoTileStatus = document.querySelector('[data-photo-tile-status]');
+const qdmExistingPhotoRemovalInputs = document.querySelectorAll('input[name="remove_photos[]"]');
 let qdmSelectedPhotos = [];
+
+/**
+ * Rôle : Compter les photographies existantes qui seront conservées.
+ * Paramètres : Aucun.
+ * Retour : Nombre de photographies existantes non cochées pour retrait.
+ */
+function qdmActiveExistingPhotoCount() {
+    let activeCount = 0;
+
+    qdmExistingPhotoRemovalInputs.forEach(function countActivePhoto(input) {
+        if (input instanceof HTMLInputElement && !input.checked) {
+            activeCount += 1;
+        }
+    });
+
+    return activeCount;
+}
 
 /**
  * Rôle : Indiquer si un fichier respecte les règles ergonomiques avant validation serveur.
@@ -68,8 +88,28 @@ function qdmSynchronizePhotoInput() {
  * Retour : Aucun.
  */
 function qdmUpdatePhotoStatus() {
+    const activeExistingPhotoCount = qdmActiveExistingPhotoCount();
+    const totalPhotoCount = activeExistingPhotoCount + qdmSelectedPhotos.length;
+
+    if (qdmPhotoCounter) {
+        qdmPhotoCounter.textContent = totalPhotoCount + ' / 3';
+    }
+
+    if (qdmPhotoTileStatus) {
+        if (activeExistingPhotoCount === 0) {
+            qdmPhotoTileStatus.textContent = totalPhotoCount + ' / 3 — la première ajoutée sera principale';
+        } else {
+            qdmPhotoTileStatus.textContent = totalPhotoCount + ' / 3 — toute nouvelle photo sera ajoutée à la fin';
+        }
+    }
+
     if (qdmSelectedPhotos.length === 0) {
-        qdmPhotoStatus.textContent = 'Aucune nouvelle photographie sélectionnée.';
+        if (activeExistingPhotoCount === 0) {
+            qdmPhotoStatus.textContent = 'Vous pouvez publier sans photo ou en ajouter jusqu’à trois.';
+        } else {
+            qdmPhotoStatus.textContent = activeExistingPhotoCount + ' photographie(s) déjà enregistrée(s).';
+        }
+
         return;
     }
 
@@ -84,6 +124,7 @@ function qdmUpdatePhotoStatus() {
  */
 function qdmRenderPhotoPreviews(files) {
     qdmClearPhotoPreviews();
+    const activeExistingPhotoCount = qdmActiveExistingPhotoCount();
 
     files.forEach(function renderPhoto(file, index) {
         const article = document.createElement('article');
@@ -93,13 +134,13 @@ function qdmRenderPhotoPreviews(files) {
         article.className = 'photo-preview';
         image.src = URL.createObjectURL(file);
         image.alt = 'Aperçu de ' + file.name;
-        label.textContent = 'Image ' + (index + 1);
+        label.textContent = 'Image ' + (activeExistingPhotoCount + index + 1);
         removeButton.className = 'button button--secondary button--compact';
         removeButton.type = 'button';
         removeButton.textContent = 'Retirer';
         removeButton.setAttribute('aria-label', 'Retirer ' + file.name);
 
-        if (index === 0) {
+        if (activeExistingPhotoCount === 0 && index === 0) {
             label.textContent += ' — principale';
         }
 
@@ -147,7 +188,7 @@ function qdmHandlePhotoSelection(event) {
         }
     });
 
-    if (combinedPhotos.length > 3) {
+    if (qdmActiveExistingPhotoCount() + combinedPhotos.length > 3) {
         qdmSynchronizePhotoInput();
         qdmPhotoStatus.textContent = 'Trois photographies sont autorisées au maximum. Les images déjà choisies sont conservées.';
         return;
@@ -159,7 +200,30 @@ function qdmHandlePhotoSelection(event) {
     qdmUpdatePhotoStatus();
 }
 
+/**
+ * Rôle : Réagir au retrait ou au rétablissement d'une photographie existante.
+ * Paramètres : Événement de changement de la case de retrait.
+ * Retour : Aucun.
+ */
+function qdmHandleExistingPhotoChange(event) {
+    if (qdmActiveExistingPhotoCount() + qdmSelectedPhotos.length > 3
+        && event.target instanceof HTMLInputElement
+    ) {
+        event.target.checked = true;
+        qdmPhotoStatus.textContent = 'Trois photographies sont autorisées au maximum. Retirez d’abord une autre image.';
+        return;
+    }
+
+    qdmRenderPhotoPreviews(qdmSelectedPhotos);
+    qdmSynchronizePhotoInput();
+    qdmUpdatePhotoStatus();
+}
+
 if (qdmPhotoInput && qdmPhotoPreviews && qdmPhotoStatus) {
     qdmPhotoInput.addEventListener('change', qdmHandlePhotoSelection);
+    qdmExistingPhotoRemovalInputs.forEach(function observeExistingPhoto(input) {
+        input.addEventListener('change', qdmHandleExistingPhotoChange);
+    });
+    qdmUpdatePhotoStatus();
 }
 

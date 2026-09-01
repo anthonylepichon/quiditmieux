@@ -16,38 +16,89 @@
 @use "../abstracts/mixins" as mixins;
 
 .site-footer {
-  padding-block: var(--space-8);
-  border-top: 0.0625rem solid var(--color-border-default);
-  background: var(--color-surface);
+  padding: 0;
+  background: transparent;
 }
 
 .site-footer__inner {
   @include mixins.content-container;
 
-  display: flex;
-  min-height: 7rem;
+  position: relative;
+  display: block;
+  height: 7rem;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-6);
+  gap: 1.5rem;
+  border-top: 0.0625rem solid var(--color-border-default);
+  background: var(--color-surface);
+}
+
+.site-footer .brand {
+  position: absolute;
+  top: 1.8125rem;
+  left: 0;
+  width: 13.75rem;
+  height: 3rem;
 }
 
 .site-footer__links {
+  position: absolute;
+  top: 2.8125rem;
+  left: 23.125rem;
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-4) var(--space-6);
+  gap: 1rem;
   list-style: none;
+}
+
+.site-footer__links li + li::before {
+  margin-right: 1rem;
+  color: var(--color-text-secondary);
+  content: "·";
 }
 
 .site-footer__links a,
 .site-footer__legal,
 .site-footer__privacy {
-  color: var(--color-text-tertiary);
+  color: var(--color-text-secondary);
   font-size: 0.875rem;
+}
+
+.site-footer__links a {
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.site-footer__privacy {
+  position: absolute;
+  top: 2.8125rem;
+  left: 60.5625rem;
+  color: var(--color-text-brand);
+  font-size: 0.8125rem;
+  font-weight: 700;
 }
 
 @media (max-width: variables.$breakpoint-tablet) {
   .site-footer__inner {
+    display: flex;
+    height: auto;
+    min-height: 7rem;
     align-items: flex-start;
     flex-direction: column;
+    padding: 1.5rem;
+  }
+
+  .site-footer .brand,
+  .site-footer__links,
+  .site-footer__privacy {
+    position: static;
+  }
+
+  .site-footer__links {
+    gap: 0.75rem;
+  }
+
+  .site-footer__links li + li::before {
+    margin-right: 0.75rem;
   }
 }

@@ -6,6 +6,7 @@
  */
 
 const qdmParticipationStatus = document.querySelector('[data-participation-status]');
+const qdmParticipationBadge = document.querySelector('[data-participation-badge]');
 const qdmCarouselTimers = new WeakMap();
 
 /**
@@ -250,6 +251,45 @@ function qdmUpdateFollowForm(form, data) {
 }
 
 /**
+ * Rôle : Actualiser le badge de participation après un changement de suivi confirmé.
+ * Paramètres : Données JSON validées contenant l'état de suivi obtenu.
+ * Retour : Aucun.
+ */
+function qdmUpdateFollowBadge(data) {
+    if (!qdmParticipationBadge || qdmParticipationBadge.dataset.hasBid === 'true') {
+        return;
+    }
+
+    if (data.is_following) {
+        qdmParticipationBadge.textContent = 'Annonce suivie';
+        return;
+    }
+
+    const defaultLabel = qdmParticipationBadge.dataset.defaultLabel;
+
+    if (typeof defaultLabel === 'string' && defaultLabel !== '') {
+        qdmParticipationBadge.textContent = defaultLabel;
+    } else {
+        qdmParticipationBadge.textContent = 'Vente en cours';
+    }
+}
+
+/**
+ * Rôle : Afficher le statut de meilleure enchère après un dépôt accepté par le serveur.
+ * Paramètres : Aucun.
+ * Retour : Aucun.
+ */
+function qdmUpdateBidBadge() {
+    if (!qdmParticipationBadge) {
+        return;
+    }
+
+    qdmParticipationBadge.textContent = 'Meilleure enchère';
+    qdmParticipationBadge.dataset.hasBid = 'true';
+    qdmParticipationBadge.dataset.isBestBidder = 'true';
+}
+
+/**
  * Rôle : Envoyer une demande de suivi et conserver l'état visible en cas d'échec réseau.
  * Paramètres : Événement de soumission.
  * Retour : Aucun.
@@ -277,6 +317,7 @@ async function qdmSubmitFollow(event) {
 
         if (data.success) {
             qdmUpdateFollowForm(form, data);
+            qdmUpdateFollowBadge(data);
         }
     } catch (error) {
         qdmParticipationStatus.textContent = 'Le suivi n’a pas pu être actualisé. Utilisez de nouveau le bouton.';
@@ -347,6 +388,7 @@ async function qdmSubmitBid(event) {
 
         if (data.success) {
             qdmUpdateBidDisplay(form, data);
+            qdmUpdateBidBadge();
         } else if (typeof data.minimum_bid === 'string') {
             qdmUpdateBidDisplay(form, data);
         }

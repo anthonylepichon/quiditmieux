@@ -12,13 +12,18 @@
  * Complète le thème, la normalisation et la typographie.
  */
 
+html,
+body {
+  overflow-x: clip;
+}
+
 body {
   min-width: 20rem;
   min-height: 100vh;
   background: var(--color-page);
   color: var(--color-text-primary);
   font-family: var(--font-family-primary);
-  font-size: 1rem;
+  font-size: 0.9375rem;
   line-height: 1.5;
   text-rendering: optimizeLegibility;
 }

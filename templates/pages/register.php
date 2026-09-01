@@ -13,30 +13,40 @@ $values = $data['values'];
 $errors = $data['errors'];
 $successMessage = $data['success_message'];
 $csrfToken = $data['csrf_token'];
+$hasErrors = $errors !== [];
+$globalErrorMessage = 'Corrigez les champs signalés avant de créer votre compte.';
+
+if (isset($errors['form'])) {
+    $globalErrorMessage = (string) $errors['form'];
+}
 $isConnected = false;
 $currentPage = 'register';
 $pageTitle = 'Créer un compte — QUIDITMIEUX';
 $pageDescription = 'Créez votre compte QUIDITMIEUX.';
 ?>
-<main class="auth-page container">
-        <section class="auth-card glass-panel" aria-labelledby="register-title">
+<main class="auth-page auth-page--register container">
+        <section class="auth-card auth-card--register glass-panel" aria-labelledby="register-title">
             <div class="auth-card__form-panel">
                 <div class="section-heading">
                     <p class="eyebrow">Rejoindre QUIDITMIEUX</p>
                     <h1 id="register-title">Créer votre compte</h1>
                 </div>
 
+            <?php if ($hasErrors): ?>
+                <div class="alert alert--error alert--illustrated auth-card__introduction" role="alert">
+                    <strong>Inscription à vérifier</strong>
+                    <span><?= htmlspecialchars($globalErrorMessage, ENT_QUOTES, 'UTF-8') ?></span>
+                </div>
+            <?php elseif ($successMessage !== null): ?>
+                <div class="alert alert--success alert--illustrated auth-card__introduction" role="status">
+                    <strong>Compte créé</strong>
+                    <span><?= htmlspecialchars($successMessage, ENT_QUOTES, 'UTF-8') ?></span>
+                </div>
+            <?php else: ?>
                 <div class="alert alert--info auth-card__introduction" role="note">
                     <strong>Un compte, simplement</strong>
                     <span>Renseignez les quatre champs puis vérifiez les règles indiquées.</span>
                 </div>
-
-            <?php if ($successMessage !== null): ?>
-                <div class="alert alert--success" role="status"><?= htmlspecialchars($successMessage, ENT_QUOTES, 'UTF-8') ?></div>
-            <?php endif; ?>
-
-            <?php if (isset($errors['form'])): ?>
-                <div class="alert alert--error" role="alert"><?= htmlspecialchars((string) $errors['form'], ENT_QUOTES, 'UTF-8') ?></div>
             <?php endif; ?>
 
             <form action="index.php?route=register" method="post" novalidate>
@@ -48,26 +58,30 @@ $pageDescription = 'Créez votre compte QUIDITMIEUX.';
                 <div class="form-grid">
                     <div class="form-field">
                         <label class="form-field__label" for="pseudo">Pseudo</label>
-                        <input class="form-control" id="pseudo" name="pseudo" type="text" required minlength="3" maxlength="30" autocomplete="username" value="<?= htmlspecialchars((string) ($values['pseudo'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" aria-describedby="pseudo-help pseudo-error" <?= isset($errors['pseudo']) ? 'aria-invalid="true"' : '' ?>>
-                        <span class="form-field__help" id="pseudo-help">3 à 30 caractères : lettres, chiffres, tirets et tirets bas.</span>
+                        <input class="form-control" id="pseudo" name="pseudo" type="text" required minlength="3" maxlength="30" autocomplete="username" placeholder="Votre pseudo" value="<?= htmlspecialchars((string) ($values['pseudo'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" aria-describedby="pseudo-help pseudo-error" <?= isset($errors['pseudo']) ? 'aria-invalid="true"' : '' ?>>
+                        <span class="form-field__help visually-hidden" id="pseudo-help">3 à 30 caractères : lettres, chiffres, tirets et tirets bas.</span>
                         <span class="form-field__error" id="pseudo-error"><?= isset($errors['pseudo']) ? htmlspecialchars((string) $errors['pseudo'], ENT_QUOTES, 'UTF-8') : '' ?></span>
                     </div>
                     <div class="form-field">
                         <label class="form-field__label" for="email">Adresse électronique</label>
-                        <input class="form-control" id="email" name="email" type="email" required maxlength="254" autocomplete="email" value="<?= htmlspecialchars((string) ($values['email'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" aria-describedby="email-error" <?= isset($errors['email']) ? 'aria-invalid="true"' : '' ?>>
+                        <input class="form-control" id="email" name="email" type="email" required maxlength="254" autocomplete="email" placeholder="vous@exemple.fr" value="<?= htmlspecialchars((string) ($values['email'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" aria-describedby="email-error" <?= isset($errors['email']) ? 'aria-invalid="true"' : '' ?>>
                         <span class="form-field__error" id="email-error"><?= isset($errors['email']) ? htmlspecialchars((string) $errors['email'], ENT_QUOTES, 'UTF-8') : '' ?></span>
                     </div>
                     <div class="form-field">
                         <label class="form-field__label" for="password">Mot de passe</label>
-                        <input class="form-control" id="password" name="password" type="password" required minlength="8" autocomplete="new-password" aria-describedby="password-help password-error" <?= isset($errors['password']) ? 'aria-invalid="true"' : '' ?>>
-                        <span class="form-field__help" id="password-help">8 caractères minimum avec majuscule, minuscule, chiffre et caractère spécial.</span>
+                        <input class="form-control" id="password" name="password" type="password" required minlength="8" autocomplete="new-password" placeholder="••••••••" aria-describedby="password-help password-error" <?= isset($errors['password']) ? 'aria-invalid="true"' : '' ?>>
+                        <span class="form-field__help visually-hidden" id="password-help">8 caractères minimum avec majuscule, minuscule, chiffre et caractère spécial.</span>
                         <span class="form-field__error" id="password-error"><?= isset($errors['password']) ? htmlspecialchars((string) $errors['password'], ENT_QUOTES, 'UTF-8') : '' ?></span>
                     </div>
                     <div class="form-field">
-                        <label class="form-field__label" for="password-confirmation">Confirmer le mot de passe</label>
-                        <input class="form-control" id="password-confirmation" name="password_confirmation" type="password" required autocomplete="new-password" aria-describedby="confirmation-error" <?= isset($errors['password_confirmation']) ? 'aria-invalid="true"' : '' ?>>
+                        <label class="form-field__label" for="password-confirmation">Confirmation du mot de passe</label>
+                        <input class="form-control" id="password-confirmation" name="password_confirmation" type="password" required autocomplete="new-password" placeholder="••••••••" aria-describedby="confirmation-error" <?= isset($errors['password_confirmation']) ? 'aria-invalid="true"' : '' ?>>
                         <span class="form-field__error" id="confirmation-error"><?= isset($errors['password_confirmation']) ? htmlspecialchars((string) $errors['password_confirmation'], ENT_QUOTES, 'UTF-8') : '' ?></span>
                     </div>
+                </div>
+                <div class="auth-card__rules">
+                    <p>Pseudo : 3 à 30 caractères, lettres, chiffres, tirets et tirets bas.</p>
+                    <p>Mot de passe : 8 caractères minimum avec majuscule, minuscule, chiffre et caractère spécial.</p>
                 </div>
                 <div class="auth-card__actions">
                     <button class="button button--primary" type="submit">Créer mon compte</button>
@@ -76,6 +90,7 @@ $pageDescription = 'Créez votre compte QUIDITMIEUX.';
             </form>
             </div>
             <aside class="auth-card__illustration" aria-label="Présentation de la communauté">
+                <img class="auth-card__halo" src="public/assets/images/decorations/halo-register.svg" alt="" width="360" height="360">
                 <img class="auth-card__character" src="public/assets/images/illustrations/character-planet.png" alt="" width="216" height="354">
                 <div class="auth-card__illustration-copy">
                     <img src="public/assets/images/icons/feature-icon-02.svg" alt="" width="70" height="70">

@@ -3,97 +3,442 @@
  * Mise en page du formulaire de création et de modification d'une annonce.
  *
  * Rôle :
- * Organiser les champs de vente et la gestion visuelle des photographies.
+ * Reproduire la géométrie du formulaire et de sa gestion des photographies.
  *
  * Tâches :
- * Dimensionner le panneau, les aperçus, les actions et les états responsives.
+ * Positionner les champs, l'introduction, l'alerte, les aperçus et les actions.
  *
  * Liens avec les autres fichiers :
  * Utilisé par listing-form.php et listing-form.js.
  */
 
 .listing-form-page {
-  padding-block: var(--space-6) var(--space-12);
+  padding-block: 0.25rem 4.125rem;
 }
 
 .listing-form-panel {
-  padding: clamp(var(--space-5), 4vw, var(--space-10));
+  position: relative;
+  height: 70.625rem;
+  overflow: hidden;
+  backdrop-filter: none;
+  box-shadow: none;
 }
 
 .listing-form-panel__introduction {
+  position: absolute;
+  top: 1.6875rem;
+  left: 1.9375rem;
   display: flex;
-  min-height: 9.375rem;
+  width: 71rem;
+  height: 9.375rem;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-6);
   overflow: hidden;
-  padding: var(--space-5) var(--space-7);
+  padding: 1.25rem 1.6875rem;
   border: 0.0625rem solid var(--color-border-accent);
   border-radius: 1.375rem;
   background: var(--color-surface-accent-soft);
 }
 
-.listing-form-panel__introduction img {
-  align-self: flex-start;
-  object-fit: contain;
+.listing-form-panel__introduction .section-heading {
+  display: block;
 }
 
-.listing-form-panel form {
-  display: grid;
-  gap: var(--space-8);
-  margin-top: var(--space-7);
+.listing-form-panel__introduction h1 {
+  margin-top: 0.5rem;
+  font-size: 2.125rem;
+  line-height: normal;
+}
+
+.listing-form-panel__introduction .section-heading > p:last-child {
+  margin-top: 0.5rem;
+  font-size: 0.9375rem;
+  line-height: normal;
+}
+
+.listing-form-panel__introduction img {
+  position: absolute;
+  top: -0.5625rem;
+  right: 2.3125rem;
+  width: 11.125rem;
+  height: 10rem;
+  max-width: none;
+  object-fit: cover;
+}
+
+.listing-form-panel > .alert {
+  position: absolute;
+  z-index: 2;
+  top: 12.0625rem;
+  left: 1.9375rem;
+  width: 71rem;
+  height: 6.25rem;
+}
+
+.listing-form-panel > .alert--error {
+  flex-wrap: wrap;
+  align-content: center;
+  gap: 0.25rem;
+}
+
+.listing-form-panel > .alert--error > strong,
+.listing-form-panel > .alert--error > span {
+  display: block;
+  width: 100%;
+}
+
+.listing-form-panel > .alert--error > span {
+  font-size: 0.8125rem;
+}
+
+.listing-form-panel > form {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+}
+
+.listing-form-grid {
+  position: static;
+  display: block;
+}
+
+.listing-form-grid .form-field {
+  position: absolute;
+  width: auto;
+}
+
+.listing-form-grid .form-field__error {
+  min-height: 0.9rem;
+  line-height: 1.2;
+}
+
+.listing-field--title {
+  top: 19.9375rem;
+  left: 1.9375rem;
+  width: 33.75rem !important;
+}
+
+.listing-field--category {
+  top: 19.9375rem;
+  left: 37.1875rem;
+  width: 33.75rem !important;
+}
+
+.listing-field--description {
+  top: 27.3125rem;
+  left: 1.9375rem;
+  width: 33.75rem !important;
+}
+
+.listing-field--description textarea {
+  height: 7.75rem;
+  min-height: 7.75rem;
+  background: var(--color-page);
+}
+
+.listing-field--state {
+  top: 27.3125rem;
+  left: 37.1875rem;
+  width: 16.125rem !important;
+}
+
+.listing-field--price {
+  top: 27.3125rem;
+  left: 54.8125rem;
+  width: 16.125rem !important;
+}
+
+.listing-field--date {
+  top: 34.3125rem;
+  left: 37.1875rem;
+  width: 16.125rem !important;
+}
+
+.listing-field--time {
+  top: 34.3125rem;
+  left: 54.8125rem;
+  width: 16.125rem !important;
+}
+
+.listing-field--time .form-field__help {
+  line-height: 1.2;
+}
+
+.listing-field--time .form-field__error:empty {
+  display: none;
 }
 
 .photo-manager {
-  display: grid;
-  gap: var(--space-4);
-  padding: var(--space-5);
+  position: absolute;
+  top: 41.9375rem;
+  left: 1.9375rem;
+  width: 71rem;
+  height: 20rem;
+  padding: 0;
+  overflow: hidden;
   border: 0.0625rem solid var(--color-border-default);
-  border-radius: var(--radius-card);
+  border-radius: 1.25rem;
+  background: var(--color-surface-soft);
+}
+
+.photo-manager legend {
+  position: absolute;
+  top: 1.125rem;
+  left: 1.4375rem;
+  padding: 0;
+  font-size: 1.375rem;
+  font-weight: 900;
+}
+
+.photo-manager__help {
+  position: absolute;
+  top: 3.25rem;
+  left: 1.4375rem;
+  color: var(--color-text-secondary);
+  font-size: 0.8125rem;
+}
+
+.photo-manager__counter {
+  position: absolute;
+  top: 1.1875rem;
+  right: 1.6875rem;
+  display: grid;
+  width: 7.25rem;
+  height: 2rem;
+  place-items: center;
+  border-radius: 1rem;
+  background: var(--color-surface-accent-soft);
+  color: var(--color-text-brand);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.photo-manager > .form-field__error {
+  position: absolute;
+  z-index: 3;
+  right: 1.5rem;
+  bottom: 1rem;
+}
+
+.photo-manager__upload {
+  position: absolute;
+  top: 5.9375rem;
+  left: 1.4375rem;
+  display: grid;
+  width: 21.25rem;
+  height: 9.25rem;
+  align-content: center;
+  justify-items: center;
+  gap: 0.25rem;
+  border: 0.0625rem dashed var(--color-border-accent);
+  border-radius: 1rem;
+  background: var(--color-surface-soft);
+  cursor: pointer;
+  text-align: center;
+}
+
+.photo-manager__upload > span {
+  color: var(--color-text-action);
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 2.5rem;
+}
+
+.photo-manager__upload strong {
+  color: var(--color-text-primary);
+  font-size: 0.9375rem;
+}
+
+.photo-manager__upload small {
+  color: var(--color-text-tertiary);
+  font-size: 0.75rem;
+}
+
+.photo-manager__copy {
+  position: absolute;
+  top: 7rem;
+  left: 24.4375rem;
+  width: 38.75rem;
+}
+
+.photo-manager__copy strong {
+  color: var(--color-text-primary);
+  font-size: 1.125rem;
+}
+
+.photo-manager__copy p {
+  margin-top: 1rem;
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
+}
+
+.photo-manager:has(.photo-preview) .photo-manager__copy {
+  display: none;
 }
 
 .photo-preview-grid {
+  position: absolute;
+  z-index: 2;
+  top: 5rem;
+  left: 24.4375rem;
   display: grid;
+  width: 44.75rem;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--space-4);
+  gap: 0.75rem;
+}
+
+.photo-preview-grid:not(:has(.photo-preview)) {
+  display: none;
+}
+
+.photo-preview-grid__new {
+  display: contents;
 }
 
 .photo-preview {
   display: grid;
-  gap: var(--space-2);
-  padding: var(--space-3);
+  gap: 0.25rem;
+  padding: 0.5rem;
+  border: 0.0625rem solid var(--color-border-default);
   border-radius: var(--radius-field);
-  background: var(--color-surface-soft);
+  background: var(--color-surface);
+  font-size: 0.75rem;
 }
 
 .photo-preview img {
   width: 100%;
-  aspect-ratio: 4 / 3;
+  height: 6rem;
   border-radius: var(--radius-field);
   object-fit: cover;
 }
 
-.photo-preview span {
-  color: var(--color-text-primary);
-  font-size: 0.8125rem;
-  font-weight: 800;
+.photo-preview .button {
+  height: 2rem;
+  min-height: 2rem;
 }
 
 .listing-form-actions {
+  position: absolute;
+  top: 64.5625rem;
+  left: 1.9375rem;
   display: flex;
-  justify-content: flex-end;
-  gap: var(--space-3);
+  height: 3.25rem;
+  align-items: center;
+  gap: 1.5rem;
 }
 
-@media (max-width: 48rem) {
+.listing-form-actions .button {
+  width: 18.25rem;
+}
+
+.listing-form-actions p {
+  width: 49.25rem;
+  color: var(--color-text-secondary);
+  font-size: 0.8125rem;
+}
+
+@media (max-width: 64rem) {
+  .listing-form-page {
+    padding-block: 1rem 3rem;
+  }
+
+  .listing-form-panel {
+    height: auto;
+    padding: 1.5rem;
+    overflow: visible;
+  }
+
+  .listing-form-panel__introduction,
+  .listing-form-panel > .alert,
+  .listing-form-panel > form,
+  .listing-form-grid .form-field,
+  .photo-manager,
+  .listing-form-actions {
+    position: static;
+    width: 100% !important;
+    height: auto;
+  }
+
+  .listing-form-panel > .alert,
+  .listing-form-panel > form {
+    margin-top: 1rem;
+  }
+
+  .listing-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+  }
+
+  .listing-field--description {
+    grid-column: 1 / -1;
+  }
+
+  .photo-manager {
+    display: grid;
+    min-height: 0;
+    margin-top: 1.5rem;
+    padding: 1.25rem;
+    gap: 1rem;
+  }
+
+  .photo-manager legend,
+  .photo-manager__help,
+  .photo-manager__counter,
+  .photo-manager > .form-field__error,
+  .photo-manager__upload,
+  .photo-manager__copy,
   .photo-preview-grid {
-    grid-template-columns: 1fr;
+    position: static;
+  }
+
+  .photo-manager legend {
+    padding-inline: 0.25rem;
+  }
+
+  .photo-manager__help,
+  .photo-manager__copy,
+  .photo-preview-grid {
+    width: 100%;
+  }
+
+  .photo-manager__counter {
+    justify-self: start;
+  }
+
+  .photo-manager__upload {
+    width: 100%;
+  }
+
+  .photo-manager > .form-field__error {
+    justify-self: start;
+  }
+
+  .listing-form-actions {
+    margin-top: 1.5rem;
   }
 }
 
-@media (max-width: 30rem) {
+@media (max-width: 40rem) {
+  .listing-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .listing-field--description {
+    grid-column: auto;
+  }
+
   .listing-form-actions {
     align-items: stretch;
-    flex-direction: column-reverse;
+    flex-direction: column;
+  }
+
+  .listing-form-actions .button,
+  .listing-form-actions p {
+    width: 100%;
+  }
+
+  .photo-preview-grid {
+    grid-template-columns: 1fr;
   }
 }
