@@ -14,10 +14,35 @@ $errors = $data['errors'];
 $successMessage = $data['success_message'];
 $csrfToken = $data['csrf_token'];
 $hasErrors = $errors !== [];
-$globalErrorMessage = 'Corrigez les champs signalés avant de créer votre compte.';
+$alertTitle = 'Vérifiez les informations indiquées';
+$alertMessage = 'Plusieurs champs doivent être corrigés avant l’inscription.';
 
-if (isset($errors['form'])) {
-    $globalErrorMessage = (string) $errors['form'];
+if ($hasErrors) {
+    $errorKeys = array_keys($errors);
+    sort($errorKeys);
+
+    if ($errorKeys === ['form']
+        && $errors['form'] === 'Veuillez réessayer. Aucun mécanisme technique n’est affiché.'
+    ) {
+        $alertTitle = 'Votre inscription n’a pas pu être validée';
+        $alertMessage = 'Veuillez réessayer. Aucun mécanisme technique n’est affiché.';
+    } elseif ($errorKeys === ['form']) {
+        $alertTitle = 'Votre inscription n’a pas pu être validée';
+        $alertMessage = 'Veuillez réessayer. Aucun mécanisme technique n’est affiché.';
+    } elseif ($errorKeys === ['pseudo'] && $errors['pseudo'] === 'Ce pseudo est déjà utilisé.') {
+        $alertTitle = 'Ce pseudo est déjà utilisé';
+        $alertMessage = 'Choisissez un autre pseudo pour continuer.';
+    } elseif ($errorKeys === ['email']
+        && $errors['email'] === 'Cette adresse électronique est déjà utilisée.'
+    ) {
+        $alertTitle = 'Cette adresse électronique est déjà utilisée';
+        $alertMessage = 'Utilisez une autre adresse électronique pour continuer.';
+    } elseif (array_diff($errorKeys, ['password', 'password_confirmation']) === []
+        && (isset($errors['password']) || isset($errors['password_confirmation']))
+    ) {
+        $alertTitle = 'Le mot de passe doit être corrigé';
+        $alertMessage = 'Respectez toutes les règles et saisissez une confirmation identique.';
+    }
 }
 $isConnected = false;
 $currentPage = 'register';
@@ -28,19 +53,19 @@ $pageDescription = 'Créez votre compte QUIDITMIEUX.';
         <section class="auth-card auth-card--register glass-panel" aria-labelledby="register-title">
             <div class="auth-card__form-panel">
                 <div class="section-heading">
-                    <p class="eyebrow">Rejoindre QUIDITMIEUX</p>
-                    <h1 id="register-title">Créer votre compte</h1>
+                    <p class="eyebrow">REJOINDRE QUIDITMIEUX</p>
+                    <h1 id="register-title"><?php if ($successMessage !== null): ?>Bienvenue !<?php else: ?>Créer votre compte<?php endif; ?></h1>
                 </div>
 
             <?php if ($hasErrors): ?>
                 <div class="alert alert--error alert--illustrated auth-card__introduction" role="alert">
-                    <strong>Inscription à vérifier</strong>
-                    <span><?= htmlspecialchars($globalErrorMessage, ENT_QUOTES, 'UTF-8') ?></span>
+                    <strong><?= htmlspecialchars($alertTitle, ENT_QUOTES, 'UTF-8') ?></strong>
+                    <?php if ($alertMessage !== ''): ?><span><?= htmlspecialchars($alertMessage, ENT_QUOTES, 'UTF-8') ?></span><?php endif; ?>
                 </div>
             <?php elseif ($successMessage !== null): ?>
                 <div class="alert alert--success alert--illustrated auth-card__introduction" role="status">
-                    <strong>Compte créé</strong>
-                    <span><?= htmlspecialchars($successMessage, ENT_QUOTES, 'UTF-8') ?></span>
+                    <strong>Compte créé avec succès</strong>
+                    <span>Vous pouvez maintenant vous connecter et participer aux enchères.</span>
                 </div>
             <?php else: ?>
                 <div class="alert alert--info auth-card__introduction" role="note">
@@ -49,6 +74,7 @@ $pageDescription = 'Créez votre compte QUIDITMIEUX.';
                 </div>
             <?php endif; ?>
 
+            <?php if ($successMessage === null): ?>
             <form action="index.php?route=register" method="post" novalidate>
                 <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
                 <div class="honeypot" aria-hidden="true">
@@ -59,7 +85,7 @@ $pageDescription = 'Créez votre compte QUIDITMIEUX.';
                     <div class="form-field">
                         <label class="form-field__label" for="pseudo">Pseudo</label>
                         <input class="form-control" id="pseudo" name="pseudo" type="text" required minlength="3" maxlength="30" autocomplete="username" placeholder="Votre pseudo" value="<?= htmlspecialchars((string) ($values['pseudo'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" aria-describedby="pseudo-help pseudo-error" <?= isset($errors['pseudo']) ? 'aria-invalid="true"' : '' ?>>
-                        <span class="form-field__help visually-hidden" id="pseudo-help">3 à 30 caractères : lettres, chiffres, tirets et tirets bas.</span>
+                        <span class="form-field__help visually-hidden" id="pseudo-help">Pseudo : 3 à 30 caractères, lettres, chiffres, _ ou -, sans espace ni @.</span>
                         <span class="form-field__error" id="pseudo-error"><?= isset($errors['pseudo']) ? htmlspecialchars((string) $errors['pseudo'], ENT_QUOTES, 'UTF-8') : '' ?></span>
                     </div>
                     <div class="form-field">
@@ -70,7 +96,7 @@ $pageDescription = 'Créez votre compte QUIDITMIEUX.';
                     <div class="form-field">
                         <label class="form-field__label" for="password">Mot de passe</label>
                         <input class="form-control" id="password" name="password" type="password" required minlength="8" autocomplete="new-password" placeholder="••••••••" aria-describedby="password-help password-error" <?= isset($errors['password']) ? 'aria-invalid="true"' : '' ?>>
-                        <span class="form-field__help visually-hidden" id="password-help">8 caractères minimum avec majuscule, minuscule, chiffre et caractère spécial.</span>
+                        <span class="form-field__help visually-hidden" id="password-help">Mot de passe : 8 caractères minimum avec majuscule, minuscule, chiffre et caractère spécial.</span>
                         <span class="form-field__error" id="password-error"><?= isset($errors['password']) ? htmlspecialchars((string) $errors['password'], ENT_QUOTES, 'UTF-8') : '' ?></span>
                     </div>
                     <div class="form-field">
@@ -80,14 +106,22 @@ $pageDescription = 'Créez votre compte QUIDITMIEUX.';
                     </div>
                 </div>
                 <div class="auth-card__rules">
-                    <p>Pseudo : 3 à 30 caractères, lettres, chiffres, tirets et tirets bas.</p>
+                    <p>Pseudo : 3 à 30 caractères, lettres, chiffres, _ ou -, sans espace ni @.</p>
                     <p>Mot de passe : 8 caractères minimum avec majuscule, minuscule, chiffre et caractère spécial.</p>
                 </div>
                 <div class="auth-card__actions">
                     <button class="button button--primary" type="submit">Créer mon compte</button>
-                    <a href="index.php?route=login_form">Déjà inscrit ? Se connecter →</a>
+                    <a href="index.php?route=login_form">Déjà inscrit ?  Se connecter →</a>
                 </div>
             </form>
+            <?php else: ?>
+                <div class="auth-confirmation auth-confirmation--register" role="status" aria-labelledby="register-confirmation-title">
+                    <h2 id="register-confirmation-title">Votre compte est prêt.</h2>
+                    <p class="auth-confirmation__body">Connectez-vous avec votre pseudo ou votre adresse électronique pour suivre une annonce ou enchérir.</p>
+                    <p class="auth-confirmation__note">Votre compte vous permet désormais de suivre les annonces et d’enchérir.</p>
+                    <a class="button button--primary" href="index.php?route=login_form">Se connecter</a>
+                </div>
+            <?php endif; ?>
             </div>
             <aside class="auth-card__illustration" aria-label="Présentation de la communauté">
                 <img class="auth-card__halo" src="public/assets/images/decorations/halo-register.svg" alt="" width="360" height="360">

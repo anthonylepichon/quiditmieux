@@ -28,24 +28,24 @@ class ParticipationController extends Controller
         $amountText = $this->readPostString('amount');
 
         if ($userId === null) {
-            $this->respondBid(false, 'Connectez-vous pour enchérir.', $listingId);
+            $this->respondBid(false, 'Connectez-vous pour suivre cette annonce ou enchérir.', $listingId);
             return;
         }
 
         if ($listingId === null || !$this->session->estJetonCsrfValide($this->readPostString('csrf_token'))) {
-            $this->respondBid(false, 'La demande d’enchère ne peut pas être confirmée.', $listingId);
+            $this->respondBid(false, 'Enchère refusée', $listingId);
             return;
         }
 
         if (preg_match('/^(?:0|[1-9][0-9]{0,7})(?:\.[0-9]{1,2})?$/', $amountText) !== 1) {
-            $this->respondBid(false, 'Saisissez un montant positif avec deux décimales au maximum.', $listingId);
+            $this->respondBid(false, 'Enchère refusée', $listingId);
             return;
         }
 
         $amount = (float) $amountText;
 
         if (!$this->database->beginTransaction()) {
-            $this->respondBid(false, 'L’enchère ne peut pas être enregistrée pour le moment.', $listingId);
+            $this->respondBid(false, 'Enchère refusée', $listingId);
             return;
         }
 
@@ -55,19 +55,19 @@ class ParticipationController extends Controller
 
         if ($listing === null) {
             $this->database->rollback();
-            $this->respondBid(false, 'L’annonce demandée est introuvable.', $listingId);
+            $this->respondBid(false, 'Enchère refusée', $listingId);
             return;
         }
 
         if ((int) $listing['utilisateur_id'] === $userId) {
             $this->database->rollback();
-            $this->respondBid(false, 'Vous ne pouvez pas enchérir sur votre propre annonce.', $listingId);
+            $this->respondBid(false, 'Enchère refusée', $listingId);
             return;
         }
 
         if ((string) $listing['date_heure_fin'] <= gmdate('Y-m-d H:i:s')) {
             $this->database->rollback();
-            $this->respondBid(false, 'Cette vente est terminée.', $listingId);
+            $this->respondBid(false, 'Vente terminée', $listingId);
             return;
         }
 
@@ -82,14 +82,16 @@ class ParticipationController extends Controller
 
         if ($amount < $minimumBid) {
             $this->database->rollback();
-            $message = 'Le montant minimum est de ' . number_format($minimumBid, 2, ',', ' ') . ' €.';
-            $this->respondBid(false, $message, $listingId, $summary, $minimumBid);
+            $message = 'Montant insuffisant : minimum '
+                . number_format($minimumBid, 2, ',', ' ')
+                . ' €.';
+            $this->respondBid(false, $message, $listingId, $summary, $minimumBid, $amount);
             return;
         }
 
         if (!$bidModel->placeBid($userId, $listingId, $amount)) {
             $this->database->rollback();
-            $this->respondBid(false, 'L’enchère ne peut pas être enregistrée pour le moment.', $listingId);
+            $this->respondBid(false, 'Enchère refusée', $listingId);
             return;
         }
 
@@ -97,12 +99,18 @@ class ParticipationController extends Controller
 
         if (!$this->database->commit()) {
             $this->database->rollback();
-            $this->respondBid(false, 'L’enchère ne peut pas être confirmée pour le moment.', $listingId);
+            $this->respondBid(false, 'Enchère refusée', $listingId);
             return;
         }
 
         $nextMinimum = round($amount + 0.01, 2);
-        $this->respondBid(true, 'Votre enchère est enregistrée.', $listingId, $updatedSummary, $nextMinimum);
+        $this->respondBid(
+            true,
+            'Vous êtes actuellement le mieux-disant. Vous pouvez enchérir de nouveau si nécessaire.',
+            $listingId,
+            $updatedSummary,
+            $nextMinimum
+        );
     }
 
     /**
@@ -136,12 +144,12 @@ class ParticipationController extends Controller
         $listingId = $this->readPositivePostIdentifier('id');
 
         if ($userId === null) {
-            $this->respond(false, 'Connectez-vous pour suivre cette annonce.', $listingId, false);
+            $this->respond(false, 'Connectez-vous pour suivre cette annonce ou enchérir.', $listingId, false);
             return;
         }
 
         if ($listingId === null || !$this->session->estJetonCsrfValide($this->readPostString('csrf_token'))) {
-            $this->respond(false, 'La demande de suivi ne peut pas être confirmée.', $listingId, false);
+            $this->respond(false, 'Le suivi ne peut pas être actualisé pour le moment.', $listingId, false);
             return;
         }
 
@@ -149,33 +157,33 @@ class ParticipationController extends Controller
         $listing = $listingModel->getDetail($listingId);
 
         if ($listing === null) {
-            $this->respond(false, 'L’annonce demandée est introuvable.', $listingId, false);
+            $this->respond(false, 'Le suivi ne peut pas être actualisé pour le moment.', $listingId, false);
             return;
         }
 
         if ((int) $listing['utilisateur_id'] === $userId) {
-            $this->respond(false, 'Vous ne pouvez pas suivre votre propre annonce.', $listingId, false);
+            $this->respond(false, 'Le suivi ne peut pas être actualisé pour le moment.', $listingId, false);
             return;
         }
 
         if ((string) $listing['date_heure_fin'] <= gmdate('Y-m-d H:i:s')) {
-            $this->respond(false, 'Cette vente est terminée.', $listingId, false);
+            $this->respond(false, 'Vente terminée', $listingId, false);
             return;
         }
 
         $followModel = new FollowModel($this->database);
         $changed = false;
-        $message = 'Annonce retirée de vos suivis.';
+        $message = 'Vous ne suivez pas encore cette annonce. Suivez-la pour la retrouver dans votre tableau de bord.';
 
         if ($shouldFollow) {
             $changed = $followModel->follow($userId, $listingId);
-            $message = 'Annonce ajoutée à vos suivis.';
+            $message = 'Vous pouvez continuer à suivre l’annonce et enchérir.';
         } else {
             $changed = $followModel->unfollow($userId, $listingId);
         }
 
         if (!$changed) {
-            $this->respond(false, 'Le suivi ne peut pas être modifié pour le moment.', $listingId, !$shouldFollow);
+            $this->respond(false, 'Le suivi ne peut pas être actualisé pour le moment.', $listingId, !$shouldFollow);
             return;
         }
 
@@ -206,13 +214,9 @@ class ParticipationController extends Controller
             return;
         }
 
-        $messageType = 'notice';
-
-        if ($success) {
-            $messageType = 'success';
+        if (!$success && $message !== '') {
+            $this->session->enregistrerMessageTemporaire('notice', $message);
         }
-
-        $this->session->enregistrerMessageTemporaire($messageType, $message);
 
         if ($listingId !== null) {
             $this->redirect('listing_detail', ['id' => $listingId]);
@@ -223,7 +227,7 @@ class ParticipationController extends Controller
 
     /**
      * Rôle : Envoyer le résultat d'une enchère en JSON ou appliquer le repli POST-Redirect-GET.
-     * Paramètres : Succès, message, annonce, résumé éventuel et prochain montant minimum.
+     * Paramètres : Succès, message, annonce, résumé, minimum et montant refusé éventuels.
      * Retour : Aucun.
      */
     private function respondBid(
@@ -231,7 +235,8 @@ class ParticipationController extends Controller
         string $message,
         ?int $listingId,
         array $summary = [],
-        ?float $minimumBid = null
+        ?float $minimumBid = null,
+        ?float $attemptedAmount = null
     ): void {
         if ($this->isJsonRequest()) {
             $currentPrice = null;
@@ -262,13 +267,23 @@ class ParticipationController extends Controller
             return;
         }
 
-        $messageType = 'notice';
+        if (!$success
+            && $listingId !== null
+            && $minimumBid !== null
+            && $attemptedAmount !== null
+        ) {
+            $rejectionData = json_encode([
+                'listing_id' => $listingId,
+                'minimum' => $minimumBid,
+                'amount' => $attemptedAmount,
+            ]);
 
-        if ($success) {
-            $messageType = 'success';
+            if (is_string($rejectionData)) {
+                $this->session->enregistrerMessageTemporaire('bid_rejection', $rejectionData);
+            }
+        } elseif (!$success && $message !== '') {
+            $this->session->enregistrerMessageTemporaire('notice', $message);
         }
-
-        $this->session->enregistrerMessageTemporaire($messageType, $message);
 
         if ($listingId !== null) {
             $this->redirect('listing_detail', ['id' => $listingId]);

@@ -42,7 +42,6 @@ class UserController extends Controller
         $account = (new UserModel($this->database))->getAccount($userId);
         if ($account === null) {
             $this->session->deconnecterUtilisateur();
-            $this->session->enregistrerMessageTemporaire('notice', 'Le compte demandé est indisponible.');
             $this->redirect('home');
             return;
         }
@@ -74,7 +73,9 @@ class UserController extends Controller
         $account = $model->getAccount($userId);
 
         if ($account === null) {
-            $errors['form'] = 'Le compte ne peut pas être modifié pour le moment.';
+            $this->session->deconnecterUtilisateur();
+            $this->redirect('home');
+            return;
         } elseif ($currentPassword !== '' && (!isset($account['password_hash'])
             || !is_string($account['password_hash'])
             || !password_verify($currentPassword, $account['password_hash']))) {
@@ -83,7 +84,7 @@ class UserController extends Controller
 
         if ($errors === []) {
             if ($model->pseudoExists($values['pseudo'], $userId)) {
-                $errors['pseudo'] = 'Ce nom d’utilisateur est déjà utilisé.';
+                $errors['pseudo'] = 'Ce pseudo est déjà utilisé.';
             }
             if ($model->emailExists($values['email'], $userId)) {
                 $errors['email'] = 'Cette adresse électronique est déjà utilisée.';
@@ -108,12 +109,16 @@ class UserController extends Controller
             }
         }
         if (!$model->updateAccount($userId, $values['pseudo'], $values['email'], $passwordHash)) {
-            $this->renderAccountForm($values, ['form' => 'Les modifications ne peuvent pas être enregistrées pour le moment.'], null);
+            $this->renderAccountForm(
+                $values,
+                ['form' => 'Les modifications ne peuvent pas être enregistrées pour le moment.'],
+                null
+            );
             return;
         }
 
         $this->session->connecterUtilisateur($userId);
-        $this->session->enregistrerMessageTemporaire('success', 'Les informations de votre compte sont à jour.');
+        $this->session->enregistrerMessageTemporaire('success', 'Les champs de mot de passe ont été vidés après l’enregistrement.');
         $this->redirect('account_form');
     }
 
@@ -145,7 +150,10 @@ class UserController extends Controller
     {
         $userId = $this->session->obtenirIdentifiantUtilisateurConnecte();
         if ($userId === null) {
-            $this->json(['success' => false, 'message' => 'La session a expiré.']);
+            $this->json([
+                'success' => false,
+                'message' => 'Les dernières informations reçues restent affichées.',
+            ]);
             return;
         }
 
@@ -162,7 +170,10 @@ class UserController extends Controller
     {
         $userId = $this->session->obtenirIdentifiantUtilisateurConnecte();
         if ($userId === null) {
-            $this->json(['success' => false, 'message' => 'La session a expiré.']);
+            $this->json([
+                'success' => false,
+                'message' => 'Les dernières informations reçues restent affichées.',
+            ]);
             return;
         }
 
@@ -241,7 +252,14 @@ class UserController extends Controller
                 'user_best_bid' => $userBestBid,
                 'winner_id' => $this->readWinnerId($row),
                 'is_active' => $deadline > $now,
-                'deadline' => $deadline->setTimezone($paris)->format('d/m/Y à H:i'),
+                'deadline' => $this->formatFrenchDashboardDate(
+                    $deadline->setTimezone($paris),
+                    true
+                ),
+                'deadline_date' => $this->formatFrenchDashboardDate(
+                    $deadline->setTimezone($paris),
+                    false
+                ),
                 'photo_url' => $this->buildPhotoUrl($photos, $id),
                 'detail_url' => 'index.php?' . http_build_query(['route' => 'listing_detail', 'id' => $id]),
             ];
@@ -273,6 +291,26 @@ class UserController extends Controller
             return (int) $row['bid_count'];
         }
         return 0;
+    }
+
+    /**
+     * Rôle : Formater une échéance du tableau de bord avec un mois français abrégé.
+     * Paramètres : Date en heure de Paris et présence souhaitée de l’heure.
+     * Retour : Date lisible conforme aux cartes de la maquette.
+     */
+    private function formatFrenchDashboardDate(DateTimeImmutable $date, bool $includeTime): string
+    {
+        $months = [
+            1 => 'janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin',
+            'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.',
+        ];
+        $label = $date->format('j') . ' ' . $months[(int) $date->format('n')];
+
+        if ($includeTime) {
+            $label .= ' à ' . $date->format('H:i');
+        }
+
+        return $label;
     }
 
     /**
@@ -348,25 +386,25 @@ class UserController extends Controller
     {
         $errors = [];
         if (!$this->session->estJetonCsrfValide($this->readPostString('csrf_token'))) {
-            $errors['form'] = 'Le formulaire a expiré. Rechargez la page puis recommencez.';
+            $errors['form'] = 'Plusieurs champs doivent être corrigés avant l’enregistrement.';
         }
         if (mb_strlen($values['pseudo']) < 3 || mb_strlen($values['pseudo']) > 30) {
-            $errors['pseudo'] = 'Le pseudo doit contenir entre 3 et 30 caractères.';
+            $errors['pseudo'] = 'Format du pseudo invalide.';
         } elseif (preg_match('/^[A-Za-z0-9_-]+$/D', $values['pseudo']) !== 1) {
-            $errors['pseudo'] = 'Utilisez uniquement des lettres, chiffres, tirets ou tirets bas.';
+            $errors['pseudo'] = 'Format du pseudo invalide.';
         }
         if (mb_strlen($values['email']) > 254 || filter_var($values['email'], FILTER_VALIDATE_EMAIL) === false) {
-            $errors['email'] = 'Saisissez une adresse électronique valide de 254 caractères au maximum.';
+            $errors['email'] = 'Adresse électronique invalide.';
         }
         if ($currentPassword === '') {
-            $errors['current_password'] = 'Saisissez votre mot de passe actuel pour confirmer les modifications.';
+            $errors['current_password'] = 'Le mot de passe actuel est requis.';
         }
         if ($newPassword !== '' || $confirmation !== '') {
             if (!$this->isStrongPassword($newPassword)) {
-                $errors['new_password'] = 'Le nouveau mot de passe doit contenir au moins 8 caractères, une majuscule, une minuscule, un chiffre et un caractère spécial.';
+                $errors['new_password'] = 'Le nouveau mot de passe ne respecte pas les règles requises.';
             }
             if ($confirmation === '' || !hash_equals($newPassword, $confirmation)) {
-                $errors['new_password_confirmation'] = 'La confirmation doit être identique au nouveau mot de passe.';
+                $errors['new_password_confirmation'] = 'La confirmation ne correspond pas au nouveau mot de passe.';
             }
         }
         return $errors;

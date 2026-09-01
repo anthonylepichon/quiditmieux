@@ -137,14 +137,20 @@ async function qdmRequestResults(requestUrl, addHistoryEntry, moveFocus) {
  */
 function qdmApplyResponse(responseData, moveFocus) {
     qdmUpdateForm(responseData);
-    qdmRenderErrors(responseData.errors);
+    qdmRenderErrors(responseData.errors, responseData.categories_available);
     qdmRenderMessage(responseData.state_key, responseData.message);
     qdmRenderListings(responseData.listings);
     qdmRenderPagination(responseData.pagination);
     qdmApplyResultsState(responseData);
 
     if (responseData.state_key === 'filtered_results') {
-        qdmResultsTitle.textContent = String(responseData.total_items) + ' annonces correspondent à votre recherche';
+        let resultLabel = ' annonce correspond à votre recherche';
+
+        if (Number(responseData.total_items) > 1) {
+            resultLabel = ' annonces correspondent à votre recherche';
+        }
+
+        qdmResultsTitle.textContent = String(responseData.total_items) + resultLabel;
         qdmResultsSummary.textContent = String(responseData.total_items) + ' résultats';
     } else if (responseData.state_key === 'no_results') {
         qdmResultsTitle.textContent = 'Résultats';
@@ -290,15 +296,23 @@ function qdmUpdateForm(responseData) {
 
     if (categoryField instanceof HTMLSelectElement) {
         categoryField.disabled = !responseData.categories_available;
+
+        if (categoryField.options.length > 0) {
+            if (responseData.categories_available) {
+                categoryField.options[0].textContent = 'Toutes les catégories';
+            } else {
+                categoryField.options[0].textContent = 'Indisponible';
+            }
+        }
     }
 }
 
 /**
  * Rôle : Afficher les erreurs de validation à proximité de leurs champs.
- * Paramètres : Objet associant les noms de champs à leurs messages.
+ * Paramètres : Objet associant les noms de champs à leurs messages et disponibilité des catégories.
  * Retour : Aucun.
  */
-function qdmRenderErrors(errors) {
+function qdmRenderErrors(errors, categoriesAvailable) {
     const errorElements = qdmSearchForm.querySelectorAll('[data-error-for]');
 
     errorElements.forEach(function clearError(errorElement) {
@@ -315,18 +329,31 @@ function qdmRenderErrors(errors) {
         return;
     }
 
+    const hasPriceRangeError = typeof errors.minimum_price === 'string'
+        && errors.maximum_price === 'Le prix maximum doit être supérieur ou égal au prix minimum.';
+
     Object.keys(errors).forEach(function displayError(fieldName) {
         const errorElement = qdmSearchForm.querySelector('[data-error-for="' + fieldName + '"]');
         const field = qdmSearchForm.elements.namedItem(fieldName);
 
         if (errorElement instanceof HTMLElement && typeof errors[fieldName] === 'string') {
-            errorElement.textContent = errors[fieldName];
+            if (hasPriceRangeError && fieldName === 'maximum_price') {
+                errorElement.textContent = 'Le maximum doit être supérieur ou égal au minimum.';
+            }
         }
 
         if (field instanceof HTMLElement) {
             field.setAttribute('aria-invalid', 'true');
         }
     });
+
+    if (categoriesAvailable === false) {
+        const categoryError = qdmSearchForm.querySelector('[data-error-for="category"]');
+
+        if (categoryError instanceof HTMLElement) {
+            categoryError.textContent = 'Catégories temporairement indisponibles.';
+        }
+    }
 }
 
 /**
@@ -336,6 +363,15 @@ function qdmRenderErrors(errors) {
  */
 function qdmRenderMessage(stateKey, message) {
     qdmResultsMessage.replaceChildren();
+
+    const maximumPriceError = qdmSearchForm.querySelector('[data-error-for="maximum_price"]');
+
+    if (stateKey === 'invalid_criteria'
+        && maximumPriceError instanceof HTMLElement
+        && maximumPriceError.textContent === 'Le maximum doit être supérieur ou égal au minimum.'
+    ) {
+        message = 'Le prix maximum doit être supérieur ou égal au prix minimum.';
+    }
 
     if (stateKey === 'no_results') {
         const emptyState = document.createElement('div');
@@ -360,26 +396,38 @@ function qdmRenderMessage(stateKey, message) {
         return;
     }
 
-    if (stateKey === 'invalid_criteria' || stateKey === 'search_error') {
-        let title = 'Corrigez les critères indiqués';
+    if (stateKey === 'search_error') {
+        qdmResultsMessage.append(qdmCreateStateAlert(
+            'error',
+            'Recherche temporairement indisponible',
+            message,
+            'alert'
+        ));
+        return;
+    }
 
-        if (stateKey === 'search_error') {
-            title = 'Recherche temporairement indisponible';
-        }
+    if (stateKey === 'invalid_criteria') {
+        qdmResultsMessage.append(qdmCreateStateAlert(
+            'error',
+            'Corrigez les critères indiqués',
+            message,
+            'alert'
+        ));
 
-        qdmResultsMessage.append(qdmCreateStateAlert('error', title, message, 'alert'));
         const blockedState = document.createElement('div');
         blockedState.className = 'search-blocked-state';
         const blockedTitle = document.createElement('h3');
         blockedTitle.textContent = 'La recherche n’a pas été exécutée.';
-        const blockedCopy = document.createElement('p');
-        blockedCopy.textContent = 'Corrigez les champs signalés, puis relancez la recherche. Vos autres critères sont conservés.';
         const blockedImage = document.createElement('img');
         blockedImage.src = 'public/assets/images/illustrations/shopping-cart.png';
         blockedImage.alt = '';
         blockedImage.width = 116;
         blockedImage.height = 164;
+
+        const blockedCopy = document.createElement('p');
+        blockedCopy.textContent = 'Corrigez les champs signalés, puis relancez la recherche. Vos autres critères sont conservés.';
         blockedState.append(blockedTitle, blockedCopy, blockedImage);
+
         qdmResultsMessage.append(blockedState);
         return;
     }

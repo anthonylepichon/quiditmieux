@@ -8,10 +8,17 @@
 const qdmPhotoInput = document.querySelector('[data-photo-input]');
 const qdmPhotoPreviews = document.querySelector('[data-photo-previews]');
 const qdmPhotoStatus = document.querySelector('[data-photo-status]');
+const qdmPhotoTitle = document.querySelector('[data-photo-title]');
 const qdmPhotoCounter = document.querySelector('[data-photo-counter]');
 const qdmPhotoTileStatus = document.querySelector('[data-photo-tile-status]');
 const qdmExistingPhotoRemovalInputs = document.querySelectorAll('input[name="remove_photos[]"]');
+const qdmListingForm = document.querySelector('[data-listing-form]');
+let qdmIsEditMode = false;
 let qdmSelectedPhotos = [];
+
+if (qdmListingForm && qdmListingForm.querySelector('input[name="id"]')) {
+    qdmIsEditMode = true;
+}
 
 /**
  * Rôle : Compter les photographies existantes qui seront conservées.
@@ -99,22 +106,36 @@ function qdmUpdatePhotoStatus() {
         if (activeExistingPhotoCount === 0) {
             qdmPhotoTileStatus.textContent = totalPhotoCount + ' / 3 — la première ajoutée sera principale';
         } else {
-            qdmPhotoTileStatus.textContent = totalPhotoCount + ' / 3 — toute nouvelle photo sera ajoutée à la fin';
+            qdmPhotoTileStatus.textContent = totalPhotoCount + ' / 3';
         }
     }
 
-    if (qdmSelectedPhotos.length === 0) {
-        if (activeExistingPhotoCount === 0) {
-            qdmPhotoStatus.textContent = 'Vous pouvez publier sans photo ou en ajouter jusqu’à trois.';
+    if (qdmPhotoTitle) {
+        if (totalPhotoCount === 0) {
+            qdmPhotoTitle.textContent = 'Aucune photographie ajoutée';
+        } else if (qdmIsEditMode) {
+            qdmPhotoTitle.textContent = 'Gestion des photographies';
         } else {
-            qdmPhotoStatus.textContent = activeExistingPhotoCount + ' photographie(s) déjà enregistrée(s).';
+            qdmPhotoTitle.textContent = 'Photographies ajoutées';
         }
+    }
 
+    if (totalPhotoCount >= 3) {
+        qdmPhotoStatus.textContent = 'Capacité atteinte. Supprimez une photo pour en ajouter une autre. La suivante devient principale si la première est supprimée.';
         return;
     }
 
-    qdmPhotoStatus.textContent = qdmSelectedPhotos.length
-        + ' photographie(s) prête(s) à être envoyée(s).';
+    if (totalPhotoCount === 0) {
+        qdmPhotoStatus.textContent = 'Vous pouvez publier sans photo ou en ajouter jusqu’à trois.';
+        return;
+    }
+
+    if (qdmIsEditMode) {
+        qdmPhotoStatus.textContent = 'Ajoutez, remplacez ou supprimez les photographies dans la limite de trois.';
+        return;
+    }
+
+    qdmPhotoStatus.textContent = 'La première photographie ajoutée est automatiquement l’image principale.';
 }
 
 /**
@@ -134,11 +155,11 @@ function qdmRenderPhotoPreviews(files) {
         article.className = 'photo-preview';
         image.src = URL.createObjectURL(file);
         image.alt = 'Aperçu de ' + file.name;
-        label.textContent = 'Image ' + (activeExistingPhotoCount + index + 1);
+        label.textContent = 'Photo ' + (activeExistingPhotoCount + index + 1);
         removeButton.className = 'button button--secondary button--compact';
         removeButton.type = 'button';
-        removeButton.textContent = 'Retirer';
-        removeButton.setAttribute('aria-label', 'Retirer ' + file.name);
+        removeButton.textContent = 'Supprimer';
+        removeButton.setAttribute('aria-label', 'Supprimer ' + file.name);
 
         if (activeExistingPhotoCount === 0 && index === 0) {
             label.textContent += ' — principale';
@@ -170,7 +191,13 @@ function qdmHandlePhotoSelection(event) {
 
     if (invalidFile) {
         qdmSynchronizePhotoInput();
-        qdmPhotoStatus.textContent = 'Utilisez des images JPEG, PNG ou WebP de 5 Mo maximum.';
+        let validationMessage = 'Corrigez les champs signalés avant de publier l’annonce.';
+
+        if (qdmIsEditMode) {
+            validationMessage = 'Corrigez les champs signalés avant d’enregistrer les modifications.';
+        }
+
+        qdmPhotoStatus.textContent = validationMessage;
         return;
     }
 
@@ -190,7 +217,7 @@ function qdmHandlePhotoSelection(event) {
 
     if (qdmActiveExistingPhotoCount() + combinedPhotos.length > 3) {
         qdmSynchronizePhotoInput();
-        qdmPhotoStatus.textContent = 'Trois photographies sont autorisées au maximum. Les images déjà choisies sont conservées.';
+        qdmPhotoStatus.textContent = 'Capacité atteinte. Supprimez une photo pour en ajouter une autre. La suivante devient principale si la première est supprimée.';
         return;
     }
 
@@ -210,7 +237,7 @@ function qdmHandleExistingPhotoChange(event) {
         && event.target instanceof HTMLInputElement
     ) {
         event.target.checked = true;
-        qdmPhotoStatus.textContent = 'Trois photographies sont autorisées au maximum. Retirez d’abord une autre image.';
+        qdmPhotoStatus.textContent = 'Capacité atteinte. Supprimez une photo pour en ajouter une autre. La suivante devient principale si la première est supprimée.';
         return;
     }
 

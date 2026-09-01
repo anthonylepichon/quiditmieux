@@ -309,18 +309,21 @@ async function qdmSubmitFollow(event) {
         const data = await response.json();
 
         if (!data || typeof data.success !== 'boolean' || typeof data.message !== 'string') {
-            qdmParticipationStatus.textContent = 'La réponse reçue ne permet pas d’actualiser le suivi.';
+            qdmParticipationStatus.textContent = '';
             return;
         }
 
-        qdmParticipationStatus.textContent = data.message;
+        qdmParticipationStatus.textContent = '';
 
         if (data.success) {
             qdmUpdateFollowForm(form, data);
             qdmUpdateFollowBadge(data);
+            qdmUpdateFollowHistory(data);
+        } else if (data.message !== '') {
+            qdmParticipationStatus.textContent = data.message;
         }
     } catch (error) {
-        qdmParticipationStatus.textContent = 'Le suivi n’a pas pu être actualisé. Utilisez de nouveau le bouton.';
+        qdmParticipationStatus.textContent = '';
     } finally {
         button.disabled = false;
     }
@@ -338,6 +341,7 @@ document.querySelectorAll('[data-follow-form]').forEach(function prepareFollowFo
 function qdmUpdateBidDisplay(form, data) {
     const currentPrice = document.querySelector('[data-current-price]');
     const bidCount = document.querySelector('[data-bid-count]');
+    const bidCountLabel = document.querySelector('[data-bid-count-label]');
     const minimumText = form.querySelector('[data-minimum-bid]');
     const amountInput = form.querySelector('[name="amount"]');
 
@@ -347,15 +351,111 @@ function qdmUpdateBidDisplay(form, data) {
 
     if (Number.isInteger(data.bid_count) && bidCount) {
         bidCount.textContent = String(data.bid_count);
+
+        if (bidCountLabel) {
+            if (data.bid_count > 1) {
+                bidCountLabel.textContent = 'enchères';
+            } else {
+                bidCountLabel.textContent = 'enchère';
+            }
+        }
     }
 
     if (typeof data.minimum_bid === 'string') {
         amountInput.min = data.minimum_bid;
-        minimumText.textContent = 'Montant minimum : ' + data.minimum_bid.replace('.', ',') + ' €';
+        minimumText.textContent = 'Montant supérieur d’au moins 0,01 € au prix courant.';
     }
 
     amountInput.value = '';
     amountInput.focus();
+
+    const summary = document.querySelector('.listing-summary__owner-copy');
+    const actions = document.querySelector('[data-listing-actions]');
+    let summaryCopy = summary;
+
+    if (!(summaryCopy instanceof HTMLElement) && actions instanceof HTMLElement) {
+        summaryCopy = document.createElement('p');
+        summaryCopy.className = 'listing-summary__owner-copy';
+        actions.before(summaryCopy);
+    }
+
+    if (summaryCopy instanceof HTMLElement) {
+        summaryCopy.textContent = 'Vous êtes actuellement le mieux-disant. Vous pouvez enchérir de nouveau si nécessaire.';
+    }
+
+    const historyTitle = document.querySelector('.bid-history h2');
+    const historySubtitle = document.querySelector('.bid-history > p');
+    const lockedHistory = document.querySelector('.bid-history__locked');
+
+    if (historyTitle instanceof HTMLElement) {
+        historyTitle.textContent = 'Historique détaillé des enchères';
+    }
+
+    if (historySubtitle instanceof HTMLElement) {
+        historySubtitle.textContent = 'Pseudo, montant, date et heure — Europe/Paris.';
+    }
+
+    if (lockedHistory instanceof HTMLElement) {
+        lockedHistory.remove();
+    }
+}
+
+/**
+ * Rôle : Afficher l’état d’enchère refusée prévu dans la maquette.
+ * Paramètres : Formulaire, données JSON validées et montant saisi par l’utilisateur.
+ * Retour : Aucun.
+ */
+function qdmUpdateRejectedBidDisplay(form, data, attemptedAmount) {
+    const amountInput = form.querySelector('[name="amount"]');
+    const minimumText = form.querySelector('[data-minimum-bid]');
+    const historySubtitle = document.querySelector('.bid-history > p');
+    const lockedHistoryBody = document.querySelector('.bid-history__locked p');
+
+    if (qdmParticipationBadge) {
+        qdmParticipationBadge.textContent = 'Enchère refusée';
+    }
+
+    if (typeof data.minimum_bid === 'string') {
+        amountInput.min = data.minimum_bid;
+        minimumText.textContent = 'Montant insuffisant : minimum '
+            + data.minimum_bid.replace('.', ',')
+            + ' €.';
+    }
+
+    const numericAmount = Number.parseFloat(attemptedAmount);
+
+    if (Number.isFinite(numericAmount) && historySubtitle) {
+        const formattedAmount = numericAmount.toLocaleString('fr-FR', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
+        historySubtitle.textContent = 'L’offre de '
+            + formattedAmount
+            + ' € n’a pas été enregistrée.';
+    }
+
+    if (lockedHistoryBody instanceof HTMLElement) {
+        lockedHistoryBody.textContent = 'Aucune enchère valide n’a été enregistrée. Corrigez le montant puis réessayez.';
+    }
+}
+
+/**
+ * Rôle : Mettre à jour le texte d’historique après un changement de suivi confirmé.
+ * Paramètres : État de suivi renvoyé par le serveur.
+ * Retour : Aucun.
+ */
+function qdmUpdateFollowHistory(data) {
+    const lockedBody = document.querySelector('.bid-history__locked p');
+
+    if (!(lockedBody instanceof HTMLElement)) {
+        return;
+    }
+
+    if (data.is_following) {
+        lockedBody.textContent = 'Vous pouvez continuer à suivre l’annonce et enchérir.';
+    } else {
+        lockedBody.textContent = 'Vous ne suivez pas encore cette annonce. Suivez-la pour la retrouver dans votre tableau de bord.';
+    }
 }
 
 /**
@@ -368,8 +468,10 @@ async function qdmSubmitBid(event) {
     const form = event.currentTarget;
     const button = form.querySelector('button');
     const status = form.querySelector('[data-bid-status]');
+    const amountInput = form.querySelector('[name="amount"]');
+    const attemptedAmount = amountInput.value;
     button.disabled = true;
-    status.textContent = 'Enregistrement de votre enchère…';
+    status.textContent = '';
 
     try {
         const response = await fetch(qdmJsonAction(form), {
@@ -380,20 +482,31 @@ async function qdmSubmitBid(event) {
         const data = await response.json();
 
         if (!data || typeof data.success !== 'boolean' || typeof data.message !== 'string') {
-            status.textContent = 'La réponse reçue ne permet pas de confirmer l’enchère.';
+            status.textContent = 'Enchère refusée';
             return;
         }
 
         status.textContent = data.message;
 
         if (data.success) {
+            if (typeof data.canonical_url === 'string' && data.canonical_url !== '') {
+                window.location.assign(data.canonical_url);
+                return;
+            }
+
             qdmUpdateBidDisplay(form, data);
             qdmUpdateBidBadge();
+            status.textContent = '';
         } else if (typeof data.minimum_bid === 'string') {
-            qdmUpdateBidDisplay(form, data);
+            qdmUpdateRejectedBidDisplay(form, data, attemptedAmount);
+            status.textContent = 'Enchère refusée : saisissez au minimum '
+                + data.minimum_bid.replace('.', ',')
+                + ' €.';
+        } else {
+            status.textContent = 'Enchère refusée';
         }
     } catch (error) {
-        status.textContent = 'L’enchère n’a pas pu être envoyée. Utilisez de nouveau le bouton.';
+        status.textContent = 'Enchère refusée';
     } finally {
         button.disabled = false;
     }

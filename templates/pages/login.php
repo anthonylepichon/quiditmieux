@@ -14,32 +14,37 @@ $errors = $data['errors'];
 $successMessage = $data['success_message'];
 $csrfToken = $data['csrf_token'];
 $hasErrors = $errors !== [];
-$globalErrorMessage = 'Vérifiez les informations saisies puis recommencez.';
-
-if (isset($errors['form'])) {
-    $globalErrorMessage = (string) $errors['form'];
-}
-$isConnected = false;
+$isConnected = $successMessage !== null;
 $currentPage = 'login';
 $pageTitle = 'Connexion — QUIDITMIEUX';
 $pageDescription = 'Connectez-vous à votre compte QUIDITMIEUX.';
+$pageScripts = [];
+$invalidAttribute = '';
+
+if ($hasErrors) {
+    $invalidAttribute = 'aria-invalid="true"';
+}
+
+if ($successMessage !== null) {
+    $pageScripts = ['public/assets/js/login.js'];
+}
 ?>
 <main class="auth-page auth-page--login container">
         <section class="auth-card auth-card--login glass-panel" aria-labelledby="login-title">
             <div class="auth-card__form-panel auth-card__form-panel--login">
                 <div class="section-heading">
-                    <p class="eyebrow">Heureux de vous revoir</p>
-                    <h1 id="login-title">Se connecter</h1>
+                    <p class="eyebrow">HEUREUX DE VOUS REVOIR</p>
+                    <h1 id="login-title"><?php if ($successMessage !== null): ?>Bienvenue !<?php else: ?>Se connecter<?php endif; ?></h1>
                 </div>
             <?php if ($hasErrors): ?>
                 <div class="alert alert--error alert--illustrated auth-card__introduction" role="alert">
-                    <strong>Connexion impossible</strong>
-                    <span><?= htmlspecialchars($globalErrorMessage, ENT_QUOTES, 'UTF-8') ?></span>
+                    <strong>Identifiants invalides</strong>
+                    <span>Vérifiez vos informations puis essayez de nouveau.</span>
                 </div>
             <?php elseif ($successMessage !== null): ?>
                 <div class="alert alert--success alert--illustrated auth-card__introduction" role="status">
-                    <strong>Connexion confirmée</strong>
-                    <span><?= htmlspecialchars($successMessage, ENT_QUOTES, 'UTF-8') ?></span>
+                    <strong>Connexion réussie</strong>
+                    <span>Redirection en cours…</span>
                 </div>
             <?php else: ?>
                 <div class="alert alert--info auth-card__introduction" role="note">
@@ -47,22 +52,32 @@ $pageDescription = 'Connectez-vous à votre compte QUIDITMIEUX.';
                     <span>Utilisez votre pseudo ou votre adresse électronique.</span>
                 </div>
             <?php endif; ?>
+            <?php if ($successMessage === null): ?>
             <form action="index.php?route=login" method="post" novalidate>
                 <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
                 <input type="hidden" name="destination" value="<?= htmlspecialchars((string) ($values['destination'] ?? 'dashboard'), ENT_QUOTES, 'UTF-8') ?>">
                 <div class="form-field">
                     <label class="form-field__label" for="login">Pseudo ou adresse électronique</label>
-                    <input class="form-control" id="login" name="login" type="text" required autocomplete="username" placeholder="camille ou camille@exemple.fr" value="<?= htmlspecialchars((string) ($values['login'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
+                    <input class="form-control" id="login" name="login" type="text" required autocomplete="username" placeholder="camille ou camille@exemple.fr" value="<?= htmlspecialchars((string) ($values['login'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" aria-describedby="login-error" <?= $invalidAttribute ?>>
+                    <span class="form-field__error" id="login-error"><?php if ($hasErrors): ?>Identifiants invalides.<?php endif; ?></span>
                 </div>
                 <div class="form-field">
                     <label class="form-field__label" for="password">Mot de passe</label>
-                    <input class="form-control" id="password" name="password" type="password" required autocomplete="current-password" placeholder="••••••••">
+                    <input class="form-control" id="password" name="password" type="password" required autocomplete="current-password" placeholder="••••••••" aria-describedby="password-error" <?= $invalidAttribute ?>>
+                    <span class="form-field__error" id="password-error"><?php if ($hasErrors): ?>Identifiants invalides.<?php endif; ?></span>
                 </div>
                 <div class="auth-card__actions">
                     <button class="button button--primary" type="submit">Se connecter</button>
-                    <a href="index.php?route=register_form">Pas encore de compte ? Créer un compte →</a>
+                    <a href="index.php?route=register_form">Pas encore de compte ?  Créer un compte →</a>
                 </div>
             </form>
+            <?php else: ?>
+                <div class="auth-confirmation auth-confirmation--login" role="status" aria-labelledby="login-confirmation-title" data-login-redirect-url="index.php?route=<?= htmlspecialchars((string) ($values['destination'] ?? 'dashboard'), ENT_QUOTES, 'UTF-8') ?>">
+                    <h2 id="login-confirmation-title">Vous êtes connecté.</h2>
+                    <p class="auth-confirmation__body">Votre session est ouverte. La page demandée va s’afficher automatiquement.</p>
+                    <p class="auth-confirmation__note">Redirection en cours…</p>
+                </div>
+            <?php endif; ?>
             </div>
             <aside class="auth-card__illustration auth-card__illustration--login" aria-label="Présentation des enchères">
                 <img class="auth-card__character" src="public/assets/images/illustrations/character-planet.png" alt="" width="300" height="492">

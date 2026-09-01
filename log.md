@@ -9,6 +9,10 @@
 
 - Le pied de page validé demande un lien « Politique de confidentialité », mais aucune page ni aucun contenu juridique correspondant ne figure dans les dix fonctionnalités définies. Le lien est affiché ; sa page de destination reste à définir.
 
+## Messages d’interface
+
+- La maquette définit précisément les messages des 53 états prévus, mais ne définit aucun texte pour certaines défaillances techniques exceptionnelles : panne d’écriture en base, suppression impossible, paramètres forgés ou résultat de recherche inexploitable. Les états représentés utilisent strictement les textes de la maquette ; les rares replis techniques conservent une formulation exacte et non trompeuse lorsqu’aucun état Figma ne peut s’appliquer.
+
 ## Erreurs corrigées pendant le développement
 
 - La première réduction de `UserModel.php` à la seule inscription avait supprimé par erreur la fermeture de la classe. Le contrôle de syntaxe PHP l’a détecté ; le modèle a été reconstruit avec ses méthodes d’unicité et validé de nouveau.
