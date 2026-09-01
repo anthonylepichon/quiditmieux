@@ -2,8 +2,8 @@
 
 /**
  * Description générale : Contrôleur de l'espace personnel de l'utilisateur connecté.
- * Rôle : Afficher le tableau de bord et gérer la modification sécurisée du compte.
- * Tâches : Protéger les routes privées, préparer les cartes, valider le compte et limiter les réponses JSON.
+ * Rôle : Afficher le tableau de bord et coordonner la modification sécurisée du compte.
+ * Tâches : Protéger les routes privées, préparer les cartes, appeler les modèles et limiter les réponses JSON.
  * Liens avec les autres fichiers : Étend Controller.php et utilise ListingModel.php, PhotoModel.php et UserModel.php.
  */
 
@@ -74,7 +74,10 @@ class UserController extends Controller
             return;
         }
 
-        $values = ['pseudo' => trim($this->readPostString('pseudo')), 'email' => mb_strtolower(trim($this->readPostString('email')))];
+        $values = [
+            'pseudo' => trim($this->readPostString('pseudo')),
+            'email' => mb_strtolower(trim($this->readPostString('email'))),
+        ];
         $currentPassword = $this->readPostString('current_password');
         $newPassword = $this->readPostString('new_password');
         $confirmation = $this->readPostString('new_password_confirmation');
@@ -95,7 +98,9 @@ class UserController extends Controller
             $this->session->deconnecterUtilisateur();
             $this->redirect('home');
             return;
-        } elseif ($currentPassword !== '' && (!isset($account['password_hash'])
+        }
+
+        if ($currentPassword !== '' && (!isset($account['password_hash'])
             || !is_string($account['password_hash'])
             || !password_verify($currentPassword, $account['password_hash']))) {
             $errors['current_password'] = 'Le mot de passe actuel est incorrect.';
@@ -471,31 +476,42 @@ class UserController extends Controller
      * Paramètres : Valeurs publiques, mot de passe actuel, nouveau mot de passe et confirmation.
      * Retour : Erreurs indexées par champ, éventuellement vides.
      */
-    private function validateAccountValues(array $values, string $currentPassword, string $newPassword, string $confirmation): array
-    {
+    private function validateAccountValues(
+        array $values,
+        string $currentPassword,
+        string $newPassword,
+        string $confirmation
+    ): array {
         $errors = [];
+
         if (!$this->session->estJetonCsrfValide($this->readPostString('csrf_token'))) {
             $errors['form'] = 'Plusieurs champs doivent être corrigés avant l’enregistrement.';
         }
+
         if (mb_strlen($values['pseudo']) < 3 || mb_strlen($values['pseudo']) > 30) {
             $errors['pseudo'] = 'Format du pseudo invalide.';
         } elseif (preg_match('/^[A-Za-z0-9_-]+$/D', $values['pseudo']) !== 1) {
             $errors['pseudo'] = 'Format du pseudo invalide.';
         }
+
         if (mb_strlen($values['email']) > 254 || filter_var($values['email'], FILTER_VALIDATE_EMAIL) === false) {
             $errors['email'] = 'Adresse électronique invalide.';
         }
+
         if ($currentPassword === '') {
             $errors['current_password'] = 'Le mot de passe actuel est requis.';
         }
+
         if ($newPassword !== '' || $confirmation !== '') {
             if (!$this->isStrongPassword($newPassword)) {
                 $errors['new_password'] = 'Le nouveau mot de passe ne respecte pas les règles requises.';
             }
+
             if ($confirmation === '' || !hash_equals($newPassword, $confirmation)) {
                 $errors['new_password_confirmation'] = 'La confirmation ne correspond pas au nouveau mot de passe.';
             }
         }
+
         return $errors;
     }
 

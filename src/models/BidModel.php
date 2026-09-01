@@ -2,8 +2,8 @@
 
 /**
  * Description générale : Modèle des enchères déposées sur les annonces.
- * Rôle : Fournir les prix courants nécessaires à la consultation des annonces.
- * Tâches : Déclarer la table ENCHERE et calculer le meilleur montant pour plusieurs annonces.
+ * Rôle : Valider et enregistrer les enchères puis fournir les prix courants des annonces.
+ * Tâches : Déclarer la table ENCHERE, appliquer la progression minimale et calculer les meilleurs montants.
  * Liens avec les autres fichiers : Étend Model.php et complète les résultats fournis par ListingModel.php.
  */
 
@@ -39,6 +39,64 @@ class BidModel extends Model
     public function __construct(Database $database, array $data = [])
     {
         parent::__construct($database, $data);
+    }
+
+    /**
+     * Rôle : Obtenir le montant courant d'une annonce en centimes sans calcul décimal flottant.
+     * Paramètres : Identifiant de l'annonce.
+     * Retour : Montant courant en centimes ou null si l'annonce est absente ou la requête échoue.
+     */
+    public function getCurrentAmountInCents(int $listingId): ?int
+    {
+        $row = $this->database->fetchOne(
+            'SELECT COALESCE(MAX(bid.montant), listing.prix_depart) AS current_amount'
+            . ' FROM `ANNONCE` listing'
+            . ' LEFT JOIN `ENCHERE` bid ON bid.annonce_id = listing.id'
+            . ' WHERE listing.id = :listing_id'
+            . ' GROUP BY listing.id, listing.prix_depart',
+            ['listing_id' => $listingId]
+        );
+
+        if ($row === false || $row === null || !isset($row['current_amount'])) {
+            return null;
+        }
+
+        return $this->decimalAmountToCents((string) $row['current_amount']);
+    }
+
+    /**
+     * Rôle : Obtenir le prochain montant minimal accepté pour une annonce.
+     * Paramètres : Identifiant de l'annonce.
+     * Retour : Montant minimal en centimes ou null si le montant courant est indisponible.
+     */
+    public function getMinimumAmountInCents(int $listingId): ?int
+    {
+        $currentAmount = $this->getCurrentAmountInCents($listingId);
+
+        if ($currentAmount === null) {
+            return null;
+        }
+
+        return $currentAmount + 1;
+    }
+
+    /**
+     * Rôle : Vérifier qu'une proposition atteint le prochain montant minimal de l'annonce.
+     * Paramètres : Identifiant de l'annonce et montant proposé en centimes.
+     * Retour : Décision métier et minimum attendu, ou null si le montant courant est indisponible.
+     */
+    public function evaluateBidAmountInCents(int $listingId, int $amountInCents): ?array
+    {
+        $minimumAmount = $this->getMinimumAmountInCents($listingId);
+
+        if ($minimumAmount === null) {
+            return null;
+        }
+
+        return [
+            'accepted' => $amountInCents >= $minimumAmount,
+            'minimum_amount_in_cents' => $minimumAmount,
+        ];
     }
 
     /**
@@ -189,16 +247,16 @@ class BidModel extends Model
     }
 
     /**
-     * Rôle : Enregistrer une enchère validée par le contrôleur dans la transaction en cours.
-     * Paramètres : Identifiants de l'utilisateur et de l'annonce, puis montant proposé.
+     * Rôle : Enregistrer une enchère validée par le modèle dans la transaction en cours.
+     * Paramètres : Identifiants de l'utilisateur et de l'annonce, puis montant proposé en centimes.
      * Retour : true lorsque l'enchère est enregistrée, sinon false.
      */
-    public function placeBid(int $userId, int $listingId, float $amount): bool
+    public function placeBid(int $userId, int $listingId, int $amountInCents): bool
     {
         return $this->create([
             'utilisateur_id' => $userId,
             'annonce_id' => $listingId,
-            'montant' => number_format($amount, 2, '.', ''),
+            'montant' => $this->formatCentsAsDecimal($amountInCents),
             'date_heure_enchere' => gmdate('Y-m-d H:i:s'),
         ]);
     }
@@ -240,6 +298,38 @@ class BidModel extends Model
         }
 
         return array_values($normalizedIdentifiers);
+    }
+
+    /**
+     * Rôle : Convertir une valeur décimale issue de PDO en nombre entier de centimes.
+     * Paramètres : Montant décimal positif provenant de la base.
+     * Retour : Montant en centimes ou null lorsque le format est inexploitable.
+     */
+    private function decimalAmountToCents(string $amount): ?int
+    {
+        if (preg_match('/^([0-9]+)(?:\.([0-9]{1,2}))?$/D', $amount, $matches) !== 1) {
+            return null;
+        }
+
+        $fraction = '00';
+
+        if (isset($matches[2])) {
+            $fraction = str_pad($matches[2], 2, '0');
+        }
+
+        return ((int) $matches[1] * 100) + (int) $fraction;
+    }
+
+    /**
+     * Rôle : Convertir un montant entier en chaîne décimale compatible avec la colonne SQL.
+     * Paramètres : Montant positif exprimé en centimes.
+     * Retour : Montant avec exactement deux décimales.
+     */
+    private function formatCentsAsDecimal(int $amountInCents): string
+    {
+        $euros = intdiv($amountInCents, 100);
+        $cents = $amountInCents % 100;
+        return $euros . '.' . str_pad((string) $cents, 2, '0', STR_PAD_LEFT);
     }
 }
 

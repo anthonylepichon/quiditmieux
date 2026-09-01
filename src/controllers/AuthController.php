@@ -2,8 +2,8 @@
 
 /**
  * Description générale : Contrôleur public de l'inscription et de l'authentification.
- * Rôle : Préparer les formulaires, valider les informations de compte et gérer la session utilisateur.
- * Tâches : Afficher et traiter l'inscription, puis accueillir ultérieurement la connexion et la déconnexion.
+ * Rôle : Préparer les formulaires, coordonner le modèle de compte et gérer la session utilisateur.
+ * Tâches : Afficher et traiter l'inscription, la connexion et la déconnexion.
  * Liens avec les autres fichiers : Étend Controller.php, utilise UserModel.php, Session.php et les templates register.php et login.php.
  */
 
@@ -133,16 +133,12 @@ class AuthController extends Controller
 
         if ($errors === []) {
             $userModel = new UserModel($this->database);
-            $account = $userModel->findByLogin($login, str_contains($login, '@'));
+            $account = $userModel->authenticate($login, $password);
 
             if ($account === false) {
                 $errors['form'] = 'Vérifiez vos informations puis essayez de nouveau.';
                 $account = null;
-            } elseif ($account === null
-                || !isset($account['id'], $account['password_hash'])
-                || !is_string($account['password_hash'])
-                || !password_verify($password, $account['password_hash'])
-            ) {
+            } elseif ($account === null || !isset($account['id'])) {
                 $errors['form'] = 'Vérifiez vos informations puis essayez de nouveau.';
             }
         }

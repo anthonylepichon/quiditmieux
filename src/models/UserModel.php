@@ -70,6 +70,31 @@ class UserModel extends Model
     }
 
     /**
+     * Rôle : Vérifier les identifiants d'un utilisateur sans exposer l'empreinte du mot de passe au contrôleur.
+     * Paramètres : Identifiant saisi et mot de passe en clair reçu par le formulaire.
+     * Retour : Compte authentifié, null si les identifiants sont incorrects ou false en cas d'erreur SQL.
+     */
+    public function authenticate(string $login, string $password): array|false|null
+    {
+        $account = $this->findByLogin($login, str_contains($login, '@'));
+
+        if ($account === false || $account === null) {
+            return $account;
+        }
+
+        if (!isset($account['password_hash'])
+            || !is_string($account['password_hash'])
+            || !password_verify($password, $account['password_hash'])
+        ) {
+            return null;
+        }
+
+        unset($account['password_hash']);
+
+        return $account;
+    }
+
+    /**
      * Rôle : Enregistrer les informations de compte déjà validées par le contrôleur.
      * Paramètres : Identifiant du compte, pseudo, adresse et empreinte facultative du nouveau mot de passe.
      * Retour : true lorsque la mise à jour est exécutée, sinon false.

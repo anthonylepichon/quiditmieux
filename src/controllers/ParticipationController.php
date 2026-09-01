@@ -2,8 +2,8 @@
 
 /**
  * Description générale : Contrôleur des participations d'un utilisateur aux ventes.
- * Rôle : Gérer le suivi volontaire et accueillir le dépôt transactionnel des enchères.
- * Tâches : Revalider l'authentification, le CSRF, la propriété et l'échéance avant toute modification.
+ * Rôle : Coordonner le suivi volontaire et le dépôt transactionnel des enchères.
+ * Tâches : Contrôler la requête, appeler les modèles et choisir une réponse HTML ou JSON.
  * Liens avec les autres fichiers : Étend Controller.php et utilise ListingModel.php, FollowModel.php et BidModel.php.
  */
 
@@ -37,12 +37,12 @@ class ParticipationController extends Controller
             return;
         }
 
-        if (preg_match('/^(?:0|[1-9][0-9]{0,7})(?:\.[0-9]{1,2})?$/', $amountText) !== 1) {
+        $amountInCents = $this->parseBidAmountInCents($amountText);
+
+        if ($amountInCents === null) {
             $this->respondBid(false, 'Enchère refusée', $listingId);
             return;
         }
-
-        $amount = (float) $amountText;
 
         if (!$this->database->beginTransaction()) {
             $this->respondBid(false, 'Enchère refusée', $listingId);
@@ -50,33 +50,29 @@ class ParticipationController extends Controller
         }
 
         $listingModel = new ListingModel($this->database);
+        $canParticipate = $listingModel->canReceiveParticipationFrom($listingId, $userId);
+
+        if ($canParticipate === null) {
+            $this->database->rollback();
+            $this->respondBid(false, 'Enchère refusée', $listingId);
+            return;
+        }
+
+        $restriction = $listingModel->getLastParticipationRestriction();
+
+        if (!$canParticipate) {
+            $this->database->rollback();
+
+            if ($restriction === 'ended') {
+                $this->respondBid(false, 'Vente terminée', $listingId);
+            } else {
+                $this->respondBid(false, 'Enchère refusée', $listingId);
+            }
+
+            return;
+        }
+
         $bidModel = new BidModel($this->database);
-        $listing = $listingModel->getForUpdate($listingId);
-
-        if ($listing === false) {
-            $this->database->rollback();
-            $this->respondBid(false, 'Enchère refusée', $listingId);
-            return;
-        }
-
-        if ($listing === null) {
-            $this->database->rollback();
-            $this->respondBid(false, 'Enchère refusée', $listingId);
-            return;
-        }
-
-        if ((int) $listing['utilisateur_id'] === $userId) {
-            $this->database->rollback();
-            $this->respondBid(false, 'Enchère refusée', $listingId);
-            return;
-        }
-
-        if ((string) $listing['date_heure_fin'] <= gmdate('Y-m-d H:i:s')) {
-            $this->database->rollback();
-            $this->respondBid(false, 'Vente terminée', $listingId);
-            return;
-        }
-
         $summary = $bidModel->getSummary($listingId);
 
         if ($summary === false) {
@@ -85,24 +81,27 @@ class ParticipationController extends Controller
             return;
         }
 
-        $currentPrice = (float) $listing['prix_depart'];
+        $decision = $bidModel->evaluateBidAmountInCents($listingId, $amountInCents);
 
-        if ($summary['best_bid'] !== null) {
-            $currentPrice = (float) $summary['best_bid'];
+        if ($decision === null) {
+            $this->database->rollback();
+            $this->respondBid(false, 'Enchère refusée', $listingId);
+            return;
         }
 
-        $minimumBid = round($currentPrice + 0.01, 2);
+        $minimumBid = $decision['minimum_amount_in_cents'] / 100;
+        $attemptedAmount = $amountInCents / 100;
 
-        if ($amount < $minimumBid) {
+        if (!$decision['accepted']) {
             $this->database->rollback();
             $message = 'Montant insuffisant : minimum '
                 . number_format($minimumBid, 2, ',', ' ')
                 . ' €.';
-            $this->respondBid(false, $message, $listingId, $summary, $minimumBid, $amount);
+            $this->respondBid(false, $message, $listingId, $summary, $minimumBid, $attemptedAmount);
             return;
         }
 
-        if (!$bidModel->placeBid($userId, $listingId, $amount)) {
+        if (!$bidModel->placeBid($userId, $listingId, $amountInCents)) {
             $this->database->rollback();
             $this->respondBid(false, 'Enchère refusée', $listingId);
             return;
@@ -116,13 +115,21 @@ class ParticipationController extends Controller
             return;
         }
 
+        $nextMinimumInCents = $bidModel->getMinimumAmountInCents($listingId);
+
+        if ($nextMinimumInCents === null) {
+            $this->database->rollback();
+            $this->respondBid(false, 'Enchère refusée', $listingId);
+            return;
+        }
+
         if (!$this->database->commit()) {
             $this->database->rollback();
             $this->respondBid(false, 'Enchère refusée', $listingId);
             return;
         }
 
-        $nextMinimum = round($amount + 0.01, 2);
+        $nextMinimum = $nextMinimumInCents / 100;
         $this->respondBid(
             true,
             'Vous êtes actuellement le mieux-disant. Vous pouvez enchérir de nouveau si nécessaire.',
@@ -173,25 +180,22 @@ class ParticipationController extends Controller
         }
 
         $listingModel = new ListingModel($this->database);
-        $listing = $listingModel->getDetail($listingId);
+        $canParticipate = $listingModel->canReceiveParticipationFrom($listingId, $userId);
 
-        if ($listing === false) {
+        if ($canParticipate === null) {
             $this->respond(false, 'Le suivi ne peut pas être actualisé pour le moment.', $listingId, false);
             return;
         }
 
-        if ($listing === null) {
-            $this->respond(false, 'Le suivi ne peut pas être actualisé pour le moment.', $listingId, false);
-            return;
-        }
+        $restriction = $listingModel->getLastParticipationRestriction();
 
-        if ((int) $listing['utilisateur_id'] === $userId) {
-            $this->respond(false, 'Le suivi ne peut pas être actualisé pour le moment.', $listingId, false);
-            return;
-        }
+        if (!$canParticipate) {
+            if ($restriction === 'ended') {
+                $this->respond(false, 'Vente terminée', $listingId, false);
+            } else {
+                $this->respond(false, 'Le suivi ne peut pas être actualisé pour le moment.', $listingId, false);
+            }
 
-        if ((string) $listing['date_heure_fin'] <= gmdate('Y-m-d H:i:s')) {
-            $this->respond(false, 'Vente terminée', $listingId, false);
             return;
         }
 
@@ -328,6 +332,26 @@ class ParticipationController extends Controller
         }
 
         return trim($_POST[$name]);
+    }
+
+    /**
+     * Rôle : Valider le format d'un montant reçu et le convertir en centimes.
+     * Paramètres : Montant textuel issu du formulaire d'enchère.
+     * Retour : Montant en centimes ou null lorsque le format est invalide.
+     */
+    private function parseBidAmountInCents(string $amount): ?int
+    {
+        if (preg_match('/^(0|[1-9][0-9]{0,7})(?:\.([0-9]{1,2}))?$/D', $amount, $matches) !== 1) {
+            return null;
+        }
+
+        $fraction = '00';
+
+        if (isset($matches[2])) {
+            $fraction = str_pad($matches[2], 2, '0');
+        }
+
+        return ((int) $matches[1] * 100) + (int) $fraction;
     }
 
     /**

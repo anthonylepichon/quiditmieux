@@ -2,8 +2,8 @@
 
 /**
  * Description générale : Modèle des annonces proposées aux enchères.
- * Rôle : Rechercher et paginer les annonces selon les critères validés par le contrôleur.
- * Tâches : Déclarer la table ANNONCE, construire la recherche multicritère et ordonner les ventes.
+ * Rôle : Rechercher les annonces et appliquer leurs règles d'autorisation métier.
+ * Tâches : Déclarer la table ANNONCE, construire la recherche et décider des modifications ou suppressions autorisées.
  * Liens avec les autres fichiers : Étend Model.php et fournit les annonces à ListingController.php.
  */
 
@@ -30,6 +30,8 @@ class ListingModel extends Model
         'categorie_id_externe',
         'categorie_libelle',
     ];
+    private string $lastManagementRestriction = 'error';
+    private string $lastParticipationRestriction = 'error';
 
     // ====================
     // MÉTHODES
@@ -43,6 +45,85 @@ class ListingModel extends Model
     public function __construct(Database $database, array $data = [])
     {
         parent::__construct($database, $data);
+    }
+
+    /**
+     * Rôle : Vérifier si une annonce peut être modifiée par l'utilisateur demandé.
+     * Paramètres : Identifiants de l'annonce et de l'utilisateur.
+     * Retour : true si la modification est autorisée, false si elle est interdite ou null en cas d'erreur SQL.
+     */
+    public function canBeModifiedBy(int $listingId, int $userId): ?bool
+    {
+        return $this->canBeManagedBy($listingId, $userId);
+    }
+
+    /**
+     * Rôle : Vérifier si une annonce peut être supprimée par l'utilisateur demandé.
+     * Paramètres : Identifiants de l'annonce et de l'utilisateur.
+     * Retour : true si la suppression est autorisée, false si elle est interdite ou null en cas d'erreur SQL.
+     */
+    public function canBeDeletedBy(int $listingId, int $userId): ?bool
+    {
+        return $this->canBeManagedBy($listingId, $userId);
+    }
+
+    /**
+     * Rôle : Fournir le motif de la dernière interdiction de modification ou de suppression.
+     * Paramètres : Aucun.
+     * Retour : Motif `missing`, `owner`, `ended`, `bid`, `error` ou chaîne vide si l'action est autorisée.
+     */
+    public function getLastManagementRestriction(): string
+    {
+        return $this->lastManagementRestriction;
+    }
+
+    /**
+     * Rôle : Vérifier si un utilisateur peut suivre une annonce ou y déposer une enchère.
+     * Paramètres : Identifiants de l'annonce et de l'utilisateur.
+     * Retour : true si la participation est autorisée, false si elle est interdite ou null en cas d'erreur SQL.
+     */
+    public function canReceiveParticipationFrom(int $listingId, int $userId): ?bool
+    {
+        $this->lastParticipationRestriction = 'error';
+        $listing = $this->database->fetchOne(
+            'SELECT utilisateur_id, date_heure_fin FROM `ANNONCE`'
+            . ' WHERE id = :listing_id LIMIT 1 FOR UPDATE',
+            ['listing_id' => $listingId]
+        );
+
+        if ($listing === false) {
+            return null;
+        }
+
+        if ($listing === null
+            || !isset($listing['utilisateur_id'], $listing['date_heure_fin'])
+        ) {
+            $this->lastParticipationRestriction = 'missing';
+            return false;
+        }
+
+        if ((int) $listing['utilisateur_id'] === $userId) {
+            $this->lastParticipationRestriction = 'owner';
+            return false;
+        }
+
+        if ((string) $listing['date_heure_fin'] <= gmdate('Y-m-d H:i:s')) {
+            $this->lastParticipationRestriction = 'ended';
+            return false;
+        }
+
+        $this->lastParticipationRestriction = '';
+        return true;
+    }
+
+    /**
+     * Rôle : Fournir le motif de la dernière interdiction de suivi ou d'enchère.
+     * Paramètres : Aucun.
+     * Retour : Motif `missing`, `owner`, `ended`, `error` ou chaîne vide si l'action est autorisée.
+     */
+    public function getLastParticipationRestriction(): string
+    {
+        return $this->lastParticipationRestriction;
     }
 
     /**
@@ -314,6 +395,51 @@ class ListingModel extends Model
             . ' CASE WHEN listing.date_heure_fin <= UTC_TIMESTAMP()'
             . ' THEN listing.date_heure_fin END DESC,'
             . ' listing.id ASC';
+    }
+
+    /**
+     * Rôle : Appliquer les règles communes de modification et de suppression d'une annonce.
+     * Paramètres : Identifiants de l'annonce et de l'utilisateur.
+     * Retour : true si l'action est autorisée, false si elle est interdite ou null en cas d'erreur SQL.
+     */
+    private function canBeManagedBy(int $listingId, int $userId): ?bool
+    {
+        $this->lastManagementRestriction = 'error';
+        $listing = $this->database->fetchOne(
+            'SELECT listing.utilisateur_id, listing.date_heure_fin,'
+            . ' EXISTS(SELECT 1 FROM `ENCHERE` bid WHERE bid.annonce_id = listing.id) AS has_bid'
+            . ' FROM `ANNONCE` listing WHERE listing.id = :listing_id LIMIT 1 FOR UPDATE',
+            ['listing_id' => $listingId]
+        );
+
+        if ($listing === false) {
+            return null;
+        }
+
+        if ($listing === null
+            || !isset($listing['utilisateur_id'], $listing['date_heure_fin'], $listing['has_bid'])
+        ) {
+            $this->lastManagementRestriction = 'missing';
+            return false;
+        }
+
+        if ((int) $listing['utilisateur_id'] !== $userId) {
+            $this->lastManagementRestriction = 'owner';
+            return false;
+        }
+
+        if ((string) $listing['date_heure_fin'] <= gmdate('Y-m-d H:i:s')) {
+            $this->lastManagementRestriction = 'ended';
+            return false;
+        }
+
+        if ((bool) $listing['has_bid']) {
+            $this->lastManagementRestriction = 'bid';
+            return false;
+        }
+
+        $this->lastManagementRestriction = '';
+        return true;
     }
 
     /**

@@ -2,15 +2,16 @@
 
 /**
  * Description générale : Contrôleur des annonces proposées aux enchères.
- * Rôle : Coordonner l'affichage initial, la recherche multicritère et la pagination de l'accueil.
- * Tâches : Valider les critères, interroger les modèles, consulter l'API de catégories et répondre en HTML ou JSON.
- * Liens avec les autres fichiers : Étend Controller.php, utilise ListingModel.php, BidModel.php, PhotoModel.php et affiche home.php.
+ * Rôle : Coordonner les demandes liées aux annonces et choisir leur réponse HTML ou JSON.
+ * Tâches : Lire et valider les requêtes, interroger les modèles et préparer l'affichage.
+ * Liens avec les autres fichiers : Étend Controller.php, utilise les modèles d'annonce, catégorie, enchère, suivi et photographie.
  */
 
 namespace App\controllers;
 
 use App\core\Controller;
 use App\models\BidModel;
+use App\models\CategoryModel;
 use App\models\FollowModel;
 use App\models\ListingModel;
 use App\models\PhotoModel;
@@ -23,7 +24,6 @@ class ListingController extends Controller
     // CONSTANTES
     // ====================
 
-    private const CATEGORIES_API_URL = 'https://api.mywebecom.ovh/play/qdm/categ.php';
     private const ITEMS_PER_PAGE = 12;
     private const ITEM_STATES = ['neuf', 'très bon état', 'bon état', 'état correct'];
     private const SALE_STATES = ['all', 'active', 'ended'];
@@ -41,7 +41,7 @@ class ListingController extends Controller
      */
     public function search(): void
     {
-        $categories = $this->fetchCategories();
+        $categories = (new CategoryModel())->getAllCategories();
         $categoriesAvailable = $categories !== null;
 
         if ($categories === null) {
@@ -235,6 +235,21 @@ class ListingController extends Controller
         }
 
         $bidRejection = $this->recoverBidRejection($listingId);
+        $canEdit = false;
+        $canParticipate = false;
+
+        if ($viewerId !== null) {
+            $canEdit = $listingModel->canBeModifiedBy($listingId, $viewerId);
+            $canParticipate = $listingModel->canReceiveParticipationFrom($listingId, $viewerId);
+
+            if ($canEdit === null || $canParticipate === null) {
+                $this->session->enregistrerMessageTemporaire(
+                    'notice',
+                    'Les données de cette annonce sont momentanément indisponibles.'
+                );
+                $this->redirect('home');
+            }
+        }
 
         $this->render('pages/listing-detail.php', [
             'listing' => [
@@ -266,9 +281,9 @@ class ListingController extends Controller
                 'has_bid' => $viewerHasBid,
                 'is_best_bidder' => $viewerId !== null && $viewerId === $summary['best_bidder_id'],
                 'is_following' => $isFollowing,
-                'can_edit' => $isOwner && !$isEnded && (int) $summary['bid_count'] === 0,
-                'can_follow' => $viewerId !== null && !$isOwner && !$isEnded,
-                'can_bid' => $viewerId !== null && !$isOwner && !$isEnded,
+                'can_edit' => $canEdit === true,
+                'can_follow' => $canParticipate === true,
+                'can_bid' => $canParticipate === true,
                 'can_view_history' => $isOwner || $viewerHasBid,
             ],
             'csrf_token' => $this->session->obtenirJetonCsrf(),
@@ -290,7 +305,7 @@ class ListingController extends Controller
             $this->redirect('login_form', ['destination' => 'listing_create_form']);
         }
 
-        $categories = $this->fetchCategories();
+        $categories = (new CategoryModel())->getAllCategories();
         $errors = [];
 
         if ($categories === null) {
@@ -314,7 +329,7 @@ class ListingController extends Controller
             $this->redirect('login_form', ['destination' => 'listing_create_form']);
         }
 
-        $categories = $this->fetchCategories();
+        $categories = (new CategoryModel())->getAllCategories();
         $values = $this->readListingFormValues();
         $errors = [];
 
@@ -404,33 +419,28 @@ class ListingController extends Controller
             $this->redirect('dashboard');
         }
 
-        if ($listing === null || (int) $listing['utilisateur_id'] !== $userId) {
+        if ($listing === null) {
             $this->session->enregistrerMessageTemporaire('notice', 'Cette annonce ne peut pas être modifiée.');
             $this->redirect('dashboard');
         }
 
-        $bidModel = new BidModel($this->database);
-        $lockedState = '';
+        $canModify = $listingModel->canBeModifiedBy($listingId, $userId);
+        $lockedState = $listingModel->getLastManagementRestriction();
 
-        if ((string) $listing['date_heure_fin'] <= gmdate('Y-m-d H:i:s')) {
-            $lockedState = 'ended';
-        } else {
-            $listingHasBid = $bidModel->listingHasBid($listingId);
-
-            if ($listingHasBid === null) {
-                $this->session->enregistrerMessageTemporaire(
-                    'notice',
-                    'Les données de cette annonce sont momentanément indisponibles.'
-                );
-                $this->redirect('dashboard');
-            }
-
-            if ($listingHasBid) {
-                $lockedState = 'bid';
-            }
+        if ($canModify === null) {
+            $this->session->enregistrerMessageTemporaire(
+                'notice',
+                'Les données de cette annonce sont momentanément indisponibles.'
+            );
+            $this->redirect('dashboard');
         }
 
-        $categories = $this->fetchCategories();
+        if ($lockedState === 'owner' || $lockedState === 'missing' || $lockedState === 'error') {
+            $this->session->enregistrerMessageTemporaire('notice', 'Cette annonce ne peut pas être modifiée.');
+            $this->redirect('dashboard');
+        }
+
+        $categories = (new CategoryModel())->getAllCategories();
         $errors = [];
 
         if ($categories === null) {
@@ -478,7 +488,7 @@ class ListingController extends Controller
 
         $values = $this->readListingFormValues();
         $values['id'] = $listingId;
-        $categories = $this->fetchCategories();
+        $categories = (new CategoryModel())->getAllCategories();
         $errors = [];
 
         if (!$this->session->estJetonCsrfValide($this->readPostString('csrf_token'))) {
@@ -534,11 +544,9 @@ class ListingController extends Controller
         }
 
         $listingModel = new ListingModel($this->database);
-        $lockedListing = $listingModel->getForUpdate($listingId);
-        $bidModel = new BidModel($this->database);
-        $listingHasBid = $bidModel->listingHasBid($listingId);
+        $canModify = $listingModel->canBeModifiedBy($listingId, $userId);
 
-        if ($lockedListing === false || $listingHasBid === null) {
+        if ($canModify === null) {
             $this->database->rollback();
             $this->session->enregistrerMessageTemporaire(
                 'notice',
@@ -547,19 +555,15 @@ class ListingController extends Controller
             $this->redirect('listing_detail', ['id' => $listingId]);
         }
 
-        if ($lockedListing === null
-            || (int) $lockedListing['utilisateur_id'] !== $userId
-            || (string) $lockedListing['date_heure_fin'] <= gmdate('Y-m-d H:i:s')
-            || $listingHasBid
-        ) {
+        $restriction = $listingModel->getLastManagementRestriction();
+
+        if (!$canModify) {
             $this->database->rollback();
             $lockedMessage = 'Modification verrouillée';
 
-            if ($lockedListing !== null
-                && (string) $lockedListing['date_heure_fin'] <= gmdate('Y-m-d H:i:s')
-            ) {
+            if ($restriction === 'ended') {
                 $lockedMessage = 'L’échéance est atteinte. Cette annonce ne peut plus être modifiée ni supprimée.';
-            } elseif ($listingHasBid) {
+            } elseif ($restriction === 'bid') {
                 $lockedMessage = 'Une enchère a été enregistrée. Cette annonce ne peut plus être modifiée ni supprimée.';
             }
 
@@ -638,11 +642,9 @@ class ListingController extends Controller
         }
 
         $listingModel = new ListingModel($this->database);
-        $lockedListing = $listingModel->getForUpdate($listingId);
-        $bidModel = new BidModel($this->database);
-        $listingHasBid = $bidModel->listingHasBid($listingId);
+        $canDelete = $listingModel->canBeDeletedBy($listingId, $userId);
 
-        if ($lockedListing === false || $listingHasBid === null) {
+        if ($canDelete === null) {
             $this->database->rollback();
             $this->session->enregistrerMessageTemporaire(
                 'notice',
@@ -651,11 +653,7 @@ class ListingController extends Controller
             $this->redirect('listing_detail', ['id' => $listingId]);
         }
 
-        if ($lockedListing === null
-            || (int) $lockedListing['utilisateur_id'] !== $userId
-            || (string) $lockedListing['date_heure_fin'] <= gmdate('Y-m-d H:i:s')
-            || $listingHasBid
-        ) {
+        if (!$canDelete) {
             $this->database->rollback();
             $this->session->enregistrerMessageTemporaire(
                 'notice',
@@ -1420,62 +1418,6 @@ class ListingController extends Controller
         }
 
         return $price;
-    }
-
-    /**
-     * Rôle : Charger et valider la liste des catégories fournie par l'API publique.
-     * Paramètres : Aucun.
-     * Retour : Catégories indexées par identifiant externe ou null si l'API est indisponible.
-     */
-    private function fetchCategories(): ?array
-    {
-        $curl = curl_init(self::CATEGORIES_API_URL);
-
-        if ($curl === false) {
-            return null;
-        }
-
-        curl_setopt_array($curl, [
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_CONNECTTIMEOUT => 3,
-            CURLOPT_TIMEOUT => 5,
-            CURLOPT_FOLLOWLOCATION => false,
-            CURLOPT_HTTPHEADER => ['Accept: application/json'],
-        ]);
-        $response = curl_exec($curl);
-        $statusCode = (int) curl_getinfo($curl, CURLINFO_RESPONSE_CODE);
-        curl_close($curl);
-
-        if (!is_string($response) || $statusCode !== 200) {
-            return null;
-        }
-
-        $decodedCategories = json_decode($response, true);
-
-        if (!is_array($decodedCategories)) {
-            return null;
-        }
-
-        $categories = [];
-
-        foreach ($decodedCategories as $identifier => $label) {
-            $identifier = (string) $identifier;
-
-            if (preg_match('/^[1-9][0-9]*$/D', $identifier) !== 1
-                || !is_string($label)
-                || trim($label) === ''
-            ) {
-                return null;
-            }
-
-            $categories[$identifier] = trim($label);
-        }
-
-        if ($categories === []) {
-            return null;
-        }
-
-        return $categories;
     }
 
     /**
