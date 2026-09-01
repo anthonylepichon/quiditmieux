@@ -4,11 +4,12 @@
  * Description générale : Contrôleur de l'espace personnel de l'utilisateur connecté.
  * Rôle : Afficher le tableau de bord et coordonner la modification sécurisée du compte.
  * Tâches : Protéger les routes privées, préparer les cartes, appeler les modèles et limiter les réponses JSON.
- * Liens avec les autres fichiers : Étend Controller.php et utilise CategoryModel.php, ListingModel.php, PhotoModel.php et UserModel.php.
+ * Liens avec les autres fichiers : Étend Controller.php et utilise Clock.php ainsi que les modèles de l'espace personnel.
  */
 
 namespace App\controllers;
 
+use App\core\Clock;
 use App\core\Controller;
 use App\core\Money;
 use App\models\CategoryModel;
@@ -211,8 +212,9 @@ class UserController extends Controller
             return;
         }
 
+        $currentTimeUtc = Clock::nowUtc();
         $model = new ListingModel($this->database);
-        $rows = $model->getDashboardSales($userId);
+        $rows = $model->getDashboardSales($userId, $currentTimeUtc);
 
         if ($rows === false) {
             $this->json(['success' => false, 'message' => 'Les dernières informations reçues restent affichées.']);
@@ -225,7 +227,7 @@ class UserController extends Controller
             $categories = [];
         }
 
-        $sales = $this->formatListings($rows, $categories);
+        $sales = $this->formatListings($rows, $categories, $currentTimeUtc);
 
         if ($sales === false) {
             $this->json(['success' => false, 'message' => 'Les dernières informations reçues restent affichées.']);
@@ -251,8 +253,9 @@ class UserController extends Controller
             return;
         }
 
+        $currentTimeUtc = Clock::nowUtc();
         $model = new ListingModel($this->database);
-        $rows = $model->getDashboardParticipations($userId);
+        $rows = $model->getDashboardParticipations($userId, $currentTimeUtc);
 
         if ($rows === false) {
             $this->json(['success' => false, 'message' => 'Les dernières informations reçues restent affichées.']);
@@ -265,7 +268,7 @@ class UserController extends Controller
             $categories = [];
         }
 
-        $listings = $this->formatListings($rows, $categories);
+        $listings = $this->formatListings($rows, $categories, $currentTimeUtc);
 
         if ($listings === false) {
             $this->json(['success' => false, 'message' => 'Les dernières informations reçues restent affichées.']);
@@ -286,9 +289,10 @@ class UserController extends Controller
      */
     private function buildDashboard(int $userId): array
     {
+        $currentTimeUtc = Clock::nowUtc();
         $model = new ListingModel($this->database);
-        $participationRows = $model->getDashboardParticipations($userId);
-        $salesRows = $model->getDashboardSales($userId);
+        $participationRows = $model->getDashboardParticipations($userId, $currentTimeUtc);
+        $salesRows = $model->getDashboardSales($userId, $currentTimeUtc);
 
         if ($participationRows === false || $salesRows === false) {
             return [
@@ -305,8 +309,12 @@ class UserController extends Controller
             $categories = [];
         }
 
-        $participationListings = $this->formatListings($participationRows, $categories);
-        $sales = $this->formatListings($salesRows, $categories);
+        $participationListings = $this->formatListings(
+            $participationRows,
+            $categories,
+            $currentTimeUtc
+        );
+        $sales = $this->formatListings($salesRows, $categories, $currentTimeUtc);
 
         if ($participationListings === false || $sales === false) {
             return [
@@ -329,10 +337,14 @@ class UserController extends Controller
 
     /**
      * Rôle : Enrichir les lignes de la base avec leurs photos et libellés d'affichage.
-     * Paramètres : Lignes d'annonces issues du tableau de bord et catégories fournies par l'API.
+     * Paramètres : Lignes du tableau de bord, catégories de l'API et instant UTC de référence.
      * Retour : Cartes limitées aux données utiles ou false en cas d'erreur SQL.
      */
-    private function formatListings(array $rows, array $categories): array|false
+    private function formatListings(
+        array $rows,
+        array $categories,
+        DateTimeImmutable $currentTimeUtc
+    ): array|false
     {
         $ids = [];
         foreach ($rows as $row) {
@@ -349,7 +361,6 @@ class UserController extends Controller
 
         $utc = new DateTimeZone('UTC');
         $paris = new DateTimeZone('Europe/Paris');
-        $now = new DateTimeImmutable('now', $utc);
         $listings = [];
 
         foreach ($rows as $row) {
@@ -411,7 +422,7 @@ class UserController extends Controller
                 'bid_count' => $this->readBidCount($row),
                 'user_best_bid' => $userBestBid,
                 'winner_id' => $this->readWinnerId($row),
-                'is_active' => $deadline > $now,
+                'is_active' => $deadline > $currentTimeUtc,
                 'deadline' => $this->formatFrenchDashboardDate(
                     $deadline->setTimezone($paris),
                     true

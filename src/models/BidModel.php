@@ -4,13 +4,15 @@
  * Description générale : Modèle des enchères déposées sur les annonces.
  * Rôle : Valider et enregistrer les enchères puis fournir les prix courants des annonces.
  * Tâches : Déclarer la table ENCHERE, appliquer la progression minimale et calculer les meilleurs montants.
- * Liens avec les autres fichiers : Étend Model.php et complète les résultats fournis par ListingModel.php.
+ * Liens avec les autres fichiers : Étend Model.php, utilise Clock.php et complète les résultats fournis par ListingModel.php.
  */
 
 namespace App\models;
 
+use App\core\Clock;
 use App\core\Money;
 use App\core\Model;
+use DateTimeImmutable;
 
 class BidModel extends Model
 {
@@ -256,16 +258,21 @@ class BidModel extends Model
 
     /**
      * Rôle : Enregistrer une enchère validée par le modèle dans la transaction en cours.
-     * Paramètres : Identifiants de l'utilisateur et de l'annonce, puis montant proposé en euros.
+     * Paramètres : Identifiants, montant proposé en euros et instant UTC de référence.
      * Retour : true lorsque l'enchère est enregistrée, sinon false.
      */
-    public function placeBid(int $userId, int $listingId, int $amountInEuros): bool
+    public function placeBid(
+        int $userId,
+        int $listingId,
+        int $amountInEuros,
+        DateTimeImmutable $placedAtUtc
+    ): bool
     {
         return $this->create([
             'utilisateur_id' => $userId,
             'annonce_id' => $listingId,
             'montant' => Money::eurosToDatabaseValue($amountInEuros),
-            'date_heure_enchere' => gmdate('Y-m-d H:i:s'),
+            'date_heure_enchere' => Clock::formatForDatabase($placedAtUtc),
         ]);
     }
 

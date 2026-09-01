@@ -4,11 +4,12 @@
  * Description générale : Contrôleur des annonces proposées aux enchères.
  * Rôle : Coordonner les demandes liées aux annonces et choisir leur réponse HTML ou JSON.
  * Tâches : Lire et valider les requêtes, interroger les modèles et préparer l'affichage.
- * Liens avec les autres fichiers : Étend Controller.php, utilise les modèles d'annonce, catégorie, enchère, suivi et photographie.
+ * Liens avec les autres fichiers : Étend Controller.php et utilise Clock.php ainsi que les modèles liés aux annonces.
  */
 
 namespace App\controllers;
 
+use App\core\Clock;
 use App\core\Controller;
 use App\core\Money;
 use App\models\BidModel;
@@ -42,6 +43,7 @@ class ListingController extends Controller
      */
     public function search(): void
     {
+        $currentTimeUtc = Clock::nowUtc();
         $categories = (new CategoryModel())->getAllCategories();
         $categoriesAvailable = $categories !== null;
 
@@ -63,12 +65,17 @@ class ListingController extends Controller
             $searchResult = $listingModel->searchListings(
                 $criteria,
                 $criteria['page'],
-                self::ITEMS_PER_PAGE
+                self::ITEMS_PER_PAGE,
+                $currentTimeUtc
             );
             $success = $searchResult['success'];
 
             if ($success) {
-                $enrichedListings = $this->enrichListings($searchResult['listings'], $categories);
+                $enrichedListings = $this->enrichListings(
+                    $searchResult['listings'],
+                    $categories,
+                    $currentTimeUtc
+                );
 
                 if ($enrichedListings === false) {
                     $success = false;
@@ -129,6 +136,7 @@ class ListingController extends Controller
      */
     public function showDetail(): void
     {
+        $currentTimeUtc = Clock::nowUtc();
         $listingId = $this->readPositiveGetIdentifier('id');
 
         if ($listingId === null) {
@@ -202,7 +210,7 @@ class ListingController extends Controller
             $this->redirect('home');
         }
 
-        $isEnded = $deadline <= new DateTimeImmutable('now', $utcTimezone);
+        $isEnded = $deadline <= $currentTimeUtc;
         $currentAmountInEuros = Money::databaseValueToEuros((string) $listing['prix_depart']);
 
         if ($currentAmountInEuros === null) {
@@ -251,8 +259,12 @@ class ListingController extends Controller
         $canParticipate = false;
 
         if ($viewerId !== null) {
-            $canEdit = $listingModel->canBeModifiedBy($listingId, $viewerId);
-            $canParticipate = $listingModel->canReceiveParticipationFrom($listingId, $viewerId);
+            $canEdit = $listingModel->canBeModifiedBy($listingId, $viewerId, $currentTimeUtc);
+            $canParticipate = $listingModel->canReceiveParticipationFrom(
+                $listingId,
+                $viewerId,
+                $currentTimeUtc
+            );
 
             if ($canEdit === null || $canParticipate === null) {
                 $this->session->enregistrerMessageTemporaire(
@@ -435,7 +447,8 @@ class ListingController extends Controller
             $this->redirect('dashboard');
         }
 
-        $canModify = $listingModel->canBeModifiedBy($listingId, $userId);
+        $currentTimeUtc = Clock::nowUtc();
+        $canModify = $listingModel->canBeModifiedBy($listingId, $userId, $currentTimeUtc);
         $lockedState = $listingModel->getLastManagementRestriction();
 
         if ($canModify === null) {
@@ -556,7 +569,8 @@ class ListingController extends Controller
             return;
         }
 
-        $canModify = $listingModel->canBeModifiedBy($listingId, $userId);
+        $currentTimeUtc = Clock::nowUtc();
+        $canModify = $listingModel->canBeModifiedBy($listingId, $userId, $currentTimeUtc);
 
         if ($canModify === null) {
             $this->database->rollback();
@@ -659,7 +673,8 @@ class ListingController extends Controller
             $this->redirect('listing_detail', ['id' => $listingId]);
         }
 
-        $canDelete = $listingModel->canBeDeletedBy($listingId, $userId);
+        $currentTimeUtc = Clock::nowUtc();
+        $canDelete = $listingModel->canBeDeletedBy($listingId, $userId, $currentTimeUtc);
 
         if ($canDelete === null) {
             $this->database->rollback();
@@ -851,13 +866,13 @@ class ListingController extends Controller
             return null;
         }
 
-        if ($deadline <= new DateTimeImmutable('now', $parisTimezone)) {
+        if ($deadline->setTimezone($utcTimezone) <= Clock::nowUtc()) {
             $errors['end_date'] = 'La date doit être future.';
             $errors['end_time'] = 'L’heure doit être future.';
             return null;
         }
 
-        return $deadline->setTimezone($utcTimezone)->format('Y-m-d H:i:s');
+        return Clock::formatForDatabase($deadline);
     }
 
     /**
@@ -1411,10 +1426,14 @@ class ListingController extends Controller
 
     /**
      * Rôle : Ajouter le prix courant, la photographie principale et les informations d'affichage aux annonces.
-     * Paramètres : Annonces brutes retournées par ListingModel et catégories fournies par l'API.
+     * Paramètres : Annonces brutes, catégories fournies par l'API et instant UTC de référence.
      * Retour : Annonces prêtes à afficher ou false en cas d'erreur SQL complémentaire.
      */
-    private function enrichListings(array $listings, array $categories): array|false
+    private function enrichListings(
+        array $listings,
+        array $categories,
+        DateTimeImmutable $currentTimeUtc
+    ): array|false
     {
         $listingIds = [];
         $startingPrices = [];
@@ -1441,7 +1460,6 @@ class ListingController extends Controller
         $displayListings = [];
         $utcTimezone = new DateTimeZone('UTC');
         $parisTimezone = new DateTimeZone('Europe/Paris');
-        $now = new DateTimeImmutable('now', $utcTimezone);
 
         foreach ($listings as $listing) {
             if (!isset(
@@ -1483,6 +1501,12 @@ class ListingController extends Controller
                 $categoryLabel = (string) $categories[$categoryId];
             }
 
+            $saleState = 'ended';
+
+            if ($deadline > $currentTimeUtc) {
+                $saleState = 'active';
+            }
+
             $displayListings[] = [
                 'id' => $identifier,
                 'title' => (string) $listing['titre'],
@@ -1496,7 +1520,7 @@ class ListingController extends Controller
                     false,
                     true
                 ),
-                'sale_state' => $deadline > $now ? 'active' : 'ended',
+                'sale_state' => $saleState,
                 'photo_url' => $photoUrl,
                 'detail_url' => 'index.php?' . http_build_query([
                     'route' => 'listing_detail',

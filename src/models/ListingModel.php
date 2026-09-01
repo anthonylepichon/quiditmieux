@@ -4,13 +4,15 @@
  * Description générale : Modèle des annonces proposées aux enchères.
  * Rôle : Rechercher les annonces et appliquer leurs règles d'autorisation métier.
  * Tâches : Déclarer la table ANNONCE, construire la recherche et décider des modifications ou suppressions autorisées.
- * Liens avec les autres fichiers : Étend Model.php et fournit les annonces à ListingController.php.
+ * Liens avec les autres fichiers : Étend Model.php, utilise Clock.php et fournit les annonces aux contrôleurs.
  */
 
 namespace App\models;
 
+use App\core\Clock;
 use App\core\Money;
 use App\core\Model;
+use DateTimeImmutable;
 
 class ListingModel extends Model
 {
@@ -132,22 +134,30 @@ class ListingModel extends Model
 
     /**
      * Rôle : Vérifier si une annonce peut être modifiée par l'utilisateur demandé.
-     * Paramètres : Identifiants de l'annonce et de l'utilisateur.
+     * Paramètres : Identifiants de l'annonce et de l'utilisateur, puis instant UTC de référence.
      * Retour : true si la modification est autorisée, false si elle est interdite ou null en cas d'erreur SQL.
      */
-    public function canBeModifiedBy(int $listingId, int $userId): ?bool
+    public function canBeModifiedBy(
+        int $listingId,
+        int $userId,
+        DateTimeImmutable $currentTimeUtc
+    ): ?bool
     {
-        return $this->canBeManagedBy($listingId, $userId);
+        return $this->canBeManagedBy($listingId, $userId, $currentTimeUtc);
     }
 
     /**
      * Rôle : Vérifier si une annonce peut être supprimée par l'utilisateur demandé.
-     * Paramètres : Identifiants de l'annonce et de l'utilisateur.
+     * Paramètres : Identifiants de l'annonce et de l'utilisateur, puis instant UTC de référence.
      * Retour : true si la suppression est autorisée, false si elle est interdite ou null en cas d'erreur SQL.
      */
-    public function canBeDeletedBy(int $listingId, int $userId): ?bool
+    public function canBeDeletedBy(
+        int $listingId,
+        int $userId,
+        DateTimeImmutable $currentTimeUtc
+    ): ?bool
     {
-        return $this->canBeManagedBy($listingId, $userId);
+        return $this->canBeManagedBy($listingId, $userId, $currentTimeUtc);
     }
 
     /**
@@ -162,10 +172,14 @@ class ListingModel extends Model
 
     /**
      * Rôle : Vérifier si un utilisateur peut suivre une annonce ou y déposer une enchère.
-     * Paramètres : Identifiants de l'annonce et de l'utilisateur.
+     * Paramètres : Identifiants de l'annonce et de l'utilisateur, puis instant UTC de référence.
      * Retour : true si la participation est autorisée, false si elle est interdite ou null en cas d'erreur SQL.
      */
-    public function canReceiveParticipationFrom(int $listingId, int $userId): ?bool
+    public function canReceiveParticipationFrom(
+        int $listingId,
+        int $userId,
+        DateTimeImmutable $currentTimeUtc
+    ): ?bool
     {
         $this->lastParticipationRestriction = 'error';
         $listing = $this->database->fetchOne(
@@ -190,7 +204,7 @@ class ListingModel extends Model
             return false;
         }
 
-        if ((string) $listing['date_heure_fin'] <= gmdate('Y-m-d H:i:s')) {
+        if ((string) $listing['date_heure_fin'] <= Clock::formatForDatabase($currentTimeUtc)) {
             $this->lastParticipationRestriction = 'ended';
             return false;
         }
@@ -211,13 +225,19 @@ class ListingModel extends Model
 
     /**
      * Rôle : Rechercher et paginer les annonces à partir de critères déjà validés.
-     * Paramètres : Critères normalisés, numéro de page demandé et nombre d'annonces par page.
+     * Paramètres : Critères normalisés, page, nombre d'annonces par page et instant UTC de référence.
      * Retour : Résultat structuré contenant le succès, les annonces et la pagination.
      */
-    public function searchListings(array $criteria, int $requestedPage, int $itemsPerPage): array
+    public function searchListings(
+        array $criteria,
+        int $requestedPage,
+        int $itemsPerPage,
+        DateTimeImmutable $currentTimeUtc
+    ): array
     {
         $whereParts = [];
         $parameters = [];
+        $currentTimeForDatabase = Clock::formatForDatabase($currentTimeUtc);
         $currentPriceSql = 'COALESCE((SELECT MAX(price_bid.montant)'
             . ' FROM `ENCHERE` price_bid'
             . ' WHERE price_bid.annonce_id = listing.id), listing.prix_depart)';
@@ -226,7 +246,12 @@ class ListingModel extends Model
         $this->addCategoryCriteria($criteria, $whereParts, $parameters);
         $this->addItemStateCriteria($criteria, $whereParts, $parameters);
         $this->addPriceCriteria($criteria, $whereParts, $parameters, $currentPriceSql);
-        $this->addSaleStateCriteria($criteria, $whereParts);
+        $this->addSaleStateCriteria(
+            $criteria,
+            $whereParts,
+            $parameters,
+            $currentTimeForDatabase
+        );
 
         $whereSql = '';
 
@@ -249,7 +274,12 @@ class ListingModel extends Model
         $totalPages = max(1, (int) ceil($totalItems / $itemsPerPage));
         $currentPage = min(max(1, $requestedPage), $totalPages);
         $offset = ($currentPage - 1) * $itemsPerPage;
-        $orderSql = $this->buildOrderSql($criteria['sale_state']);
+        $listParameters = $parameters;
+        $orderSql = $this->buildOrderSql(
+            $criteria['sale_state'],
+            $listParameters,
+            $currentTimeForDatabase
+        );
         $listSql = 'SELECT listing.id, listing.titre, listing.description,'
             . ' listing.etat_objet, listing.prix_depart, listing.date_heure_fin,'
             . ' listing.categorie_id'
@@ -257,7 +287,7 @@ class ListingModel extends Model
             . $whereSql
             . $orderSql
             . ' LIMIT ' . $itemsPerPage . ' OFFSET ' . $offset;
-        $listings = $this->database->fetchAll($listSql, $parameters);
+        $listings = $this->database->fetchAll($listSql, $listParameters);
 
         if ($listings === false) {
             return $this->failedSearchResult($itemsPerPage);
@@ -307,10 +337,10 @@ class ListingModel extends Model
 
     /**
      * Rôle : Récupérer les annonces vendues par l'utilisateur avec leur prix courant.
-     * Paramètres : Identifiant de l'utilisateur connecté.
+     * Paramètres : Identifiant de l'utilisateur connecté et instant UTC de référence.
      * Retour : Liste des ventes ou false en cas d'erreur SQL.
      */
-    public function getDashboardSales(int $userId): array|false
+    public function getDashboardSales(int $userId, DateTimeImmutable $currentTimeUtc): array|false
     {
         $sql = 'SELECT listing.id, listing.titre, listing.etat_objet, listing.prix_depart,'
             . ' listing.date_heure_fin, listing.categorie_id,'
@@ -320,17 +350,20 @@ class ListingModel extends Model
             . ' WHERE listing.utilisateur_id = :user_id'
             . ' GROUP BY listing.id, listing.titre, listing.etat_objet, listing.prix_depart,'
             . ' listing.date_heure_fin, listing.categorie_id'
-            . ' ORDER BY CASE WHEN listing.date_heure_fin > UTC_TIMESTAMP() THEN 0 ELSE 1 END,'
+            . ' ORDER BY CASE WHEN listing.date_heure_fin > :current_time_order THEN 0 ELSE 1 END,'
             . ' listing.date_heure_fin ASC, listing.id ASC';
-        return $this->database->fetchAll($sql, ['user_id' => $userId]);
+        return $this->database->fetchAll($sql, [
+            'user_id' => $userId,
+            'current_time_order' => Clock::formatForDatabase($currentTimeUtc),
+        ]);
     }
 
     /**
      * Rôle : Récupérer les suivis et enchères de l'utilisateur utiles au tableau de bord.
-     * Paramètres : Identifiant de l'utilisateur connecté.
+     * Paramètres : Identifiant de l'utilisateur connecté et instant UTC de référence.
      * Retour : Participations de l'utilisateur ou false en cas d'erreur SQL.
      */
-    public function getDashboardParticipations(int $userId): array|false
+    public function getDashboardParticipations(int $userId, DateTimeImmutable $currentTimeUtc): array|false
     {
         $winnerSql = '(SELECT winning_bid.utilisateur_id FROM `ENCHERE` winning_bid'
             . ' WHERE winning_bid.annonce_id = listing.id'
@@ -347,15 +380,16 @@ class ListingModel extends Model
             . ' AND followed.utilisateur_id = :follow_user_id) AS is_following'
             . ' FROM `ANNONCE` listing'
             . ' WHERE listing.utilisateur_id <> :owner_user_id'
-            . ' AND ((listing.date_heure_fin > UTC_TIMESTAMP() AND ('
+            . ' AND ((listing.date_heure_fin > :current_time_active AND ('
             . ' EXISTS(SELECT 1 FROM `ASSOC_UTILISATEUR_ANNONCE` active_follow WHERE active_follow.annonce_id = listing.id'
             . ' AND active_follow.utilisateur_id = :active_follow_user_id)'
             . ' OR EXISTS(SELECT 1 FROM `ENCHERE` active_bid WHERE active_bid.annonce_id = listing.id'
             . ' AND active_bid.utilisateur_id = :active_bid_user_id)))'
-            . ' OR (listing.date_heure_fin <= UTC_TIMESTAMP() AND EXISTS(SELECT 1 FROM `ENCHERE` ended_bid'
+            . ' OR (listing.date_heure_fin <= :current_time_ended AND EXISTS(SELECT 1 FROM `ENCHERE` ended_bid'
             . ' WHERE ended_bid.annonce_id = listing.id AND ended_bid.utilisateur_id = :ended_bid_user_id)))'
-            . ' ORDER BY CASE WHEN listing.date_heure_fin > UTC_TIMESTAMP() THEN 0 ELSE 1 END,'
+            . ' ORDER BY CASE WHEN listing.date_heure_fin > :current_time_order THEN 0 ELSE 1 END,'
             . ' listing.date_heure_fin ASC, listing.id ASC';
+        $currentTimeForDatabase = Clock::formatForDatabase($currentTimeUtc);
         return $this->database->fetchAll($sql, [
             'best_user_id' => $userId,
             'follow_user_id' => $userId,
@@ -363,6 +397,9 @@ class ListingModel extends Model
             'active_follow_user_id' => $userId,
             'active_bid_user_id' => $userId,
             'ended_bid_user_id' => $userId,
+            'current_time_active' => $currentTimeForDatabase,
+            'current_time_ended' => $currentTimeForDatabase,
+            'current_time_order' => $currentTimeForDatabase,
         ]);
     }
 
@@ -443,24 +480,35 @@ class ListingModel extends Model
 
     /**
      * Rôle : Limiter la recherche aux ventes en cours ou terminées selon le choix reçu.
-     * Paramètres : Critères normalisés et conditions SQL à compléter.
+     * Paramètres : Critères normalisés, conditions, paramètres SQL et instant UTC formaté.
      * Retour : Aucun.
      */
-    private function addSaleStateCriteria(array $criteria, array &$whereParts): void
+    private function addSaleStateCriteria(
+        array $criteria,
+        array &$whereParts,
+        array &$parameters,
+        string $currentTimeUtc
+    ): void
     {
         if ($criteria['sale_state'] === 'active') {
-            $whereParts[] = 'listing.date_heure_fin > UTC_TIMESTAMP()';
+            $whereParts[] = 'listing.date_heure_fin > :current_time_filter';
+            $parameters['current_time_filter'] = $currentTimeUtc;
         } elseif ($criteria['sale_state'] === 'ended') {
-            $whereParts[] = 'listing.date_heure_fin <= UTC_TIMESTAMP()';
+            $whereParts[] = 'listing.date_heure_fin <= :current_time_filter';
+            $parameters['current_time_filter'] = $currentTimeUtc;
         }
     }
 
     /**
      * Rôle : Définir un ordre déterministe adapté à l'état des ventes recherché.
-     * Paramètres : État de vente normalisé.
+     * Paramètres : État de vente normalisé, paramètres SQL et instant UTC formaté.
      * Retour : Fragment SQL contenant uniquement l'ordre interne prévu par le modèle.
      */
-    private function buildOrderSql(string $saleState): string
+    private function buildOrderSql(
+        string $saleState,
+        array &$parameters,
+        string $currentTimeUtc
+    ): string
     {
         if ($saleState === 'active') {
             return ' ORDER BY listing.date_heure_fin ASC, listing.id ASC';
@@ -470,20 +518,28 @@ class ListingModel extends Model
             return ' ORDER BY listing.date_heure_fin DESC, listing.id DESC';
         }
 
-        return ' ORDER BY CASE WHEN listing.date_heure_fin > UTC_TIMESTAMP() THEN 0 ELSE 1 END ASC,'
-            . ' CASE WHEN listing.date_heure_fin > UTC_TIMESTAMP()'
+        $parameters['current_time_order_state'] = $currentTimeUtc;
+        $parameters['current_time_order_active'] = $currentTimeUtc;
+        $parameters['current_time_order_ended'] = $currentTimeUtc;
+
+        return ' ORDER BY CASE WHEN listing.date_heure_fin > :current_time_order_state THEN 0 ELSE 1 END ASC,'
+            . ' CASE WHEN listing.date_heure_fin > :current_time_order_active'
             . ' THEN listing.date_heure_fin END ASC,'
-            . ' CASE WHEN listing.date_heure_fin <= UTC_TIMESTAMP()'
+            . ' CASE WHEN listing.date_heure_fin <= :current_time_order_ended'
             . ' THEN listing.date_heure_fin END DESC,'
             . ' listing.id ASC';
     }
 
     /**
      * Rôle : Appliquer les règles communes de modification et de suppression d'une annonce.
-     * Paramètres : Identifiants de l'annonce et de l'utilisateur.
+     * Paramètres : Identifiants de l'annonce et de l'utilisateur, puis instant UTC de référence.
      * Retour : true si l'action est autorisée, false si elle est interdite ou null en cas d'erreur SQL.
      */
-    private function canBeManagedBy(int $listingId, int $userId): ?bool
+    private function canBeManagedBy(
+        int $listingId,
+        int $userId,
+        DateTimeImmutable $currentTimeUtc
+    ): ?bool
     {
         $this->lastManagementRestriction = 'error';
         $listing = $this->database->fetchOne(
@@ -509,7 +565,7 @@ class ListingModel extends Model
             return false;
         }
 
-        if ((string) $listing['date_heure_fin'] <= gmdate('Y-m-d H:i:s')) {
+        if ((string) $listing['date_heure_fin'] <= Clock::formatForDatabase($currentTimeUtc)) {
             $this->lastManagementRestriction = 'ended';
             return false;
         }

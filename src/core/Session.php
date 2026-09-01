@@ -4,7 +4,7 @@
  * Description générale : Gestionnaire de session de l'application.
  * Rôle : Sécuriser la session PHP et conserver l'identifiant de l'utilisateur connecté.
  * Tâches : Démarrer la session, gérer l'authentification, les messages temporaires et les jetons CSRF.
- * Liens avec les autres fichiers : Est créée par App.php puis transmise par Router.php aux contrôleurs.
+ * Liens avec les autres fichiers : Est créée par App.php, utilise Clock.php et est transmise aux contrôleurs par Router.php.
  */
 
 namespace App\core;
@@ -71,7 +71,7 @@ class Session
         if (ini_get('session.use_cookies')) {
             $cookieParameters = session_get_cookie_params();
             setcookie(session_name(), '', [
-                'expires' => time() - 42000,
+                'expires' => Clock::unixTimestamp() - 42000,
                 'path' => $cookieParameters['path'],
                 'domain' => $cookieParameters['domain'],
                 'secure' => $cookieParameters['secure'],

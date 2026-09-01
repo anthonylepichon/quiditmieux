@@ -4,11 +4,12 @@
  * Description générale : Contrôleur des participations d'un utilisateur aux ventes.
  * Rôle : Coordonner le suivi volontaire et le dépôt transactionnel des enchères.
  * Tâches : Contrôler la requête, appeler les modèles et choisir une réponse HTML ou JSON.
- * Liens avec les autres fichiers : Étend Controller.php et utilise ListingModel.php, FollowModel.php et BidModel.php.
+ * Liens avec les autres fichiers : Étend Controller.php et utilise Clock.php, ListingModel.php, FollowModel.php et BidModel.php.
  */
 
 namespace App\controllers;
 
+use App\core\Clock;
 use App\core\Controller;
 use App\core\Money;
 use App\models\BidModel;
@@ -50,8 +51,13 @@ class ParticipationController extends Controller
             return;
         }
 
+        $currentTimeUtc = Clock::nowUtc();
         $listingModel = new ListingModel($this->database);
-        $canParticipate = $listingModel->canReceiveParticipationFrom($listingId, $userId);
+        $canParticipate = $listingModel->canReceiveParticipationFrom(
+            $listingId,
+            $userId,
+            $currentTimeUtc
+        );
 
         if ($canParticipate === null) {
             $this->database->rollback();
@@ -101,7 +107,7 @@ class ParticipationController extends Controller
             return;
         }
 
-        if (!$bidModel->placeBid($userId, $listingId, $amountInEuros)) {
+        if (!$bidModel->placeBid($userId, $listingId, $amountInEuros, $currentTimeUtc)) {
             $this->database->rollback();
             $this->respondBid(false, 'Enchère refusée', $listingId);
             return;
@@ -178,8 +184,13 @@ class ParticipationController extends Controller
             return;
         }
 
+        $currentTimeUtc = Clock::nowUtc();
         $listingModel = new ListingModel($this->database);
-        $canParticipate = $listingModel->canReceiveParticipationFrom($listingId, $userId);
+        $canParticipate = $listingModel->canReceiveParticipationFrom(
+            $listingId,
+            $userId,
+            $currentTimeUtc
+        );
 
         if ($canParticipate === null) {
             $this->respond(false, 'Le suivi ne peut pas être actualisé pour le moment.', $listingId, false);
