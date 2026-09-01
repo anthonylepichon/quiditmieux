@@ -18,6 +18,16 @@ use DateTimeZone;
 
 class UserController extends Controller
 {
+    // ====================
+    // CONSTANTES
+    // ====================
+
+    private const PHOTO_PUBLIC_DIRECTORY = 'public/uploads/annonces/';
+
+    // ====================
+    // MÉTHODES
+    // ====================
+
     /**
      * Rôle : Afficher le formulaire privé avec les informations actuelles du compte.
      * Paramètres : Aucun.
@@ -273,7 +283,7 @@ class UserController extends Controller
     private function buildPhotoUrl(array $photos, int $listingId): ?string
     {
         if (isset($photos[$listingId])) {
-            return 'public/assets/images/photos-objets/' . rawurlencode($photos[$listingId]);
+            return self::PHOTO_PUBLIC_DIRECTORY . rawurlencode($photos[$listingId]);
         }
         return null;
     }

@@ -27,6 +27,8 @@ class ListingController extends Controller
     private const ITEMS_PER_PAGE = 12;
     private const ITEM_STATES = ['neuf', 'très bon état', 'bon état', 'état correct'];
     private const SALE_STATES = ['all', 'active', 'ended'];
+    private const PHOTO_PUBLIC_DIRECTORY = 'public/uploads/annonces/';
+    private const PHOTO_STORAGE_DIRECTORY = '/public/uploads/annonces';
 
     // ====================
     // MÉTHODES
@@ -174,7 +176,7 @@ class ListingController extends Controller
         $photos = [];
 
         foreach ($photoModel->getListingPhotos($listingId) as $photo) {
-            $photo['url'] = 'public/assets/images/photos-objets/' . rawurlencode($photo['filename']);
+            $photo['url'] = self::PHOTO_PUBLIC_DIRECTORY . rawurlencode($photo['filename']);
             $photos[] = $photo;
         }
 
@@ -745,10 +747,18 @@ class ListingController extends Controller
         int $startingOrder = 1
     ): bool
     {
-        $directory = dirname(__DIR__, 2) . '/public/assets/images/photos-objets';
+        $directory = dirname(__DIR__, 2) . self::PHOTO_STORAGE_DIRECTORY;
 
-        if (!is_dir($directory) || !is_writable($directory)) {
-            return $photos === [];
+        if ($photos === []) {
+            return true;
+        }
+
+        if (!is_dir($directory) && !mkdir($directory, 0775, true)) {
+            return false;
+        }
+
+        if (!is_writable($directory)) {
+            return false;
         }
 
         $photoModel = new PhotoModel($this->database);
@@ -888,7 +898,7 @@ class ListingController extends Controller
     private function addPhotoUrls(array $photos): array
     {
         foreach ($photos as &$photo) {
-            $photo['url'] = 'public/assets/images/photos-objets/' . rawurlencode($photo['filename']);
+            $photo['url'] = self::PHOTO_PUBLIC_DIRECTORY . rawurlencode($photo['filename']);
         }
         unset($photo);
 
@@ -902,7 +912,7 @@ class ListingController extends Controller
      */
     private function deletePhotoFiles(array $photos): void
     {
-        $directory = dirname(__DIR__, 2) . '/public/assets/images/photos-objets/';
+        $directory = dirname(__DIR__, 2) . self::PHOTO_STORAGE_DIRECTORY . '/';
 
         foreach ($photos as $photo) {
             if (!isset($photo['filename']) || !is_string($photo['filename'])) {
@@ -1310,7 +1320,7 @@ class ListingController extends Controller
             $photoUrl = null;
 
             if (isset($primaryPhotos[$identifier])) {
-                $photoUrl = 'public/assets/images/photos-objets/'
+                $photoUrl = self::PHOTO_PUBLIC_DIRECTORY
                     . rawurlencode($primaryPhotos[$identifier]);
             }
 
