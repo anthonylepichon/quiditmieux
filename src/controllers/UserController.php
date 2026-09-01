@@ -575,16 +575,4 @@ class UserController extends Controller
             && preg_match('/[^A-Za-z0-9]/', $password) === 1;
     }
 
-    /**
-     * Rôle : Lire une valeur POST simple sans accepter de tableau inattendu.
-     * Paramètres : Nom du champ demandé.
-     * Retour : Valeur reçue ou chaîne vide lorsqu'elle est absente ou invalide.
-     */
-    private function readPostString(string $name): string
-    {
-        if (!isset($_POST[$name]) || !is_string($_POST[$name])) {
-            return '';
-        }
-        return trim($_POST[$name]);
-    }
 }

@@ -9,7 +9,6 @@
 
 namespace App\models;
 
-use App\core\Database;
 use App\core\Model;
 
 class BidModel extends Model
@@ -30,16 +29,6 @@ class BidModel extends Model
     // ====================
     // MÉTHODES
     // ====================
-
-    /**
-     * Rôle : Initialiser le modèle avec le gestionnaire de base de données et des données éventuelles.
-     * Paramètres : Gestionnaire de base de données et tableau facultatif de données d'enchère.
-     * Retour : Aucun.
-     */
-    public function __construct(Database $database, array $data = [])
-    {
-        parent::__construct($database, $data);
-    }
 
     /**
      * Rôle : Obtenir le montant courant d'une annonce en centimes sans calcul décimal flottant.

@@ -1,15 +1,15 @@
 <?php
 
 /**
- * Description générale : Modèle parent générique de l'application.
- * Rôle : Fournir les opérations communes d'accès aux données pour les modèles enfants.
+ * Description générale : Modèle parent abstrait et générique de l'application.
+ * Rôle : Définir les opérations communes d'accès aux données que les modèles SQL utilisent par héritage.
  * Tâches : Conserver Database, hydrater les objets et exécuter les opérations CRUD génériques.
  * Liens avec les autres fichiers : Est étendu par les modèles enfants et reçoit Database depuis les contrôleurs.
  */
 
 namespace App\core;
 
-class Model
+abstract class Model
 {
     // ====================
     // ATTRIBUTS
@@ -137,7 +137,7 @@ class Model
      * Paramètres : Tableau associatif des valeurs à enregistrer.
      * Retour : true en cas de création, sinon false.
      */
-    public function create(array $data): bool
+    protected function create(array $data): bool
     {
         if (!$this->metadataIsValid()) {
             return false;
@@ -184,7 +184,7 @@ class Model
      * Paramètres : Identifiant de l'enregistrement et tableau associatif des nouvelles valeurs.
      * Retour : true si la requête est exécutée, sinon false.
      */
-    public function update(int $identifier, array $data): bool
+    protected function update(int $identifier, array $data): bool
     {
         if (!$this->metadataIsValid()) {
             return false;
@@ -219,7 +219,7 @@ class Model
      * Paramètres : Identifiant de l'enregistrement.
      * Retour : true si la requête est exécutée, sinon false.
      */
-    public function delete(int $identifier): bool
+    protected function delete(int $identifier): bool
     {
         if (!$this->metadataIsValid()) {
             return false;

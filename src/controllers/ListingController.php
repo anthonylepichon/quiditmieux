@@ -128,7 +128,7 @@ class ListingController extends Controller
      */
     public function showDetail(): void
     {
-        $listingId = $this->readPositiveIdentifier('id');
+        $listingId = $this->readPositiveGetIdentifier('id');
 
         if ($listingId === null) {
             $this->session->enregistrerMessageTemporaire('notice', 'L’annonce demandée est introuvable.');
@@ -407,7 +407,7 @@ class ListingController extends Controller
             $this->redirect('login_form', ['destination' => 'dashboard']);
         }
 
-        $listingId = $this->readPositiveIdentifier('id');
+        $listingId = $this->readPositiveGetIdentifier('id');
         $listingModel = new ListingModel($this->database);
         $listing = null;
 
@@ -690,20 +690,6 @@ class ListingController extends Controller
         $this->deletePhotoFiles($photos);
         $this->session->enregistrerMessageTemporaire('success', 'L’annonce a été supprimée.');
         $this->redirect('dashboard');
-    }
-
-    /**
-     * Rôle : Lire une valeur POST simple sans accepter de tableau inattendu.
-     * Paramètres : Nom du champ demandé.
-     * Retour : Valeur reçue ou chaîne vide lorsqu'elle est absente ou invalide.
-     */
-    private function readPostString(string $name): string
-    {
-        if (!isset($_POST[$name]) || !is_string($_POST[$name])) {
-            return '';
-        }
-
-        return trim($_POST[$name]);
     }
 
     /**
@@ -996,23 +982,6 @@ class ListingController extends Controller
     }
 
     /**
-     * Rôle : Lire un identifiant entier strictement positif dans la requête POST.
-     * Paramètres : Nom du champ.
-     * Retour : Identifiant validé ou null.
-     */
-    private function readPositivePostIdentifier(string $name): ?int
-    {
-        $value = $this->readPostString($name);
-        $identifier = filter_var($value, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
-
-        if ($identifier === false) {
-            return null;
-        }
-
-        return (int) $identifier;
-    }
-
-    /**
      * Rôle : Transformer une annonce enregistrée en valeurs adaptées au formulaire de modification.
      * Paramètres : Annonce enregistrée.
      * Retour : Valeurs réaffichables du formulaire.
@@ -1140,28 +1109,6 @@ class ListingController extends Controller
             'locked_state' => $lockedState,
             'csrf_token' => $this->session->obtenirJetonCsrf(),
         ]);
-    }
-
-    /**
-     * Rôle : Lire un identifiant entier strictement positif dans la requête GET.
-     * Paramètres : Nom du paramètre.
-     * Retour : Identifiant validé ou null lorsque la valeur est absente ou invalide.
-     */
-    private function readPositiveIdentifier(string $name): ?int
-    {
-        if (!isset($_GET[$name]) || !is_string($_GET[$name])) {
-            return null;
-        }
-
-        $identifier = filter_var($_GET[$name], FILTER_VALIDATE_INT, [
-            'options' => ['min_range' => 1],
-        ]);
-
-        if ($identifier === false) {
-            return null;
-        }
-
-        return (int) $identifier;
     }
 
     /**
@@ -1688,18 +1635,6 @@ class ListingController extends Controller
             'sale_state' => $criteria['sale_state'],
             'page' => $criteria['page'],
         ];
-    }
-
-    /**
-     * Rôle : Indiquer si le navigateur demande le contrat JSON de la recherche.
-     * Paramètres : Aucun.
-     * Retour : true pour une demande JSON explicite, sinon false.
-     */
-    private function isJsonRequest(): bool
-    {
-        return isset($_GET['format'])
-            && is_string($_GET['format'])
-            && $_GET['format'] === 'json';
     }
 
     /**

@@ -321,20 +321,6 @@ class ParticipationController extends Controller
     }
 
     /**
-     * Rôle : Lire une valeur POST simple sans accepter de tableau inattendu.
-     * Paramètres : Nom du champ.
-     * Retour : Valeur reçue ou chaîne vide.
-     */
-    private function readPostString(string $name): string
-    {
-        if (!isset($_POST[$name]) || !is_string($_POST[$name])) {
-            return '';
-        }
-
-        return trim($_POST[$name]);
-    }
-
-    /**
      * Rôle : Valider le format d'un montant reçu et le convertir en centimes.
      * Paramètres : Montant textuel issu du formulaire d'enchère.
      * Retour : Montant en centimes ou null lorsque le format est invalide.
@@ -352,34 +338,6 @@ class ParticipationController extends Controller
         }
 
         return ((int) $matches[1] * 100) + (int) $fraction;
-    }
-
-    /**
-     * Rôle : Lire un identifiant POST entier strictement positif.
-     * Paramètres : Nom du champ.
-     * Retour : Identifiant ou null lorsque la valeur est invalide.
-     */
-    private function readPositivePostIdentifier(string $name): ?int
-    {
-        $identifier = filter_var($this->readPostString($name), FILTER_VALIDATE_INT, [
-            'options' => ['min_range' => 1],
-        ]);
-
-        if ($identifier === false) {
-            return null;
-        }
-
-        return (int) $identifier;
-    }
-
-    /**
-     * Rôle : Indiquer si le navigateur demande explicitement une réponse JSON.
-     * Paramètres : Aucun.
-     * Retour : true pour une demande AJAX JSON, sinon false.
-     */
-    private function isJsonRequest(): bool
-    {
-        return isset($_GET['format']) && is_string($_GET['format']) && $_GET['format'] === 'json';
     }
 
     /**

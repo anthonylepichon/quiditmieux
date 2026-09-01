@@ -199,34 +199,6 @@ class AuthController extends Controller
     }
 
     /**
-     * Rôle : Lire une valeur POST simple sans accepter de tableau inattendu.
-     * Paramètres : Nom du champ demandé.
-     * Retour : Valeur reçue ou chaîne vide lorsqu'elle est absente ou invalide.
-     */
-    private function readPostString(string $name): string
-    {
-        if (!isset($_POST[$name]) || !is_string($_POST[$name])) {
-            return '';
-        }
-
-        return trim($_POST[$name]);
-    }
-
-    /**
-     * Rôle : Lire une valeur GET simple sans accepter de tableau inattendu.
-     * Paramètres : Nom du champ demandé.
-     * Retour : Valeur reçue ou chaîne vide lorsqu'elle est absente ou invalide.
-     */
-    private function readGetString(string $name): string
-    {
-        if (!isset($_GET[$name]) || !is_string($_GET[$name])) {
-            return '';
-        }
-
-        return trim($_GET[$name]);
-    }
-
-    /**
      * Rôle : Limiter une destination de connexion aux routes internes protégées prévues.
      * Paramètres : Nom de destination candidat.
      * Retour : Route interne autorisée ou tableau de bord par défaut.

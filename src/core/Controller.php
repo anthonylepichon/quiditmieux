@@ -1,15 +1,15 @@
 <?php
 
 /**
- * Description générale : Contrôleur parent commun de l'application.
- * Rôle : Fournir les aides simples partagées par les contrôleurs enfants.
- * Tâches : Conserver Database et Session, composer une page avec le layout, rediriger et produire une réponse JSON.
+ * Description générale : Contrôleur parent abstrait commun de l'application.
+ * Rôle : Définir les aides simples que les contrôleurs enfants utilisent par héritage.
+ * Tâches : Conserver Database et Session, composer une page avec le layout, lire les paramètres simples, rediriger et produire une réponse JSON.
  * Liens avec les autres fichiers : Est étendu par les contrôleurs enfants et utilise les templates ainsi que base.php.
  */
 
 namespace App\core;
 
-class Controller
+abstract class Controller
 {
     // ====================
     // ATTRIBUTS
@@ -117,5 +117,79 @@ class Controller
         }
 
         echo $json;
+    }
+
+    /**
+     * Rôle : Lire une valeur POST simple sans accepter de tableau inattendu.
+     * Paramètres : Nom du champ demandé.
+     * Retour : Valeur nettoyée ou chaîne vide lorsqu'elle est absente ou invalide.
+     */
+    protected function readPostString(string $name): string
+    {
+        if (!isset($_POST[$name]) || !is_string($_POST[$name])) {
+            return '';
+        }
+
+        return trim($_POST[$name]);
+    }
+
+    /**
+     * Rôle : Lire une valeur GET simple sans accepter de tableau inattendu.
+     * Paramètres : Nom du paramètre demandé.
+     * Retour : Valeur nettoyée ou chaîne vide lorsqu'elle est absente ou invalide.
+     */
+    protected function readGetString(string $name): string
+    {
+        if (!isset($_GET[$name]) || !is_string($_GET[$name])) {
+            return '';
+        }
+
+        return trim($_GET[$name]);
+    }
+
+    /**
+     * Rôle : Lire un identifiant entier strictement positif dans la requête POST.
+     * Paramètres : Nom du champ demandé.
+     * Retour : Identifiant validé ou null lorsque la valeur est absente ou invalide.
+     */
+    protected function readPositivePostIdentifier(string $name): ?int
+    {
+        $identifier = filter_var($this->readPostString($name), FILTER_VALIDATE_INT, [
+            'options' => ['min_range' => 1],
+        ]);
+
+        if ($identifier === false) {
+            return null;
+        }
+
+        return (int) $identifier;
+    }
+
+    /**
+     * Rôle : Lire un identifiant entier strictement positif dans la requête GET.
+     * Paramètres : Nom du paramètre demandé.
+     * Retour : Identifiant validé ou null lorsque la valeur est absente ou invalide.
+     */
+    protected function readPositiveGetIdentifier(string $name): ?int
+    {
+        $identifier = filter_var($this->readGetString($name), FILTER_VALIDATE_INT, [
+            'options' => ['min_range' => 1],
+        ]);
+
+        if ($identifier === false) {
+            return null;
+        }
+
+        return (int) $identifier;
+    }
+
+    /**
+     * Rôle : Indiquer si le navigateur demande explicitement une réponse JSON.
+     * Paramètres : Aucun.
+     * Retour : true lorsque le paramètre de format demande JSON, sinon false.
+     */
+    protected function isJsonRequest(): bool
+    {
+        return $this->readGetString('format') === 'json';
     }
 }

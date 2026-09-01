@@ -9,7 +9,6 @@
 
 namespace App\models;
 
-use App\core\Database;
 use App\core\Model;
 
 class ListingModel extends Model
@@ -35,16 +34,6 @@ class ListingModel extends Model
     // ====================
     // MÉTHODES
     // ====================
-
-    /**
-     * Rôle : Initialiser le modèle avec le gestionnaire de base de données et des données éventuelles.
-     * Paramètres : Gestionnaire de base de données et tableau facultatif de données d'annonce.
-     * Retour : Aucun.
-     */
-    public function __construct(Database $database, array $data = [])
-    {
-        parent::__construct($database, $data);
-    }
 
     /**
      * Rôle : Créer une annonce à partir des informations déjà validées par le contrôleur.
