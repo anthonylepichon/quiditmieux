@@ -82,20 +82,24 @@ class Model
     /**
      * Rôle : Rechercher un enregistrement à partir de sa clé primaire.
      * Paramètres : Identifiant de l'enregistrement.
-     * Retour : Objet du modèle enfant ou null lorsque l'enregistrement est absent.
+     * Retour : Objet du modèle enfant, null si l'enregistrement est absent ou false en cas d'erreur SQL.
      */
-    public function find(int $identifier): ?static
+    public function find(int $identifier): static|false|null
     {
         if (!$this->metadataIsValid()) {
-            return null;
+            return false;
         }
 
         $sql = 'SELECT * FROM `' . $this->tableName . '`'
             . ' WHERE `' . $this->primaryKeyName . '` = :identifier LIMIT 1';
         $data = $this->database->fetchOne($sql, ['identifier' => $identifier]);
 
-        if ($data === null) {
-            return null;
+        if ($data === false || $data === null) {
+            return $data;
+        }
+
+        if (!is_array($data)) {
+            return false;
         }
 
         return new static($this->database, $data);
@@ -104,16 +108,21 @@ class Model
     /**
      * Rôle : Récupérer tous les enregistrements de la table du modèle enfant.
      * Paramètres : Aucun.
-     * Retour : Tableau d'objets du modèle enfant, éventuellement vide.
+     * Retour : Tableau d'objets du modèle enfant, éventuellement vide, ou false en cas d'erreur SQL.
      */
-    public function findAll(): array
+    public function findAll(): array|false
     {
         if (!$this->metadataIsValid()) {
-            return [];
+            return false;
         }
 
         $sql = 'SELECT * FROM `' . $this->tableName . '`';
         $rows = $this->database->fetchAll($sql);
+
+        if ($rows === false) {
+            return false;
+        }
+
         $models = [];
 
         foreach ($rows as $row) {
@@ -158,6 +167,10 @@ class Model
 
         $this->hydrate($filteredData);
         $lastIdentifier = $this->database->getLastInsertId();
+
+        if ($lastIdentifier === false) {
+            return false;
+        }
 
         if ($lastIdentifier !== null) {
             $this->recordData[$this->primaryKeyName] = $lastIdentifier;

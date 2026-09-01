@@ -39,9 +39,9 @@ class UserModel extends Model
     /**
      * Rôle : Rechercher un compte à partir du pseudo ou de l'adresse électronique.
      * Paramètres : Identifiant saisi et indication précisant s'il s'agit d'une adresse électronique.
-     * Retour : Compte avec son empreinte de mot de passe ou null lorsqu'il est absent.
+     * Retour : Compte avec son empreinte, null s'il est absent ou false en cas d'erreur SQL.
      */
-    public function findByLogin(string $login, bool $isEmail): ?array
+    public function findByLogin(string $login, bool $isEmail): array|false|null
     {
         $column = 'pseudo';
 
@@ -59,9 +59,9 @@ class UserModel extends Model
     /**
      * Rôle : Récupérer les informations privées nécessaires au formulaire du compte.
      * Paramètres : Identifiant de l'utilisateur connecté.
-     * Retour : Identité et empreinte du mot de passe, ou null lorsque le compte est absent.
+     * Retour : Identité et empreinte, null si le compte est absent ou false en cas d'erreur SQL.
      */
-    public function getAccount(int $userId): ?array
+    public function getAccount(int $userId): array|false|null
     {
         return $this->database->fetchOne(
             'SELECT id, pseudo, email, password_hash FROM `UTILISATEUR` WHERE id = :user_id LIMIT 1',
@@ -86,9 +86,9 @@ class UserModel extends Model
     /**
      * Rôle : Vérifier si un pseudo est déjà enregistré sans tenir compte de la casse.
      * Paramètres : Pseudo recherché et éventuel identifiant de compte à exclure.
-     * Retour : true si le pseudo existe, sinon false.
+     * Retour : true si le pseudo existe, false s'il est disponible ou null en cas d'erreur SQL.
      */
-    public function pseudoExists(string $pseudo, ?int $excludedUserId = null): bool
+    public function pseudoExists(string $pseudo, ?int $excludedUserId = null): ?bool
     {
         return $this->normalizedValueExists('pseudo', $pseudo, $excludedUserId);
     }
@@ -96,9 +96,9 @@ class UserModel extends Model
     /**
      * Rôle : Vérifier si une adresse électronique est déjà enregistrée sans tenir compte de la casse.
      * Paramètres : Adresse recherchée et éventuel identifiant de compte à exclure.
-     * Retour : true si l'adresse existe, sinon false.
+     * Retour : true si l'adresse existe, false si elle est disponible ou null en cas d'erreur SQL.
      */
-    public function emailExists(string $email, ?int $excludedUserId = null): bool
+    public function emailExists(string $email, ?int $excludedUserId = null): ?bool
     {
         return $this->normalizedValueExists('email', $email, $excludedUserId);
     }
@@ -106,9 +106,9 @@ class UserModel extends Model
     /**
      * Rôle : Vérifier l'existence normalisée d'une valeur dans une colonne autorisée.
      * Paramètres : Colonne contrôlée, valeur recherchée et éventuel identifiant à exclure.
-     * Retour : true lorsqu'un compte correspondant existe, sinon false.
+     * Retour : true si un compte correspond, false s'il est absent ou null en cas d'erreur SQL.
      */
-    private function normalizedValueExists(string $column, string $value, ?int $excludedUserId): bool
+    private function normalizedValueExists(string $column, string $value, ?int $excludedUserId): ?bool
     {
         if ($column !== 'pseudo' && $column !== 'email') {
             return false;
@@ -124,6 +124,12 @@ class UserModel extends Model
 
         $sql .= ' LIMIT 1';
 
-        return $this->database->fetchOne($sql, $parameters) !== null;
+        $account = $this->database->fetchOne($sql, $parameters);
+
+        if ($account === false) {
+            return null;
+        }
+
+        return $account !== null;
     }
 }

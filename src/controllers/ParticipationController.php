@@ -53,6 +53,12 @@ class ParticipationController extends Controller
         $bidModel = new BidModel($this->database);
         $listing = $listingModel->getForUpdate($listingId);
 
+        if ($listing === false) {
+            $this->database->rollback();
+            $this->respondBid(false, 'Enchère refusée', $listingId);
+            return;
+        }
+
         if ($listing === null) {
             $this->database->rollback();
             $this->respondBid(false, 'Enchère refusée', $listingId);
@@ -72,6 +78,13 @@ class ParticipationController extends Controller
         }
 
         $summary = $bidModel->getSummary($listingId);
+
+        if ($summary === false) {
+            $this->database->rollback();
+            $this->respondBid(false, 'Enchère refusée', $listingId);
+            return;
+        }
+
         $currentPrice = (float) $listing['prix_depart'];
 
         if ($summary['best_bid'] !== null) {
@@ -96,6 +109,12 @@ class ParticipationController extends Controller
         }
 
         $updatedSummary = $bidModel->getSummary($listingId);
+
+        if ($updatedSummary === false) {
+            $this->database->rollback();
+            $this->respondBid(false, 'Enchère refusée', $listingId);
+            return;
+        }
 
         if (!$this->database->commit()) {
             $this->database->rollback();
@@ -155,6 +174,11 @@ class ParticipationController extends Controller
 
         $listingModel = new ListingModel($this->database);
         $listing = $listingModel->getDetail($listingId);
+
+        if ($listing === false) {
+            $this->respond(false, 'Le suivi ne peut pas être actualisé pour le moment.', $listingId, false);
+            return;
+        }
 
         if ($listing === null) {
             $this->respond(false, 'Le suivi ne peut pas être actualisé pour le moment.', $listingId, false);

@@ -43,9 +43,9 @@ class PhotoModel extends Model
     /**
      * Rôle : Obtenir la première photographie ordonnée de chaque annonce demandée.
      * Paramètres : Liste d'identifiants d'annonces.
-     * Retour : Références de fichiers indexées par identifiant d'annonce.
+     * Retour : Références indexées par annonce ou false en cas d'erreur SQL.
      */
-    public function getPrimaryPhotos(array $listingIds): array
+    public function getPrimaryPhotos(array $listingIds): array|false
     {
         $identifiers = $this->normalizeIdentifiers($listingIds);
 
@@ -67,6 +67,11 @@ class PhotoModel extends Model
             . ' WHERE annonce_id IN (' . implode(', ', $placeholders) . ')'
             . ' ORDER BY annonce_id ASC, ordre ASC';
         $rows = $this->database->fetchAll($sql, $parameters);
+
+        if ($rows === false) {
+            return false;
+        }
+
         $primaryPhotos = [];
 
         foreach ($rows as $row) {
@@ -87,15 +92,20 @@ class PhotoModel extends Model
     /**
      * Rôle : Récupérer toutes les photographies d'une annonce dans leur ordre d'affichage.
      * Paramètres : Identifiant de l'annonce.
-     * Retour : Liste des photographies avec un nom de fichier sûr.
+     * Retour : Liste des photographies ou false en cas d'erreur SQL.
      */
-    public function getListingPhotos(int $listingId): array
+    public function getListingPhotos(int $listingId): array|false
     {
         $rows = $this->database->fetchAll(
             'SELECT id, ref_fichier, ordre FROM `PHOTOGRAPHIE`'
             . ' WHERE annonce_id = :listing_id ORDER BY ordre ASC, id ASC',
             ['listing_id' => $listingId]
         );
+
+        if ($rows === false) {
+            return false;
+        }
+
         $photos = [];
 
         foreach ($rows as $row) {

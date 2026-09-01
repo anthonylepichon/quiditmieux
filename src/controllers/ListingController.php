@@ -67,14 +67,24 @@ class ListingController extends Controller
             $success = $searchResult['success'];
 
             if ($success) {
-                $searchResult['listings'] = $this->enrichListings($searchResult['listings']);
-                $criteria['page'] = $searchResult['current_page'];
-                $stateKey = $this->determineStateKey(
-                    $searchResult,
-                    $hasCustomCriteria,
-                    $categoriesAvailable
-                );
-                $message = $this->buildStateMessage($stateKey, $searchResult);
+                $enrichedListings = $this->enrichListings($searchResult['listings']);
+
+                if ($enrichedListings === false) {
+                    $success = false;
+                    $searchResult['success'] = false;
+                    $searchResult['listings'] = [];
+                    $stateKey = 'search_error';
+                    $message = 'Les annonces ne peuvent pas être actualisées pour le moment.';
+                } else {
+                    $searchResult['listings'] = $enrichedListings;
+                    $criteria['page'] = $searchResult['current_page'];
+                    $stateKey = $this->determineStateKey(
+                        $searchResult,
+                        $hasCustomCriteria,
+                        $categoriesAvailable
+                    );
+                    $message = $this->buildStateMessage($stateKey, $searchResult);
+                }
             } else {
                 $stateKey = 'search_error';
                 $message = 'Les annonces ne peuvent pas être actualisées pour le moment.';
@@ -128,6 +138,14 @@ class ListingController extends Controller
         $listingModel = new ListingModel($this->database);
         $listing = $listingModel->getDetail($listingId);
 
+        if ($listing === false) {
+            $this->session->enregistrerMessageTemporaire(
+                'notice',
+                'Les données de cette annonce sont momentanément indisponibles.'
+            );
+            $this->redirect('home');
+        }
+
         if ($listing === null) {
             $this->session->enregistrerMessageTemporaire('notice', 'L’annonce demandée est introuvable.');
             $this->redirect('home');
@@ -137,6 +155,15 @@ class ListingController extends Controller
         $photoModel = new PhotoModel($this->database);
         $followModel = new FollowModel($this->database);
         $summary = $bidModel->getSummary($listingId);
+
+        if ($summary === false) {
+            $this->session->enregistrerMessageTemporaire(
+                'notice',
+                'Les données de cette annonce sont momentanément indisponibles.'
+            );
+            $this->redirect('home');
+        }
+
         $viewerId = $this->session->obtenirIdentifiantUtilisateurConnecte();
         $isOwner = $viewerId !== null && $viewerId === (int) $listing['utilisateur_id'];
         $viewerHasBid = false;
@@ -145,6 +172,14 @@ class ListingController extends Controller
         if ($viewerId !== null && !$isOwner) {
             $viewerHasBid = $bidModel->userHasBid($listingId, $viewerId);
             $isFollowing = $followModel->isFollowing($viewerId, $listingId);
+
+            if ($viewerHasBid === null || $isFollowing === null) {
+                $this->session->enregistrerMessageTemporaire(
+                    'notice',
+                    'Les données de cette annonce sont momentanément indisponibles.'
+                );
+                $this->redirect('home');
+            }
         }
 
         $utcTimezone = new DateTimeZone('UTC');
@@ -170,12 +205,31 @@ class ListingController extends Controller
         $history = [];
 
         if ($isOwner || $viewerHasBid) {
-            $history = $this->formatBidHistory($bidModel->getHistory($listingId), $parisTimezone);
+            $historyRows = $bidModel->getHistory($listingId);
+
+            if ($historyRows === false) {
+                $this->session->enregistrerMessageTemporaire(
+                    'notice',
+                    'Les données de cette annonce sont momentanément indisponibles.'
+                );
+                $this->redirect('home');
+            }
+
+            $history = $this->formatBidHistory($historyRows, $parisTimezone);
         }
 
         $photos = [];
+        $photoRows = $photoModel->getListingPhotos($listingId);
 
-        foreach ($photoModel->getListingPhotos($listingId) as $photo) {
+        if ($photoRows === false) {
+            $this->session->enregistrerMessageTemporaire(
+                'notice',
+                'Les données de cette annonce sont momentanément indisponibles.'
+            );
+            $this->redirect('home');
+        }
+
+        foreach ($photoRows as $photo) {
             $photo['url'] = self::PHOTO_PUBLIC_DIRECTORY . rawurlencode($photo['filename']);
             $photos[] = $photo;
         }
@@ -342,6 +396,14 @@ class ListingController extends Controller
             $listing = $listingModel->getDetail($listingId);
         }
 
+        if ($listing === false) {
+            $this->session->enregistrerMessageTemporaire(
+                'notice',
+                'Les données de cette annonce sont momentanément indisponibles.'
+            );
+            $this->redirect('dashboard');
+        }
+
         if ($listing === null || (int) $listing['utilisateur_id'] !== $userId) {
             $this->session->enregistrerMessageTemporaire('notice', 'Cette annonce ne peut pas être modifiée.');
             $this->redirect('dashboard');
@@ -352,8 +414,20 @@ class ListingController extends Controller
 
         if ((string) $listing['date_heure_fin'] <= gmdate('Y-m-d H:i:s')) {
             $lockedState = 'ended';
-        } elseif ($bidModel->listingHasBid($listingId)) {
-            $lockedState = 'bid';
+        } else {
+            $listingHasBid = $bidModel->listingHasBid($listingId);
+
+            if ($listingHasBid === null) {
+                $this->session->enregistrerMessageTemporaire(
+                    'notice',
+                    'Les données de cette annonce sont momentanément indisponibles.'
+                );
+                $this->redirect('dashboard');
+            }
+
+            if ($listingHasBid) {
+                $lockedState = 'bid';
+            }
         }
 
         $categories = $this->fetchCategories();
@@ -371,7 +445,14 @@ class ListingController extends Controller
         }
 
         $photoModel = new PhotoModel($this->database);
-        $photos = $this->addPhotoUrls($photoModel->getListingPhotos($listingId));
+        $photos = $photoModel->getListingPhotos($listingId);
+
+        if ($photos === false) {
+            $photos = [];
+            $errors['form'] = 'Les photographies de cette annonce sont momentanément indisponibles.';
+        }
+
+        $photos = $this->addPhotoUrls($photos);
         $values = $this->listingToFormValues($listing, $categories);
         $this->renderListingForm('edit', $values, $errors, $categories, $photos, $lockedState);
     }
@@ -413,6 +494,12 @@ class ListingController extends Controller
         $uploadedPhotos = $this->validateUploadedPhotos($errors, 'edit');
         $photoModel = new PhotoModel($this->database);
         $existingPhotos = $photoModel->getListingPhotos($listingId);
+
+        if ($existingPhotos === false) {
+            $existingPhotos = [];
+            $errors['form'] = 'Les photographies de cette annonce sont momentanément indisponibles.';
+        }
+
         $removeIds = $this->readPhotoIdentifiersToRemove();
         $keptPhotos = [];
         $removedPhotos = [];
@@ -450,6 +537,15 @@ class ListingController extends Controller
         $lockedListing = $listingModel->getForUpdate($listingId);
         $bidModel = new BidModel($this->database);
         $listingHasBid = $bidModel->listingHasBid($listingId);
+
+        if ($lockedListing === false || $listingHasBid === null) {
+            $this->database->rollback();
+            $this->session->enregistrerMessageTemporaire(
+                'notice',
+                'Les données de cette annonce sont momentanément indisponibles.'
+            );
+            $this->redirect('listing_detail', ['id' => $listingId]);
+        }
 
         if ($lockedListing === null
             || (int) $lockedListing['utilisateur_id'] !== $userId
@@ -544,11 +640,21 @@ class ListingController extends Controller
         $listingModel = new ListingModel($this->database);
         $lockedListing = $listingModel->getForUpdate($listingId);
         $bidModel = new BidModel($this->database);
+        $listingHasBid = $bidModel->listingHasBid($listingId);
+
+        if ($lockedListing === false || $listingHasBid === null) {
+            $this->database->rollback();
+            $this->session->enregistrerMessageTemporaire(
+                'notice',
+                'Les données de cette annonce sont momentanément indisponibles.'
+            );
+            $this->redirect('listing_detail', ['id' => $listingId]);
+        }
 
         if ($lockedListing === null
             || (int) $lockedListing['utilisateur_id'] !== $userId
             || (string) $lockedListing['date_heure_fin'] <= gmdate('Y-m-d H:i:s')
-            || $bidModel->listingHasBid($listingId)
+            || $listingHasBid
         ) {
             $this->database->rollback();
             $this->session->enregistrerMessageTemporaire(
@@ -560,6 +666,15 @@ class ListingController extends Controller
 
         $photoModel = new PhotoModel($this->database);
         $photos = $photoModel->getListingPhotos($listingId);
+
+        if ($photos === false) {
+            $this->database->rollback();
+            $this->session->enregistrerMessageTemporaire(
+                'notice',
+                'Les photographies de cette annonce sont momentanément indisponibles.'
+            );
+            $this->redirect('listing_detail', ['id' => $listingId]);
+        }
 
         if (!$listingModel->delete($listingId) || !$this->database->commit()) {
             $this->database->rollback();
@@ -1366,9 +1481,9 @@ class ListingController extends Controller
     /**
      * Rôle : Ajouter le prix courant, la photographie principale et les informations d'affichage aux annonces.
      * Paramètres : Annonces brutes retournées par ListingModel.
-     * Retour : Annonces limitées aux informations nécessaires à la carte d'accueil.
+     * Retour : Annonces prêtes à afficher ou false en cas d'erreur SQL complémentaire.
      */
-    private function enrichListings(array $listings): array
+    private function enrichListings(array $listings): array|false
     {
         $listingIds = [];
         $startingPrices = [];
@@ -1387,6 +1502,11 @@ class ListingController extends Controller
         $photoModel = new PhotoModel($this->database);
         $currentPrices = $bidModel->getCurrentPrices($listingIds, $startingPrices);
         $primaryPhotos = $photoModel->getPrimaryPhotos($listingIds);
+
+        if ($currentPrices === false || $primaryPhotos === false) {
+            return false;
+        }
+
         $displayListings = [];
         $utcTimezone = new DateTimeZone('UTC');
         $parisTimezone = new DateTimeZone('Europe/Paris');

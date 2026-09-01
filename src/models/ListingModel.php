@@ -73,7 +73,11 @@ class ListingModel extends Model
         $countSql = 'SELECT COUNT(*) AS total FROM `ANNONCE` listing' . $whereSql;
         $countRow = $this->database->fetchOne($countSql, $parameters);
 
-        if ($countRow === null || !isset($countRow['total']) || !is_numeric($countRow['total'])) {
+        if ($countRow === false
+            || $countRow === null
+            || !isset($countRow['total'])
+            || !is_numeric($countRow['total'])
+        ) {
             return $this->failedSearchResult($itemsPerPage);
         }
 
@@ -90,6 +94,10 @@ class ListingModel extends Model
             . $orderSql
             . ' LIMIT ' . $itemsPerPage . ' OFFSET ' . $offset;
         $listings = $this->database->fetchAll($listSql, $parameters);
+
+        if ($listings === false) {
+            return $this->failedSearchResult($itemsPerPage);
+        }
 
         if ($totalItems > 0 && $listings === []) {
             return $this->failedSearchResult($itemsPerPage);
@@ -108,9 +116,9 @@ class ListingModel extends Model
     /**
      * Rôle : Récupérer toutes les informations publiques d'une annonce et le pseudo de son vendeur.
      * Paramètres : Identifiant de l'annonce.
-     * Retour : Données de l'annonce ou null lorsqu'elle est absente.
+     * Retour : Données de l'annonce, null si elle est absente ou false en cas d'erreur SQL.
      */
-    public function getDetail(int $listingId): ?array
+    public function getDetail(int $listingId): array|false|null
     {
         $sql = 'SELECT listing.id, listing.utilisateur_id, listing.titre, listing.description,'
             . ' listing.etat_objet, listing.prix_depart, listing.date_heure_fin,'
@@ -124,9 +132,9 @@ class ListingModel extends Model
     /**
      * Rôle : Verrouiller et récupérer une annonce pendant une opération concurrente.
      * Paramètres : Identifiant de l'annonce.
-     * Retour : Données essentielles verrouillées ou null lorsque l'annonce est absente.
+     * Retour : Données verrouillées, null si elles sont absentes ou false en cas d'erreur SQL.
      */
-    public function getForUpdate(int $listingId): ?array
+    public function getForUpdate(int $listingId): array|false|null
     {
         $sql = 'SELECT id, utilisateur_id, prix_depart, date_heure_fin FROM `ANNONCE`'
             . ' WHERE id = :listing_id LIMIT 1 FOR UPDATE';
@@ -136,9 +144,9 @@ class ListingModel extends Model
     /**
      * Rôle : Récupérer les annonces vendues par l'utilisateur avec leur prix courant.
      * Paramètres : Identifiant de l'utilisateur connecté.
-     * Retour : Liste des ventes ordonnées des plus proches aux plus anciennes.
+     * Retour : Liste des ventes ou false en cas d'erreur SQL.
      */
-    public function getDashboardSales(int $userId): array
+    public function getDashboardSales(int $userId): array|false
     {
         $sql = 'SELECT listing.id, listing.titre, listing.etat_objet, listing.prix_depart,'
             . ' listing.date_heure_fin, listing.categorie_libelle,'
@@ -156,9 +164,9 @@ class ListingModel extends Model
     /**
      * Rôle : Récupérer les suivis et enchères de l'utilisateur utiles au tableau de bord.
      * Paramètres : Identifiant de l'utilisateur connecté.
-     * Retour : Participations actives, enchères perdues et enchères remportées.
+     * Retour : Participations de l'utilisateur ou false en cas d'erreur SQL.
      */
-    public function getDashboardParticipations(int $userId): array
+    public function getDashboardParticipations(int $userId): array|false
     {
         $winnerSql = '(SELECT winning_bid.utilisateur_id FROM `ENCHERE` winning_bid'
             . ' WHERE winning_bid.annonce_id = listing.id'

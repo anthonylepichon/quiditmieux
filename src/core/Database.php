@@ -88,12 +88,12 @@ class Database
     /**
      * Rôle : Préparer une requête et récupérer son premier enregistrement.
      * Paramètres : Requête SQL et tableau facultatif de paramètres.
-     * Retour : Tableau associatif du premier enregistrement ou null s'il est absent.
+     * Retour : Tableau du premier enregistrement, null s'il est absent ou false en cas d'erreur SQL.
      */
-    public function fetchOne(string $sql, array $parameters = []): ?array
+    public function fetchOne(string $sql, array $parameters = []): array|false|null
     {
         if ($this->connection === null) {
-            return null;
+            return false;
         }
 
         try {
@@ -101,11 +101,15 @@ class Database
             $statement->execute($parameters);
             $record = $statement->fetch();
         } catch (PDOException) {
+            return false;
+        }
+
+        if ($record === false) {
             return null;
         }
 
         if (!is_array($record)) {
-            return null;
+            return false;
         }
 
         return $record;
@@ -114,12 +118,12 @@ class Database
     /**
      * Rôle : Préparer une requête et récupérer tous ses enregistrements.
      * Paramètres : Requête SQL et tableau facultatif de paramètres.
-     * Retour : Tableau des enregistrements, éventuellement vide.
+     * Retour : Tableau des enregistrements, éventuellement vide, ou false en cas d'erreur SQL.
      */
-    public function fetchAll(string $sql, array $parameters = []): array
+    public function fetchAll(string $sql, array $parameters = []): array|false
     {
         if ($this->connection === null) {
-            return [];
+            return false;
         }
 
         try {
@@ -127,24 +131,32 @@ class Database
             $statement->execute($parameters);
             return $statement->fetchAll();
         } catch (PDOException) {
-            return [];
+            return false;
         }
     }
 
     /**
      * Rôle : Récupérer l'identifiant entier généré par la dernière insertion.
      * Paramètres : Aucun.
-     * Retour : Identifiant généré ou null lorsqu'il n'est pas disponible.
+     * Retour : Identifiant généré, null s'il n'est pas disponible ou false en cas d'erreur PDO.
      */
-    public function getLastInsertId(): ?int
+    public function getLastInsertId(): int|false|null
     {
         if ($this->connection === null) {
-            return null;
+            return false;
         }
 
-        $lastInsertId = $this->connection->lastInsertId();
+        try {
+            $lastInsertId = $this->connection->lastInsertId();
+        } catch (PDOException) {
+            return false;
+        }
 
-        if ($lastInsertId === false || $lastInsertId === '0') {
+        if ($lastInsertId === false) {
+            return false;
+        }
+
+        if ($lastInsertId === '0') {
             return null;
         }
 

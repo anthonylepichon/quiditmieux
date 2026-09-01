@@ -47,11 +47,18 @@ class AuthController extends Controller
         $userModel = new UserModel($this->database);
 
         if ($errors === []) {
-            if ($userModel->pseudoExists($values['pseudo'])) {
+            $pseudoExists = $userModel->pseudoExists($values['pseudo']);
+            $emailExists = $userModel->emailExists($values['email']);
+
+            if ($pseudoExists === null || $emailExists === null) {
+                $errors['form'] = 'Veuillez réessayer. Aucun mécanisme technique n’est affiché.';
+            }
+
+            if ($pseudoExists === true) {
                 $errors['pseudo'] = 'Ce pseudo est déjà utilisé.';
             }
 
-            if ($userModel->emailExists($values['email'])) {
+            if ($emailExists === true) {
                 $errors['email'] = 'Cette adresse électronique est déjà utilisée.';
             }
         }
@@ -128,7 +135,10 @@ class AuthController extends Controller
             $userModel = new UserModel($this->database);
             $account = $userModel->findByLogin($login, str_contains($login, '@'));
 
-            if ($account === null
+            if ($account === false) {
+                $errors['form'] = 'Vérifiez vos informations puis essayez de nouveau.';
+                $account = null;
+            } elseif ($account === null
                 || !isset($account['id'], $account['password_hash'])
                 || !is_string($account['password_hash'])
                 || !password_verify($password, $account['password_hash'])

@@ -31,16 +31,22 @@ class FollowModel extends Model
     /**
      * Rôle : Indiquer si un utilisateur suit volontairement une annonce.
      * Paramètres : Identifiants de l'utilisateur et de l'annonce.
-     * Retour : true lorsque le suivi existe, sinon false.
+     * Retour : true si le suivi existe, false sinon, ou null en cas d'erreur SQL.
      */
-    public function isFollowing(int $userId, int $listingId): bool
+    public function isFollowing(int $userId, int $listingId): ?bool
     {
         $sql = 'SELECT id FROM `ASSOC_UTILISATEUR_ANNONCE`'
             . ' WHERE utilisateur_id = :user_id AND annonce_id = :listing_id LIMIT 1';
-        return $this->database->fetchOne($sql, [
+        $follow = $this->database->fetchOne($sql, [
             'user_id' => $userId,
             'listing_id' => $listingId,
-        ]) !== null;
+        ]);
+
+        if ($follow === false) {
+            return null;
+        }
+
+        return $follow !== null;
     }
 
     /**
@@ -50,7 +56,13 @@ class FollowModel extends Model
      */
     public function follow(int $userId, int $listingId): bool
     {
-        if ($this->isFollowing($userId, $listingId)) {
+        $isFollowing = $this->isFollowing($userId, $listingId);
+
+        if ($isFollowing === null) {
+            return false;
+        }
+
+        if ($isFollowing) {
             return true;
         }
 

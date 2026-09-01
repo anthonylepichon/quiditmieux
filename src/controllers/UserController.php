@@ -40,6 +40,16 @@ class UserController extends Controller
             return;
         }
         $account = (new UserModel($this->database))->getAccount($userId);
+
+        if ($account === false) {
+            $this->renderAccountForm(
+                ['pseudo' => '', 'email' => ''],
+                ['form' => 'Les informations du compte sont momentanément indisponibles.'],
+                null
+            );
+            return;
+        }
+
         if ($account === null) {
             $this->session->deconnecterUtilisateur();
             $this->redirect('home');
@@ -72,6 +82,15 @@ class UserController extends Controller
         $model = new UserModel($this->database);
         $account = $model->getAccount($userId);
 
+        if ($account === false) {
+            $this->renderAccountForm(
+                $values,
+                ['form' => 'Les informations du compte sont momentanément indisponibles.'],
+                null
+            );
+            return;
+        }
+
         if ($account === null) {
             $this->session->deconnecterUtilisateur();
             $this->redirect('home');
@@ -83,10 +102,18 @@ class UserController extends Controller
         }
 
         if ($errors === []) {
-            if ($model->pseudoExists($values['pseudo'], $userId)) {
+            $pseudoExists = $model->pseudoExists($values['pseudo'], $userId);
+            $emailExists = $model->emailExists($values['email'], $userId);
+
+            if ($pseudoExists === null || $emailExists === null) {
+                $errors['form'] = 'Les informations du compte sont momentanément indisponibles.';
+            }
+
+            if ($pseudoExists === true) {
                 $errors['pseudo'] = 'Ce pseudo est déjà utilisé.';
             }
-            if ($model->emailExists($values['email'], $userId)) {
+
+            if ($emailExists === true) {
                 $errors['email'] = 'Cette adresse électronique est déjà utilisée.';
             }
         }
@@ -138,6 +165,12 @@ class UserController extends Controller
         $dashboard['csrf_token'] = $this->session->obtenirJetonCsrf();
         $dashboard['flash_success'] = $this->session->recupererMessageTemporaire('success');
         $dashboard['flash_notice'] = $this->session->recupererMessageTemporaire('notice');
+
+        if ($dashboard['load_error']) {
+            $dashboard['flash_notice'] = 'Le tableau de bord ne peut pas être actualisé pour le moment.';
+        }
+
+        unset($dashboard['load_error']);
         $this->render('pages/dashboard.php', $dashboard);
     }
 
@@ -158,7 +191,21 @@ class UserController extends Controller
         }
 
         $model = new ListingModel($this->database);
-        $this->json(['success' => true, 'sales' => $this->formatListings($model->getDashboardSales($userId))]);
+        $rows = $model->getDashboardSales($userId);
+
+        if ($rows === false) {
+            $this->json(['success' => false, 'message' => 'Les dernières informations reçues restent affichées.']);
+            return;
+        }
+
+        $sales = $this->formatListings($rows);
+
+        if ($sales === false) {
+            $this->json(['success' => false, 'message' => 'Les dernières informations reçues restent affichées.']);
+            return;
+        }
+
+        $this->json(['success' => true, 'sales' => $sales]);
     }
 
     /**
@@ -178,8 +225,22 @@ class UserController extends Controller
         }
 
         $model = new ListingModel($this->database);
+        $rows = $model->getDashboardParticipations($userId);
+
+        if ($rows === false) {
+            $this->json(['success' => false, 'message' => 'Les dernières informations reçues restent affichées.']);
+            return;
+        }
+
+        $listings = $this->formatListings($rows);
+
+        if ($listings === false) {
+            $this->json(['success' => false, 'message' => 'Les dernières informations reçues restent affichées.']);
+            return;
+        }
+
         $data = $this->partitionParticipations(
-            $this->formatListings($model->getDashboardParticipations($userId)),
+            $listings,
             $userId
         );
         $this->json(['success' => true, 'participations' => $data['participations'], 'wins' => $data['wins']]);
@@ -193,23 +254,46 @@ class UserController extends Controller
     private function buildDashboard(int $userId): array
     {
         $model = new ListingModel($this->database);
-        $data = $this->partitionParticipations(
-            $this->formatListings($model->getDashboardParticipations($userId)),
-            $userId
-        );
+        $participationRows = $model->getDashboardParticipations($userId);
+        $salesRows = $model->getDashboardSales($userId);
+
+        if ($participationRows === false || $salesRows === false) {
+            return [
+                'sales' => [],
+                'participations' => [],
+                'wins' => [],
+                'load_error' => true,
+            ];
+        }
+
+        $participationListings = $this->formatListings($participationRows);
+        $sales = $this->formatListings($salesRows);
+
+        if ($participationListings === false || $sales === false) {
+            return [
+                'sales' => [],
+                'participations' => [],
+                'wins' => [],
+                'load_error' => true,
+            ];
+        }
+
+        $data = $this->partitionParticipations($participationListings, $userId);
+
         return [
-            'sales' => $this->formatListings($model->getDashboardSales($userId)),
+            'sales' => $sales,
             'participations' => $data['participations'],
             'wins' => $data['wins'],
+            'load_error' => false,
         ];
     }
 
     /**
      * Rôle : Enrichir les lignes de la base avec leurs photos et libellés d'affichage.
      * Paramètres : Lignes d'annonces issues du tableau de bord.
-     * Retour : Cartes limitées aux données utiles à l'interface.
+     * Retour : Cartes limitées aux données utiles ou false en cas d'erreur SQL.
      */
-    private function formatListings(array $rows): array
+    private function formatListings(array $rows): array|false
     {
         $ids = [];
         foreach ($rows as $row) {
@@ -219,6 +303,11 @@ class UserController extends Controller
         }
 
         $photos = (new PhotoModel($this->database))->getPrimaryPhotos($ids);
+
+        if ($photos === false) {
+            return false;
+        }
+
         $utc = new DateTimeZone('UTC');
         $paris = new DateTimeZone('Europe/Paris');
         $now = new DateTimeImmutable('now', $utc);

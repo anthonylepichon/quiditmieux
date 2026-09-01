@@ -44,9 +44,9 @@ class BidModel extends Model
     /**
      * Rôle : Calculer le prix courant de chaque annonce demandée.
      * Paramètres : Liste d'identifiants d'annonces et prix de départ indexés par annonce.
-     * Retour : Prix courants indexés par identifiant d'annonce.
+     * Retour : Prix courants indexés par annonce ou false en cas d'erreur SQL.
      */
-    public function getCurrentPrices(array $listingIds, array $startingPrices): array
+    public function getCurrentPrices(array $listingIds, array $startingPrices): array|false
     {
         $identifiers = $this->normalizeIdentifiers($listingIds);
         $currentPrices = [];
@@ -76,6 +76,10 @@ class BidModel extends Model
             . ' GROUP BY annonce_id';
         $rows = $this->database->fetchAll($sql, $parameters);
 
+        if ($rows === false) {
+            return false;
+        }
+
         foreach ($rows as $row) {
             if (!isset($row['annonce_id'], $row['best_bid']) || !is_numeric($row['best_bid'])) {
                 continue;
@@ -91,13 +95,17 @@ class BidModel extends Model
     /**
      * Rôle : Obtenir le nombre d'enchères, le meilleur montant et son auteur pour une annonce.
      * Paramètres : Identifiant de l'annonce.
-     * Retour : Résumé des enchères avec des valeurs nulles lorsqu'aucune enchère n'existe.
+     * Retour : Résumé des enchères ou false en cas d'erreur SQL.
      */
-    public function getSummary(int $listingId): array
+    public function getSummary(int $listingId): array|false
     {
         $sql = 'SELECT COUNT(*) AS bid_count, MAX(montant) AS best_bid'
             . ' FROM `ENCHERE` WHERE annonce_id = :listing_id';
         $summary = $this->database->fetchOne($sql, ['listing_id' => $listingId]);
+
+        if ($summary === false) {
+            return false;
+        }
 
         if ($summary === null) {
             return ['bid_count' => 0, 'best_bid' => null, 'best_bidder_id' => null];
@@ -112,6 +120,10 @@ class BidModel extends Model
                 . ' ORDER BY date_heure_enchere ASC, id ASC LIMIT 1',
                 ['listing_id' => $listingId, 'best_bid' => $summary['best_bid']]
             );
+
+            if ($winner === false) {
+                return false;
+            }
 
             if ($winner !== null && isset($winner['utilisateur_id'])) {
                 $bestBidderId = (int) $winner['utilisateur_id'];
@@ -139,29 +151,41 @@ class BidModel extends Model
     /**
      * Rôle : Indiquer si un utilisateur a déjà enchéri sur une annonce.
      * Paramètres : Identifiants de l'annonce et de l'utilisateur.
-     * Retour : true lorsqu'au moins une enchère correspond, sinon false.
+     * Retour : true si une enchère correspond, false sinon, ou null en cas d'erreur SQL.
      */
-    public function userHasBid(int $listingId, int $userId): bool
+    public function userHasBid(int $listingId, int $userId): ?bool
     {
         $sql = 'SELECT id FROM `ENCHERE`'
             . ' WHERE annonce_id = :listing_id AND utilisateur_id = :user_id LIMIT 1';
-        return $this->database->fetchOne($sql, [
+        $bid = $this->database->fetchOne($sql, [
             'listing_id' => $listingId,
             'user_id' => $userId,
-        ]) !== null;
+        ]);
+
+        if ($bid === false) {
+            return null;
+        }
+
+        return $bid !== null;
     }
 
     /**
      * Rôle : Indiquer si une annonce possède déjà au moins une enchère.
      * Paramètres : Identifiant de l'annonce.
-     * Retour : true lorsqu'une enchère existe, sinon false.
+     * Retour : true si une enchère existe, false sinon, ou null en cas d'erreur SQL.
      */
-    public function listingHasBid(int $listingId): bool
+    public function listingHasBid(int $listingId): ?bool
     {
-        return $this->database->fetchOne(
+        $bid = $this->database->fetchOne(
             'SELECT id FROM `ENCHERE` WHERE annonce_id = :listing_id LIMIT 1',
             ['listing_id' => $listingId]
-        ) !== null;
+        );
+
+        if ($bid === false) {
+            return null;
+        }
+
+        return $bid !== null;
     }
 
     /**
@@ -182,9 +206,9 @@ class BidModel extends Model
     /**
      * Rôle : Récupérer l'historique détaillé et ordonné des enchères d'une annonce.
      * Paramètres : Identifiant de l'annonce.
-     * Retour : Liste des enchères avec le pseudo de leur auteur.
+     * Retour : Liste des enchères ou false en cas d'erreur SQL.
      */
-    public function getHistory(int $listingId): array
+    public function getHistory(int $listingId): array|false
     {
         $sql = 'SELECT bid.montant, bid.date_heure_enchere, bidder.pseudo'
             . ' FROM `ENCHERE` bid'
