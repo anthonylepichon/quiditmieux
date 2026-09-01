@@ -27,8 +27,7 @@ class ListingModel extends Model
         'etat_objet',
         'prix_depart',
         'date_heure_fin',
-        'categorie_id_externe',
-        'categorie_libelle',
+        'categorie_id',
     ];
     private string $lastManagementRestriction = 'error';
     private string $lastParticipationRestriction = 'error';
@@ -169,7 +168,7 @@ class ListingModel extends Model
         $orderSql = $this->buildOrderSql($criteria['sale_state']);
         $listSql = 'SELECT listing.id, listing.titre, listing.description,'
             . ' listing.etat_objet, listing.prix_depart, listing.date_heure_fin,'
-            . ' listing.categorie_id_externe, listing.categorie_libelle'
+            . ' listing.categorie_id'
             . ' FROM `ANNONCE` listing'
             . $whereSql
             . $orderSql
@@ -203,7 +202,7 @@ class ListingModel extends Model
     {
         $sql = 'SELECT listing.id, listing.utilisateur_id, listing.titre, listing.description,'
             . ' listing.etat_objet, listing.prix_depart, listing.date_heure_fin,'
-            . ' listing.categorie_id_externe, listing.categorie_libelle, seller.pseudo AS seller_pseudo'
+            . ' listing.categorie_id, seller.pseudo AS seller_pseudo'
             . ' FROM `ANNONCE` listing'
             . ' INNER JOIN `UTILISATEUR` seller ON seller.id = listing.utilisateur_id'
             . ' WHERE listing.id = :listing_id LIMIT 1';
@@ -230,13 +229,13 @@ class ListingModel extends Model
     public function getDashboardSales(int $userId): array|false
     {
         $sql = 'SELECT listing.id, listing.titre, listing.etat_objet, listing.prix_depart,'
-            . ' listing.date_heure_fin, listing.categorie_libelle,'
+            . ' listing.date_heure_fin, listing.categorie_id,'
             . ' COUNT(bid.id) AS bid_count, MAX(bid.montant) AS best_bid'
             . ' FROM `ANNONCE` listing'
             . ' LEFT JOIN `ENCHERE` bid ON bid.annonce_id = listing.id'
             . ' WHERE listing.utilisateur_id = :user_id'
             . ' GROUP BY listing.id, listing.titre, listing.etat_objet, listing.prix_depart,'
-            . ' listing.date_heure_fin, listing.categorie_libelle'
+            . ' listing.date_heure_fin, listing.categorie_id'
             . ' ORDER BY CASE WHEN listing.date_heure_fin > UTC_TIMESTAMP() THEN 0 ELSE 1 END,'
             . ' listing.date_heure_fin ASC, listing.id ASC';
         return $this->database->fetchAll($sql, ['user_id' => $userId]);
@@ -254,7 +253,7 @@ class ListingModel extends Model
             . ' ORDER BY winning_bid.montant DESC, winning_bid.date_heure_enchere ASC,'
             . ' winning_bid.id ASC LIMIT 1)';
         $sql = 'SELECT listing.id, listing.titre, listing.etat_objet, listing.prix_depart,'
-            . ' listing.date_heure_fin, listing.categorie_libelle,'
+            . ' listing.date_heure_fin, listing.categorie_id,'
             . ' (SELECT MAX(all_bid.montant) FROM `ENCHERE` all_bid WHERE all_bid.annonce_id = listing.id) AS best_bid,'
             . ' (SELECT COUNT(*) FROM `ENCHERE` counted_bid WHERE counted_bid.annonce_id = listing.id) AS bid_count,'
             . ' (SELECT MAX(user_bid.montant) FROM `ENCHERE` user_bid WHERE user_bid.annonce_id = listing.id'
@@ -307,20 +306,18 @@ class ListingModel extends Model
     }
 
     /**
-     * Rôle : Ajouter le filtre de catégorie externe en conservant la compatibilité avec son libellé enregistré.
+     * Rôle : Ajouter le filtre exact sur l'identifiant de catégorie fourni par l'API externe.
      * Paramètres : Critères normalisés, conditions SQL et paramètres de requête à compléter.
      * Retour : Aucun.
      */
     private function addCategoryCriteria(array $criteria, array &$whereParts, array &$parameters): void
     {
-        if ($criteria['category_id'] === null || $criteria['category_label'] === null) {
+        if ($criteria['category_id'] === null) {
             return;
         }
 
-        $whereParts[] = '(listing.categorie_id_externe = :category_id'
-            . ' OR listing.categorie_libelle = :category_label)';
+        $whereParts[] = 'listing.categorie_id = :category_id';
         $parameters['category_id'] = $criteria['category_id'];
-        $parameters['category_label'] = $criteria['category_label'];
     }
 
     /**

@@ -90,7 +90,7 @@ $pageDescription = 'Créez votre compte QUIDITMIEUX.';
                     </div>
                     <div class="form-field">
                         <label class="form-field__label" for="email">Adresse électronique</label>
-                        <input class="form-control" id="email" name="email" type="email" required maxlength="254" autocomplete="email" placeholder="vous@exemple.fr" value="<?= htmlspecialchars((string) ($values['email'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" aria-describedby="email-error" <?= isset($errors['email']) ? 'aria-invalid="true"' : '' ?>>
+                        <input class="form-control" id="email" name="email" type="email" required maxlength="255" autocomplete="email" placeholder="vous@exemple.fr" value="<?= htmlspecialchars((string) ($values['email'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" aria-describedby="email-error" <?= isset($errors['email']) ? 'aria-invalid="true"' : '' ?>>
                         <span class="form-field__error" id="email-error"><?= isset($errors['email']) ? htmlspecialchars((string) $errors['email'], ENT_QUOTES, 'UTF-8') : '' ?></span>
                     </div>
                     <div class="form-field">

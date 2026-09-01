@@ -67,7 +67,7 @@ class ListingController extends Controller
             $success = $searchResult['success'];
 
             if ($success) {
-                $enrichedListings = $this->enrichListings($searchResult['listings']);
+                $enrichedListings = $this->enrichListings($searchResult['listings'], $categories);
 
                 if ($enrichedListings === false) {
                     $success = false;
@@ -149,6 +149,12 @@ class ListingController extends Controller
         if ($listing === null) {
             $this->session->enregistrerMessageTemporaire('notice', 'L’annonce demandée est introuvable.');
             $this->redirect('home');
+        }
+
+        $categoryLabel = (new CategoryModel())->getCategoryLabel((int) $listing['categorie_id']);
+
+        if ($categoryLabel === null) {
+            $categoryLabel = 'Catégorie indisponible';
         }
 
         $bidModel = new BidModel($this->database);
@@ -257,7 +263,7 @@ class ListingController extends Controller
                 'title' => (string) $listing['titre'],
                 'description' => (string) $listing['description'],
                 'item_state' => (string) $listing['etat_objet'],
-                'category' => (string) $listing['categorie_libelle'],
+                'category' => $categoryLabel,
                 'seller' => (string) $listing['seller_pseudo'],
                 'seller_id' => (int) $listing['utilisateur_id'],
                 'current_price_label' => number_format($currentPrice, 2, ',', ' ') . ' €',
@@ -364,8 +370,7 @@ class ListingController extends Controller
             'etat_objet' => $normalizedData['item_state'],
             'prix_depart' => $normalizedData['starting_price'],
             'date_heure_fin' => $normalizedData['deadline_utc'],
-            'categorie_id_externe' => $normalizedData['category_id'],
-            'categorie_libelle' => $normalizedData['category_label'],
+            'categorie_id' => $normalizedData['category_id'],
         ]);
         $listingId = $listingModel->getValue('id');
         $storedFiles = [];
@@ -446,7 +451,7 @@ class ListingController extends Controller
         if ($categories === null) {
             if ($lockedState !== '') {
                 $categories = [
-                    (string) $listing['categorie_id_externe'] => (string) $listing['categorie_libelle'],
+                    (int) $listing['categorie_id'] => 'Catégorie indisponible',
                 ];
             } else {
                 $categories = [];
@@ -463,7 +468,7 @@ class ListingController extends Controller
         }
 
         $photos = $this->addPhotoUrls($photos);
-        $values = $this->listingToFormValues($listing, $categories);
+        $values = $this->listingToFormValues($listing);
         $this->renderListingForm('edit', $values, $errors, $categories, $photos, $lockedState);
     }
 
@@ -577,8 +582,7 @@ class ListingController extends Controller
             'etat_objet' => $normalizedData['item_state'],
             'prix_depart' => $normalizedData['starting_price'],
             'date_heure_fin' => $normalizedData['deadline_utc'],
-            'categorie_id_externe' => $normalizedData['category_id'],
-            'categorie_libelle' => $normalizedData['category_label'],
+            'categorie_id' => $normalizedData['category_id'],
         ]);
 
         foreach ($removedPhotos as $photo) {
@@ -743,7 +747,6 @@ class ListingController extends Controller
         $title = trim($values['title']);
         $description = trim($values['description']);
         $categoryId = null;
-        $categoryLabel = '';
 
         if ($title === '') {
             if ($mode === 'edit') {
@@ -769,7 +772,6 @@ class ListingController extends Controller
             $errors['category'] = 'Choisissez une catégorie proposée dans la liste.';
         } else {
             $categoryId = (int) $values['category'];
-            $categoryLabel = $categories[$values['category']];
         }
 
         if (!in_array($values['item_state'], self::ITEM_STATES, true)) {
@@ -792,7 +794,6 @@ class ListingController extends Controller
             'title' => $title,
             'description' => $description,
             'category_id' => $categoryId,
-            'category_label' => $categoryLabel,
             'item_state' => $values['item_state'],
             'starting_price' => $price,
             'deadline_utc' => $deadlineUtc,
@@ -1017,10 +1018,10 @@ class ListingController extends Controller
 
     /**
      * Rôle : Transformer une annonce enregistrée en valeurs adaptées au formulaire de modification.
-     * Paramètres : Annonce et catégories actuellement disponibles.
+     * Paramètres : Annonce enregistrée.
      * Retour : Valeurs réaffichables du formulaire.
      */
-    private function listingToFormValues(array $listing, array $categories): array
+    private function listingToFormValues(array $listing): array
     {
         $utcTimezone = new DateTimeZone('UTC');
         $parisTimezone = new DateTimeZone('Europe/Paris');
@@ -1038,16 +1039,7 @@ class ListingController extends Controller
             $time = $parisDeadline->format('H:i');
         }
 
-        $category = (string) $listing['categorie_id_externe'];
-
-        if (!isset($categories[$category])) {
-            foreach ($categories as $identifier => $label) {
-                if ($label === $listing['categorie_libelle']) {
-                    $category = (string) $identifier;
-                    break;
-                }
-            }
-        }
+        $category = (string) $listing['categorie_id'];
 
         return [
             'id' => (int) $listing['id'],
@@ -1272,7 +1264,6 @@ class ListingController extends Controller
         }
 
         $categoryId = null;
-        $categoryLabel = null;
 
         if ($categoriesAvailable && $categoryInput !== '') {
             if (preg_match('/^[1-9][0-9]*$/D', $categoryInput) !== 1
@@ -1281,7 +1272,6 @@ class ListingController extends Controller
                 $errors['category'] = 'Choisissez une catégorie proposée dans la liste.';
             } else {
                 $categoryId = (int) $categoryInput;
-                $categoryLabel = $categories[$categoryInput];
             }
         }
 
@@ -1355,7 +1345,6 @@ class ListingController extends Controller
                 'text' => $text,
                 'words' => $words,
                 'category_id' => $categoryId,
-                'category_label' => $categoryLabel,
                 'item_state' => $itemState,
                 'minimum_price' => $minimumPrice,
                 'maximum_price' => $maximumPrice,
@@ -1422,10 +1411,10 @@ class ListingController extends Controller
 
     /**
      * Rôle : Ajouter le prix courant, la photographie principale et les informations d'affichage aux annonces.
-     * Paramètres : Annonces brutes retournées par ListingModel.
+     * Paramètres : Annonces brutes retournées par ListingModel et catégories fournies par l'API.
      * Retour : Annonces prêtes à afficher ou false en cas d'erreur SQL complémentaire.
      */
-    private function enrichListings(array $listings): array|false
+    private function enrichListings(array $listings, array $categories): array|false
     {
         $listingIds = [];
         $startingPrices = [];
@@ -1458,7 +1447,7 @@ class ListingController extends Controller
             if (!isset(
                 $listing['id'],
                 $listing['titre'],
-                $listing['categorie_libelle'],
+                $listing['categorie_id'],
                 $listing['date_heure_fin']
             )) {
                 continue;
@@ -1483,10 +1472,17 @@ class ListingController extends Controller
             }
 
             $currentPrice = $currentPrices[$identifier] ?? (float) $listing['prix_depart'];
+            $categoryId = (int) $listing['categorie_id'];
+            $categoryLabel = 'Catégorie indisponible';
+
+            if (isset($categories[$categoryId])) {
+                $categoryLabel = (string) $categories[$categoryId];
+            }
+
             $displayListings[] = [
                 'id' => $identifier,
                 'title' => (string) $listing['titre'],
-                'category' => (string) $listing['categorie_libelle'],
+                'category' => $categoryLabel,
                 'item_state' => (string) $listing['etat_objet'],
                 'current_price' => round((float) $currentPrice, 2),
                 'current_price_label' => number_format((float) $currentPrice, 2, ',', ' ') . ' €',

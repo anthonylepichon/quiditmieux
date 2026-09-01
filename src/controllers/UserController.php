@@ -4,12 +4,13 @@
  * Description générale : Contrôleur de l'espace personnel de l'utilisateur connecté.
  * Rôle : Afficher le tableau de bord et coordonner la modification sécurisée du compte.
  * Tâches : Protéger les routes privées, préparer les cartes, appeler les modèles et limiter les réponses JSON.
- * Liens avec les autres fichiers : Étend Controller.php et utilise ListingModel.php, PhotoModel.php et UserModel.php.
+ * Liens avec les autres fichiers : Étend Controller.php et utilise CategoryModel.php, ListingModel.php, PhotoModel.php et UserModel.php.
  */
 
 namespace App\controllers;
 
 use App\core\Controller;
+use App\models\CategoryModel;
 use App\models\ListingModel;
 use App\models\PhotoModel;
 use App\models\UserModel;
@@ -203,7 +204,13 @@ class UserController extends Controller
             return;
         }
 
-        $sales = $this->formatListings($rows);
+        $categories = (new CategoryModel())->getAllCategories();
+
+        if ($categories === null) {
+            $categories = [];
+        }
+
+        $sales = $this->formatListings($rows, $categories);
 
         if ($sales === false) {
             $this->json(['success' => false, 'message' => 'Les dernières informations reçues restent affichées.']);
@@ -237,7 +244,13 @@ class UserController extends Controller
             return;
         }
 
-        $listings = $this->formatListings($rows);
+        $categories = (new CategoryModel())->getAllCategories();
+
+        if ($categories === null) {
+            $categories = [];
+        }
+
+        $listings = $this->formatListings($rows, $categories);
 
         if ($listings === false) {
             $this->json(['success' => false, 'message' => 'Les dernières informations reçues restent affichées.']);
@@ -271,8 +284,14 @@ class UserController extends Controller
             ];
         }
 
-        $participationListings = $this->formatListings($participationRows);
-        $sales = $this->formatListings($salesRows);
+        $categories = (new CategoryModel())->getAllCategories();
+
+        if ($categories === null) {
+            $categories = [];
+        }
+
+        $participationListings = $this->formatListings($participationRows, $categories);
+        $sales = $this->formatListings($salesRows, $categories);
 
         if ($participationListings === false || $sales === false) {
             return [
@@ -295,10 +314,10 @@ class UserController extends Controller
 
     /**
      * Rôle : Enrichir les lignes de la base avec leurs photos et libellés d'affichage.
-     * Paramètres : Lignes d'annonces issues du tableau de bord.
+     * Paramètres : Lignes d'annonces issues du tableau de bord et catégories fournies par l'API.
      * Retour : Cartes limitées aux données utiles ou false en cas d'erreur SQL.
      */
-    private function formatListings(array $rows): array|false
+    private function formatListings(array $rows, array $categories): array|false
     {
         $ids = [];
         foreach ($rows as $row) {
@@ -319,7 +338,13 @@ class UserController extends Controller
         $listings = [];
 
         foreach ($rows as $row) {
-            if (!isset($row['id'], $row['titre'], $row['prix_depart'], $row['date_heure_fin'])) {
+            if (!isset(
+                $row['id'],
+                $row['titre'],
+                $row['prix_depart'],
+                $row['date_heure_fin'],
+                $row['categorie_id']
+            )) {
                 continue;
             }
             $deadline = DateTimeImmutable::createFromFormat('Y-m-d H:i:s', (string) $row['date_heure_fin'], $utc);
@@ -337,10 +362,17 @@ class UserController extends Controller
                 $userBestBid = number_format((float) $row['user_best_bid'], 2, ',', ' ') . ' €';
             }
 
+            $categoryId = (int) $row['categorie_id'];
+            $categoryLabel = 'Catégorie indisponible';
+
+            if (isset($categories[$categoryId])) {
+                $categoryLabel = (string) $categories[$categoryId];
+            }
+
             $listings[] = [
                 'id' => $id,
                 'title' => (string) $row['titre'],
-                'category' => (string) $row['categorie_libelle'],
+                'category' => $categoryLabel,
                 'current_price' => number_format($price, 2, ',', ' ') . ' €',
                 'bid_count' => $this->readBidCount($row),
                 'user_best_bid' => $userBestBid,
@@ -494,7 +526,7 @@ class UserController extends Controller
             $errors['pseudo'] = 'Format du pseudo invalide.';
         }
 
-        if (mb_strlen($values['email']) > 254 || filter_var($values['email'], FILTER_VALIDATE_EMAIL) === false) {
+        if (mb_strlen($values['email']) > 255 || filter_var($values['email'], FILTER_VALIDATE_EMAIL) === false) {
             $errors['email'] = 'Adresse électronique invalide.';
         }
 

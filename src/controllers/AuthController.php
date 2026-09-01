@@ -276,7 +276,7 @@ class AuthController extends Controller
             $errors['pseudo'] = 'Format du pseudo invalide.';
         }
 
-        if (mb_strlen($values['email']) > 254
+        if (mb_strlen($values['email']) > 255
             || filter_var($values['email'], FILTER_VALIDATE_EMAIL) === false
         ) {
             $errors['email'] = 'Adresse électronique invalide.';
