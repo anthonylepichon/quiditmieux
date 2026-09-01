@@ -7,6 +7,8 @@
  * Liens avec les autres fichiers : Est affiché par UserController.php puis inséré dans base.php.
  */
 
+/** @var array<string, mixed> $data Données préparées par le contrôleur. */
+
 $values = $data['values'];
 $errors = $data['errors'];
 $successMessage = $data['success_message'];

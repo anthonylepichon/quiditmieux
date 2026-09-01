@@ -6,6 +6,10 @@
  * Tâches : Échapper les textes dynamiques, charger les ressources communes et ajouter les scripts propres à la page.
  * Liens avec les autres fichiers : Est inclus par base.php et reçoit ses variables depuis Controller.php et le template courant.
  */
+
+/** @var string $pageTitle Titre de la page courante. */
+/** @var string $pageDescription Description de la page courante. */
+/** @var array<int, string> $pageScripts Scripts propres à la page courante. */
 ?>
 <head>
     <meta charset="UTF-8">
