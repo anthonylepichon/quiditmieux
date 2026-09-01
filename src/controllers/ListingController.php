@@ -490,12 +490,14 @@ class ListingController extends Controller
             $this->redirect('dashboard');
         }
 
+        $csrfIsValid = $this->session->estJetonCsrfValide($this->readPostString('csrf_token'));
+        $listingModel = $this->requireListingOwner($listingId, $userId, 'Modification verrouillée');
         $values = $this->readListingFormValues();
         $values['id'] = $listingId;
         $categories = (new CategoryModel())->getAllCategories();
         $errors = [];
 
-        if (!$this->session->estJetonCsrfValide($this->readPostString('csrf_token'))) {
+        if (!$csrfIsValid) {
             $errors['form'] = 'Le formulaire a expiré. Rechargez la page puis recommencez.';
         }
 
@@ -547,7 +549,6 @@ class ListingController extends Controller
             return;
         }
 
-        $listingModel = new ListingModel($this->database);
         $canModify = $listingModel->canBeModifiedBy($listingId, $userId);
 
         if ($canModify === null) {
@@ -637,6 +638,12 @@ class ListingController extends Controller
             $this->redirect('dashboard');
         }
 
+        $listingModel = $this->requireListingOwner(
+            $listingId,
+            $userId,
+            'Cette annonce ne peut plus être supprimée.'
+        );
+
         if (!$this->database->beginTransaction()) {
             $this->session->enregistrerMessageTemporaire(
                 'notice',
@@ -645,7 +652,6 @@ class ListingController extends Controller
             $this->redirect('listing_detail', ['id' => $listingId]);
         }
 
-        $listingModel = new ListingModel($this->database);
         $canDelete = $listingModel->canBeDeletedBy($listingId, $userId);
 
         if ($canDelete === null) {
@@ -690,6 +696,32 @@ class ListingController extends Controller
         $this->deletePhotoFiles($photos);
         $this->session->enregistrerMessageTemporaire('success', 'L’annonce a été supprimée.');
         $this->redirect('dashboard');
+    }
+
+    /**
+     * Rôle : Refuser une gestion d'annonce avant les traitements coûteux si l'utilisateur n'en est pas propriétaire.
+     * Paramètres : Identifiants de l'annonce et de l'utilisateur, puis message à afficher en cas de refus.
+     * Retour : Modèle de l'annonce après confirmation de son propriétaire.
+     */
+    private function requireListingOwner(int $listingId, int $userId, string $deniedMessage): ListingModel
+    {
+        $listingModel = new ListingModel($this->database);
+        $isOwner = $listingModel->isOwnedBy($listingId, $userId);
+
+        if ($isOwner === null) {
+            $this->session->enregistrerMessageTemporaire(
+                'notice',
+                'Les données de cette annonce sont momentanément indisponibles.'
+            );
+            $this->redirect('listing_detail', ['id' => $listingId]);
+        }
+
+        if (!$isOwner) {
+            $this->session->enregistrerMessageTemporaire('notice', $deniedMessage);
+            $this->redirect('listing_detail', ['id' => $listingId]);
+        }
+
+        return $listingModel;
     }
 
     /**

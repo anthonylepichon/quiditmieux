@@ -107,6 +107,29 @@ class ListingModel extends Model
     }
 
     /**
+     * Rôle : Vérifier rapidement si une annonce appartient à l'utilisateur demandé.
+     * Paramètres : Identifiants de l'annonce et de l'utilisateur.
+     * Retour : true si l'utilisateur est propriétaire, false sinon ou null en cas d'erreur SQL.
+     */
+    public function isOwnedBy(int $listingId, int $userId): ?bool
+    {
+        $listing = $this->database->fetchOne(
+            'SELECT utilisateur_id FROM `ANNONCE` WHERE id = :listing_id LIMIT 1',
+            ['listing_id' => $listingId]
+        );
+
+        if ($listing === false) {
+            return null;
+        }
+
+        if ($listing === null || !isset($listing['utilisateur_id'])) {
+            return false;
+        }
+
+        return (int) $listing['utilisateur_id'] === $userId;
+    }
+
+    /**
      * Rôle : Vérifier si une annonce peut être modifiée par l'utilisateur demandé.
      * Paramètres : Identifiants de l'annonce et de l'utilisateur.
      * Retour : true si la modification est autorisée, false si elle est interdite ou null en cas d'erreur SQL.
