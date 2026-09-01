@@ -20,9 +20,22 @@ $pageTitle = $listing['title'] . ' — QUIDITMIEUX';
 $pageDescription = 'Consultez le détail de l’annonce ' . $listing['title'] . '.';
 $pageScripts = ['public/assets/js/listing-detail.js'];
 $saleStatusLabel = 'Vente en cours';
+$finalResultTitle = '';
+$historySubtitle = 'Suivez l’évolution du prix et les participations enregistrées sur cette vente.';
+$showEmptyEndedHistory = false;
 
 if ($listing['is_ended']) {
     $saleStatusLabel = 'Vente terminée';
+    $finalResultTitle = 'Vente adjugée';
+
+    if ($listing['final_state'] === 'Non adjugée') {
+        $finalResultTitle = 'Vente non adjugée';
+    }
+
+    if ((int) $listing['bid_count'] === 0) {
+        $historySubtitle = 'Cette vente s’est terminée sans aucune enchère.';
+        $showEmptyEndedHistory = true;
+    }
 }
 
 $participationLabel = $saleStatusLabel;
@@ -43,9 +56,34 @@ if ($viewer['is_following']) {
     $followRoute = 'unfollow_listing';
     $followLabel = 'Ne plus suivre';
 }
+
+$hasBidAttribute = 'false';
+$isBestBidderAttribute = 'false';
+
+if ($viewer['has_bid']) {
+    $hasBidAttribute = 'true';
+}
+
+if ($viewer['is_best_bidder']) {
+    $isBestBidderAttribute = 'true';
+}
+
+$ownerMessage = '';
+
+if ($viewer['can_edit']) {
+    $ownerMessage = 'Vous pouvez modifier ou supprimer cette annonce tant qu’aucune enchère n’a été enregistrée.';
+} elseif ($viewer['is_owner'] && !$listing['is_ended']) {
+    $ownerMessage = 'Une enchère est enregistrée : cette annonce est désormais verrouillée.';
+}
+
+$actionsClass = 'listing-summary__actions';
+
+if ($listing['is_ended']) {
+    $actionsClass .= ' listing-summary__actions--ended';
+}
 ?>
 <main class="listing-detail container">
-        <a class="back-link" href="index.php?route=home#annonces">← Retour aux annonces</a>
+        <a class="back-link visually-hidden" href="index.php?route=home#annonces">Retour aux annonces</a>
         <?php if ($data['flash_success'] !== null): ?><div class="alert alert--success" role="status"><?= htmlspecialchars($data['flash_success'], ENT_QUOTES, 'UTF-8') ?></div><?php endif; ?>
         <?php if ($data['flash_notice'] !== null): ?><div class="alert alert--warning" role="status"><?= htmlspecialchars($data['flash_notice'], ENT_QUOTES, 'UTF-8') ?></div><?php endif; ?>
 
@@ -56,7 +94,7 @@ if ($viewer['is_following']) {
         </header>
 
         <section class="listing-detail__hero" aria-labelledby="listing-title">
-            <div class="listing-gallery" data-carousel data-carousel-interval="5000" role="region" aria-label="Photographies de l’annonce" aria-roledescription="carrousel">
+            <div class="listing-gallery glass-panel" data-carousel data-carousel-interval="5000" role="region" aria-label="Photographies de l’annonce" aria-roledescription="carrousel">
                 <?php if ($photos !== []): ?>
                     <div class="listing-gallery__viewport">
                         <img class="listing-gallery__main" data-carousel-image src="<?= htmlspecialchars($photos[0]['url'], ENT_QUOTES, 'UTF-8') ?>" alt="Photographie 1 de <?= htmlspecialchars($listing['title'], ENT_QUOTES, 'UTF-8') ?>">
@@ -79,18 +117,27 @@ if ($viewer['is_following']) {
                 <?php else: ?>
                     <div class="listing-gallery__empty"><img src="public/assets/images/illustrations/shopping-cart.png" alt="Aucune photographie disponible"></div>
                 <?php endif; ?>
+                <div class="listing-gallery__description">
+                    <h2 id="description-title">Description</h2>
+                    <p><?= nl2br(htmlspecialchars($listing['description'], ENT_QUOTES, 'UTF-8')) ?></p>
+                    <p class="listing-gallery__metadata">État : <?= htmlspecialchars($listing['item_state'], ENT_QUOTES, 'UTF-8') ?> · Catégorie : <?= htmlspecialchars($listing['category'], ENT_QUOTES, 'UTF-8') ?> · Vendeur : <?= htmlspecialchars($listing['seller'], ENT_QUOTES, 'UTF-8') ?></p>
+                </div>
             </div>
 
             <div class="listing-summary glass-panel">
-                <p class="status-badge"><?= $participationLabel ?></p>
-                <dl class="listing-summary__facts">
-                    <div><dt>État de l’objet</dt><dd><?= htmlspecialchars($listing['item_state'], ENT_QUOTES, 'UTF-8') ?></dd></div>
-                    <div><dt>Prix courant</dt><dd class="listing-summary__price" data-current-price><?= htmlspecialchars($listing['current_price_label'], ENT_QUOTES, 'UTF-8') ?></dd></div>
-                    <div><dt>Enchères</dt><dd data-bid-count><?= (int) $listing['bid_count'] ?></dd></div>
-                </dl>
-
                 <?php if ($listing['is_ended']): ?>
                     <p class="status-badge status-badge--ended"><?= htmlspecialchars($listing['final_state'], ENT_QUOTES, 'UTF-8') ?></p>
+                <?php else: ?>
+                    <p class="status-badge" data-participation-badge data-default-label="<?= htmlspecialchars($saleStatusLabel, ENT_QUOTES, 'UTF-8') ?>" data-has-bid="<?= $hasBidAttribute ?>" data-is-best-bidder="<?= $isBestBidderAttribute ?>"><?= htmlspecialchars($participationLabel, ENT_QUOTES, 'UTF-8') ?></p>
+                <?php endif; ?>
+                <div class="listing-summary__price-copy"><span>Prix courant</span><strong class="listing-summary__price" data-current-price><?= htmlspecialchars($listing['current_price_label'], ENT_QUOTES, 'UTF-8') ?></strong><p><span data-bid-count><?= (int) $listing['bid_count'] ?></span> enchère(s) enregistrée(s)</p></div>
+                <img class="listing-summary__asset" src="public/assets/images/illustrations/coin-vault.png" alt="" width="88" height="123">
+
+                <?php if ($listing['is_ended']): ?>
+                    <div class="listing-summary__final-result">
+                        <strong><?= htmlspecialchars($finalResultTitle, ENT_QUOTES, 'UTF-8') ?></strong>
+                        <p>Vente terminée le <?= htmlspecialchars($listing['deadline_label'], ENT_QUOTES, 'UTF-8') ?> — Europe/Paris</p>
+                    </div>
                 <?php else: ?>
                     <div class="hero-countdown listing-summary__countdown" data-countdown data-deadline-utc="<?= htmlspecialchars($listing['deadline_utc'], ENT_QUOTES, 'UTF-8') ?>">
                         <p>Cette vente se termine dans</p>
@@ -98,14 +145,20 @@ if ($viewer['is_following']) {
                     </div>
                 <?php endif; ?>
 
-                <div class="listing-summary__actions" data-listing-actions>
-                    <?php if ($viewer['can_edit']): ?>
+                <?php if (!$viewer['is_connected'] && !$listing['is_ended']): ?><p class="listing-summary__invitation">Connectez-vous ou créez un compte pour enchérir et suivre cette annonce.</p><?php endif; ?>
+                <?php if ($ownerMessage !== ''): ?><p class="listing-summary__owner-copy"><?= htmlspecialchars($ownerMessage, ENT_QUOTES, 'UTF-8') ?></p><?php endif; ?>
+
+                <div class="<?= $actionsClass ?>" data-listing-actions>
+                    <?php if ($listing['is_ended']): ?>
+                        <p class="alert alert--warning alert--illustrated"><strong>Vente terminée</strong><span>Aucune action de participation ou de modification n’est disponible.</span></p>
+                    <?php elseif ($viewer['can_edit']): ?>
                         <a class="button button--secondary" href="index.php?route=listing_edit_form&id=<?= (int) $listing['id'] ?>">Modifier</a>
                         <form action="index.php?route=listing_delete" method="post"><input type="hidden" name="id" value="<?= (int) $listing['id'] ?>"><input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>"><button class="button button--danger" type="submit">Supprimer</button></form>
                     <?php elseif ($viewer['is_owner']): ?>
                         <p class="alert alert--warning">Cette annonce ne peut plus être modifiée ni supprimée.</p>
                     <?php elseif (!$viewer['is_connected'] && !$listing['is_ended']): ?>
-                        <a class="button button--secondary" href="index.php?route=login_form">Se connecter pour participer</a>
+                        <a class="button button--secondary" href="index.php?route=login_form">Se connecter</a>
+                        <a class="button button--primary" href="index.php?route=register_form">Créer un compte</a>
                     <?php elseif ($viewer['can_follow']): ?>
                         <form action="index.php?route=<?= $followRoute ?>" method="post" data-follow-form><input type="hidden" name="id" value="<?= (int) $listing['id'] ?>"><input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>"><button class="button button--secondary" type="submit"><?= $followLabel ?></button></form>
                     <?php endif; ?>
@@ -124,11 +177,13 @@ if ($viewer['is_following']) {
             </div>
         </section>
 
-        <section class="listing-description glass-panel" aria-labelledby="description-title"><h2 id="description-title">Description</h2><p><?= nl2br(htmlspecialchars($listing['description'], ENT_QUOTES, 'UTF-8')) ?></p></section>
-
-        <?php if ($viewer['can_view_history']): ?>
-            <section class="bid-history glass-panel" aria-labelledby="history-title"><h2 id="history-title">Historique des enchères</h2>
-                <?php if ($history === []): ?><p>Aucune enchère enregistrée.</p><?php else: ?><ul><?php foreach ($history as $bid): ?><li><strong><?= htmlspecialchars($bid['amount'], ENT_QUOTES, 'UTF-8') ?></strong> par <?= htmlspecialchars($bid['bidder'], ENT_QUOTES, 'UTF-8') ?> — <?= htmlspecialchars($bid['date'], ENT_QUOTES, 'UTF-8') ?></li><?php endforeach; ?></ul><?php endif; ?>
-            </section>
-        <?php endif; ?>
+        <section class="bid-history glass-panel" aria-labelledby="history-title"><h2 id="history-title">Historique des enchères</h2><p><?= htmlspecialchars($historySubtitle, ENT_QUOTES, 'UTF-8') ?></p>
+            <?php if ($showEmptyEndedHistory): ?>
+                <div class="bid-history__empty"><img src="public/assets/images/illustrations/shopping-cart.png" alt="" width="110" height="110"><strong>Aucune enchère enregistrée</strong><p>Cette annonce n’a reçu aucune enchère avant la fin de la vente.</p></div>
+            <?php elseif ($viewer['can_view_history']): ?>
+                <div class="bid-history__content"><?php if ($history === []): ?><p>Aucune enchère enregistrée.</p><?php else: ?><ul><?php foreach ($history as $bid): ?><li><strong><?= htmlspecialchars($bid['amount'], ENT_QUOTES, 'UTF-8') ?></strong> par <?= htmlspecialchars($bid['bidder'], ENT_QUOTES, 'UTF-8') ?> — <?= htmlspecialchars($bid['date'], ENT_QUOTES, 'UTF-8') ?></li><?php endforeach; ?></ul><?php endif; ?></div>
+            <?php else: ?>
+                <div class="bid-history__locked"><img src="public/assets/images/icons/feature-icon-03.svg" alt="" width="70" height="70"><div><h3>Historique détaillé non accessible</h3><p>Connectez-vous et participez à la vente pour consulter le détail des enchères enregistrées.</p></div></div>
+            <?php endif; ?>
+        </section>
 </main>

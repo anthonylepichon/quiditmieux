@@ -21,14 +21,99 @@ $isConnected = $data['is_connected'];
 $csrfToken = $data['csrf_token'];
 $flashSuccess = $data['flash_success'];
 $flashNotice = $data['flash_notice'];
+$totalItems = (int) $data['total_items'];
 $currentPage = 'home';
 $pageTitle = 'Accueil — QUIDITMIEUX';
 $pageDescription = 'Consultez et recherchez les ventes aux enchères QUIDITMIEUX.';
 $pageScripts = ['public/assets/js/home.js'];
 $featuredListing = null;
+$resultsStateKey = $stateKey;
+$firstSearchError = (string) $message;
+$filterSummaryParts = [];
+$paginationUrls = [];
 
 if ($listings !== []) {
     $featuredListing = $listings[0];
+}
+
+if ($stateKey === 'initial' && (int) $pagination['total_pages'] > 1) {
+    $resultsStateKey = 'pagination';
+}
+
+foreach ($errors as $errorMessage) {
+    $firstSearchError = (string) $errorMessage;
+    break;
+}
+
+if ((string) $criteria['text'] !== '') {
+    $filterSummaryParts[] = (string) $criteria['text'];
+}
+
+if ($criteria['category_id'] !== null && isset($categories[$criteria['category_id']])) {
+    $filterSummaryParts[] = (string) $categories[$criteria['category_id']];
+}
+
+if ($criteria['item_state'] !== null) {
+    $filterSummaryParts[] = ucfirst((string) $criteria['item_state']);
+}
+
+if ((string) $criteria['minimum_price'] !== '' || (string) $criteria['maximum_price'] !== '') {
+    $minimumPriceLabel = '0,00 €';
+    $maximumPriceLabel = 'sans limite';
+
+    if ((string) $criteria['minimum_price'] !== '') {
+        $minimumPriceLabel = (string) $criteria['minimum_price'] . ' €';
+    }
+
+    if ((string) $criteria['maximum_price'] !== '') {
+        $maximumPriceLabel = (string) $criteria['maximum_price'] . ' €';
+    }
+
+    $filterSummaryParts[] = $minimumPriceLabel . ' à ' . $maximumPriceLabel;
+}
+
+if ((string) $criteria['sale_state'] !== 'active') {
+    $saleStateLabel = 'Toutes';
+
+    if ((string) $criteria['sale_state'] === 'ended') {
+        $saleStateLabel = 'Terminées';
+    }
+
+    $filterSummaryParts[] = $saleStateLabel;
+}
+
+for ($pageNumber = 1; $pageNumber <= (int) $pagination['total_pages']; $pageNumber++) {
+    $pageParameters = ['route' => 'home'];
+
+    if ((string) $criteria['text'] !== '') {
+        $pageParameters['q'] = (string) $criteria['text'];
+    }
+
+    if ($criteria['category_id'] !== null) {
+        $pageParameters['category'] = (string) $criteria['category_id'];
+    }
+
+    if ($criteria['item_state'] !== null) {
+        $pageParameters['item_state'] = (string) $criteria['item_state'];
+    }
+
+    if ((string) $criteria['minimum_price'] !== '') {
+        $pageParameters['minimum_price'] = (string) $criteria['minimum_price'];
+    }
+
+    if ((string) $criteria['maximum_price'] !== '') {
+        $pageParameters['maximum_price'] = (string) $criteria['maximum_price'];
+    }
+
+    if ((string) $criteria['sale_state'] !== 'active') {
+        $pageParameters['sale_state'] = (string) $criteria['sale_state'];
+    }
+
+    if ($pageNumber > 1) {
+        $pageParameters['page'] = $pageNumber;
+    }
+
+    $paginationUrls[$pageNumber] = 'index.php?' . http_build_query($pageParameters);
 }
 ?>
 <main>
@@ -42,12 +127,10 @@ if ($listings !== []) {
             </div>
             <div class="home-hero__visual">
                 <img src="public/assets/images/illustrations/character-hero.png" alt="" width="343" height="314">
-                <?php if ($featuredListing !== null && $featuredListing['sale_state'] === 'active'): ?>
-                    <div class="hero-countdown" data-countdown data-deadline-utc="<?= htmlspecialchars((string) $featuredListing['deadline_utc'], ENT_QUOTES, 'UTF-8') ?>">
-                        <p>Cette vente se termine dans</p>
-                        <div class="hero-countdown__values" data-countdown-values><span>--<small>JOURS</small></span><span>--<small>HEURES</small></span><span>--<small>MINUTES</small></span><span>--<small>SECONDES</small></span></div>
-                    </div>
-                <?php endif; ?>
+                <img class="home-hero__badge home-hero__badge--euro" src="public/assets/images/icons/decorative-badge-euro.svg" alt="" width="46" height="46">
+                <img class="home-hero__badge home-hero__badge--binary" src="public/assets/images/icons/decorative-badge-binary.svg" alt="" width="46" height="46">
+                <img class="home-hero__badge home-hero__badge--heart" src="public/assets/images/icons/decorative-badge-heart.svg" alt="" width="46" height="46">
+                <img class="home-hero__badge home-hero__badge--trend" src="public/assets/images/icons/decorative-badge-trend.svg" alt="" width="46" height="46">
             </div>
         </section>
 
@@ -61,16 +144,8 @@ if ($listings !== []) {
             <!-- ==================== RECHERCHE ==================== -->
             <section class="search-panel glass-panel" aria-labelledby="search-title">
                 <div class="section-heading">
-                    <p class="eyebrow">Recherche multicritère</p>
                     <h2 id="search-title">Rechercher une annonce</h2>
-                    <p>Combinez plusieurs critères pour affiner les résultats.</p>
                 </div>
-
-                <?php if (!$categoriesAvailable): ?>
-                    <div class="alert alert--warning" role="status">
-                        Les catégories sont temporairement indisponibles. Les autres critères restent utilisables.
-                    </div>
-                <?php endif; ?>
 
                 <form class="search-form" id="search-form" action="index.php" method="get" novalidate>
                     <input type="hidden" name="route" value="home">
@@ -146,7 +221,7 @@ if ($listings !== []) {
                         </div>
 
                         <div class="form-field search-form__minimum-price">
-                            <label class="form-field__label" for="search-minimum-price">Prix courant minimum</label>
+                            <label class="form-field__label" for="search-minimum-price">Prix minimum</label>
                             <input
                                 class="form-control"
                                 id="search-minimum-price"
@@ -165,7 +240,7 @@ if ($listings !== []) {
                         </div>
 
                         <div class="form-field search-form__maximum-price">
-                            <label class="form-field__label" for="search-maximum-price">Prix courant maximum</label>
+                            <label class="form-field__label" for="search-maximum-price">Prix maximum</label>
                             <input
                                 class="form-control"
                                 id="search-maximum-price"
@@ -184,30 +259,42 @@ if ($listings !== []) {
                         </div>
                     </div>
                     <div class="search-form__actions">
-                        <a class="button button--secondary" href="index.php?route=home">Réinitialiser</a>
                         <button class="button button--primary" type="submit">Rechercher</button>
                     </div>
                 </form>
             </section>
 
             <!-- ==================== RÉSULTATS ==================== -->
-            <section id="annonces" class="results-section" aria-labelledby="results-title" data-results-region aria-busy="false">
+            <section id="annonces" class="results-section results-section--<?= htmlspecialchars($resultsStateKey, ENT_QUOTES, 'UTF-8') ?>" aria-labelledby="results-title" data-results-region data-results-state="<?= htmlspecialchars($resultsStateKey, ENT_QUOTES, 'UTF-8') ?>" aria-busy="false">
                 <div class="section-heading section-heading--row">
-                    <div>
-                        <p class="eyebrow">Annonces disponibles</p>
-                        <h2 id="results-title" tabindex="-1">Les dernières opportunités</h2>
-                    </div>
-                    <p class="results-summary" data-results-summary role="status" aria-live="polite"><?= htmlspecialchars((string) $message, ENT_QUOTES, 'UTF-8') ?></p>
+                    <h2 id="results-title" tabindex="-1"><?php if ($stateKey === 'filtered_results'): ?><?= $totalItems ?> annonces correspondent à votre recherche<?php elseif ($stateKey === 'no_results'): ?>Résultats<?php else: ?>Les enchères qui se terminent bientôt<?php endif; ?></h2>
+                    <p class="results-summary" data-results-summary role="status" aria-live="polite"><?php if ($stateKey === 'filtered_results'): ?><?= $totalItems ?> résultats<?php elseif ($stateKey === 'categories_unavailable'): ?><?= $totalItems ?> ventes actives · échéance croissante<?php elseif ($resultsStateKey === 'pagination'): ?><?= $totalItems ?> ventes · page <?= (int) $pagination['current_page'] ?>/<?= (int) $pagination['total_pages'] ?><?php elseif ($stateKey === 'initial'): ?><?= $totalItems ?> ventes actives · échéance croissante<?php endif; ?></p>
                 </div>
 
                 <div data-results-message>
                     <?php if ($stateKey === 'invalid_criteria' || $stateKey === 'search_error'): ?>
-                        <div class="alert alert--error" role="alert"><?= htmlspecialchars((string) $message, ENT_QUOTES, 'UTF-8') ?></div>
+                        <div class="alert alert--error home-state-alert" role="alert">
+                            <strong><?php if ($stateKey === 'invalid_criteria'): ?>Corrigez les critères indiqués<?php else: ?>Recherche temporairement indisponible<?php endif; ?></strong>
+                            <span><?= htmlspecialchars($firstSearchError, ENT_QUOTES, 'UTF-8') ?></span>
+                        </div>
+                        <div class="search-blocked-state">
+                            <h3>La recherche n’a pas été exécutée.</h3>
+                            <p>Corrigez les champs signalés, puis relancez la recherche. Vos autres critères sont conservés.</p>
+                            <img src="public/assets/images/illustrations/shopping-cart.png" alt="" width="116" height="164">
+                        </div>
+                    <?php elseif ($stateKey === 'categories_unavailable'): ?>
+                        <div class="alert alert--warning home-state-alert" role="status">
+                            <strong>Catégories temporairement indisponibles</strong>
+                            <span>Les autres critères restent utilisables et les annonces existantes conservent leur catégorie enregistrée.</span>
+                        </div>
                     <?php elseif ($stateKey === 'no_results'): ?>
                         <div class="empty-state">
                             <img src="public/assets/images/illustrations/shopping-cart.png" alt="" width="168" height="238">
-                            <h3>Aucun résultat</h3>
-                            <p>Modifiez les critères ou revenez à la liste initiale des ventes.</p>
+                            <div>
+                                <h3>Aucune annonce ne correspond à vos critères</h3>
+                                <p>Modifiez un ou plusieurs critères pour élargir votre recherche.</p>
+                                <a class="button button--primary" href="#search-title">Modifier mes critères</a>
+                            </div>
                         </div>
                     <?php endif; ?>
                 </div>
@@ -223,9 +310,8 @@ if ($listings !== []) {
                                 <?php endif; ?>
                             </div>
                             <div class="auction-card__body">
-                                <p class="auction-card__category"><?= htmlspecialchars((string) $listing['category'], ENT_QUOTES, 'UTF-8') ?></p>
+                                <p class="auction-card__category"><?php if ($listing['sale_state'] === 'active'): ?>Vente en cours<?php else: ?>Vente terminée<?php endif; ?></p>
                                 <h3 class="auction-card__title"><?= htmlspecialchars((string) $listing['title'], ENT_QUOTES, 'UTF-8') ?></h3>
-                                <p class="auction-card__state"><?= htmlspecialchars(ucfirst((string) $listing['item_state']), ENT_QUOTES, 'UTF-8') ?></p>
                                 <div class="auction-card__meta">
                                     <div>
                                         <span>Prix courant</span>
@@ -235,9 +321,7 @@ if ($listings !== []) {
                                         <time
                                             class="auction-card__deadline"
                                             datetime="<?= htmlspecialchars((string) $listing['deadline_utc'], ENT_QUOTES, 'UTF-8') ?>"
-                                            data-countdown
-                                            data-deadline-utc="<?= htmlspecialchars((string) $listing['deadline_utc'], ENT_QUOTES, 'UTF-8') ?>"
-                                        >Fin le <?= htmlspecialchars((string) $listing['deadline_label'], ENT_QUOTES, 'UTF-8') ?></time>
+                                        ><?= htmlspecialchars((string) $listing['deadline_label'], ENT_QUOTES, 'UTF-8') ?></time>
                                     <?php else: ?>
                                         <time class="auction-card__deadline" datetime="<?= htmlspecialchars((string) $listing['deadline_utc'], ENT_QUOTES, 'UTF-8') ?>">Vente terminée</time>
                                     <?php endif; ?>
@@ -248,15 +332,27 @@ if ($listings !== []) {
                     <?php endforeach; ?>
                 </div>
 
+                <div class="filter-summary" data-filter-summary <?php if ($stateKey !== 'filtered_results'): ?>hidden<?php endif; ?>>
+                    <h3>Critères appliqués</h3>
+                    <p data-filter-summary-values><?= htmlspecialchars(implode(' · ', $filterSummaryParts), ENT_QUOTES, 'UTF-8') ?></p>
+                    <p>Les résultats sont classés par date et heure de fin.</p>
+                </div>
+
                 <nav class="pagination" data-pagination aria-label="Pagination des annonces">
-                    <?php if ($pagination['previous_url'] !== null): ?>
-                        <a class="button button--secondary button--compact" href="<?= htmlspecialchars((string) $pagination['previous_url'], ENT_QUOTES, 'UTF-8') ?>" rel="prev">Page précédente</a>
-                    <?php endif; ?>
                     <?php if ($pagination['total_pages'] > 1): ?>
-                        <span class="pagination__status">Page <?= (int) $pagination['current_page'] ?> sur <?= (int) $pagination['total_pages'] ?></span>
-                    <?php endif; ?>
-                    <?php if ($pagination['next_url'] !== null): ?>
-                        <a class="button button--secondary button--compact" href="<?= htmlspecialchars((string) $pagination['next_url'], ENT_QUOTES, 'UTF-8') ?>" rel="next">Page suivante</a>
+                        <?php if ($pagination['previous_url'] !== null): ?>
+                            <a class="button button--secondary pagination__previous" href="<?= htmlspecialchars((string) $pagination['previous_url'], ENT_QUOTES, 'UTF-8') ?>" rel="prev">Précédent</a>
+                        <?php else: ?>
+                            <span class="button button--disabled pagination__previous" aria-disabled="true">Précédent</span>
+                        <?php endif; ?>
+                        <?php foreach ($paginationUrls as $pageNumber => $pageUrl): ?>
+                            <a class="button pagination__page<?php if ($pageNumber === (int) $pagination['current_page']): ?> button--primary<?php else: ?> button--secondary<?php endif; ?>" href="<?= htmlspecialchars($pageUrl, ENT_QUOTES, 'UTF-8') ?>"<?php if ($pageNumber === (int) $pagination['current_page']): ?> aria-current="page"<?php endif; ?>><?= $pageNumber ?></a>
+                        <?php endforeach; ?>
+                        <?php if ($pagination['next_url'] !== null): ?>
+                            <a class="button button--secondary pagination__next" href="<?= htmlspecialchars((string) $pagination['next_url'], ENT_QUOTES, 'UTF-8') ?>" rel="next">Suivant</a>
+                        <?php else: ?>
+                            <span class="button button--disabled pagination__next" aria-disabled="true">Suivant</span>
+                        <?php endif; ?>
                     <?php endif; ?>
                 </nav>
             </section>

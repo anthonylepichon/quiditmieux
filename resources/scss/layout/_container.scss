@@ -20,12 +20,10 @@
 
 .glass-panel {
   @include mixins.glass-panel;
-
-  padding: clamp(var(--space-6), 4vw, var(--space-10));
 }
 
 .section-stack {
   display: grid;
-  gap: var(--space-8);
-  padding-block: var(--space-8) var(--space-16);
+  gap: 2.25rem;
+  padding-block: 2.125rem 4rem;
 }

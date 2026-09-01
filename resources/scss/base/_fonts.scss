@@ -1,0 +1,45 @@
+/*
+ * Description générale :
+ * Polices locales utilisées par l'interface QUIDITMIEUX.
+ *
+ * Rôle :
+ * Charger les graisses Lato employées dans la maquette sans dépendre d'un service externe.
+ *
+ * Tâches :
+ * Déclarer les variantes Regular, Medium, Bold et Black utilisées par les textes.
+ *
+ * Liens avec les autres fichiers :
+ * Chargé par main.scss avant la typographie et alimenté par public/assets/fonts.
+ */
+
+@font-face {
+  font-family: "Lato";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("../../assets/fonts/Lato-Regular.ttf") format("truetype");
+}
+
+@font-face {
+  font-family: "Lato";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("../../assets/fonts/Lato-Medium.ttf") format("truetype");
+}
+
+@font-face {
+  font-family: "Lato";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("../../assets/fonts/Lato-Bold.ttf") format("truetype");
+}
+
+@font-face {
+  font-family: "Lato";
+  font-style: normal;
+  font-weight: 900;
+  font-display: swap;
+  src: url("../../assets/fonts/Lato-Black.ttf") format("truetype");
+}

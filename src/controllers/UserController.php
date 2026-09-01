@@ -298,6 +298,8 @@ class UserController extends Controller
         $participations = [];
         $wins = [];
         foreach ($listings as $listing) {
+            $listing['is_current_winner'] = $listing['winner_id'] === $userId;
+
             if (!$listing['is_active'] && $listing['winner_id'] === $userId) {
                 $wins[] = $listing;
             } else {

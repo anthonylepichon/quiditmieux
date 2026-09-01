@@ -12,6 +12,8 @@ const qdmResultsMessage = document.querySelector('[data-results-message]');
 const qdmResultsSummary = document.querySelector('[data-results-summary]');
 const qdmResultsTitle = document.querySelector('#results-title');
 const qdmPagination = document.querySelector('[data-pagination]');
+const qdmFilterSummary = document.querySelector('[data-filter-summary]');
+const qdmFilterSummaryValues = document.querySelector('[data-filter-summary-values]');
 let qdmCurrentRequest = null;
 let qdmRequestNumber = 0;
 
@@ -139,11 +141,117 @@ function qdmApplyResponse(responseData, moveFocus) {
     qdmRenderMessage(responseData.state_key, responseData.message);
     qdmRenderListings(responseData.listings);
     qdmRenderPagination(responseData.pagination);
-    qdmResultsSummary.textContent = responseData.message;
+    qdmApplyResultsState(responseData);
+
+    if (responseData.state_key === 'filtered_results') {
+        qdmResultsTitle.textContent = String(responseData.total_items) + ' annonces correspondent à votre recherche';
+        qdmResultsSummary.textContent = String(responseData.total_items) + ' résultats';
+    } else if (responseData.state_key === 'no_results') {
+        qdmResultsTitle.textContent = 'Résultats';
+        qdmResultsSummary.textContent = '';
+    } else if (responseData.state_key === 'categories_unavailable') {
+        qdmResultsTitle.textContent = 'Les enchères qui se terminent bientôt';
+        qdmResultsSummary.textContent = String(responseData.total_items) + ' ventes actives · échéance croissante';
+    } else if (responseData.pagination.total_pages > 1) {
+        qdmResultsTitle.textContent = 'Les enchères qui se terminent bientôt';
+        qdmResultsSummary.textContent = String(responseData.total_items)
+            + ' ventes · page '
+            + String(responseData.pagination.current_page)
+            + '/'
+            + String(responseData.pagination.total_pages);
+    } else if (responseData.state_key === 'initial') {
+        qdmResultsTitle.textContent = 'Les enchères qui se terminent bientôt';
+        qdmResultsSummary.textContent = String(responseData.total_items) + ' ventes actives · échéance croissante';
+    } else {
+        qdmResultsSummary.textContent = responseData.message;
+    }
 
     if (moveFocus) {
         qdmResultsTitle.focus();
     }
+}
+
+/**
+ * Rôle : Appliquer la variante visuelle correspondant à l'état reçu et mettre à jour le résumé des filtres.
+ * Paramètres : Réponse JSON validée du serveur.
+ * Retour : Aucun.
+ */
+function qdmApplyResultsState(responseData) {
+    const knownStates = [
+        'initial',
+        'filtered_results',
+        'no_results',
+        'invalid_criteria',
+        'search_error',
+        'categories_unavailable',
+        'pagination',
+    ];
+    let visualState = responseData.state_key;
+
+    if (visualState === 'initial' && responseData.pagination.total_pages > 1) {
+        visualState = 'pagination';
+    }
+
+    knownStates.forEach(function removeStateClass(stateName) {
+        qdmResultsRegion.classList.remove('results-section--' + stateName);
+    });
+    qdmResultsRegion.classList.add('results-section--' + visualState);
+    qdmResultsRegion.dataset.resultsState = visualState;
+
+    if (!(qdmFilterSummary instanceof HTMLElement)
+        || !(qdmFilterSummaryValues instanceof HTMLElement)
+    ) {
+        return;
+    }
+
+    qdmFilterSummary.hidden = responseData.state_key !== 'filtered_results';
+
+    if (responseData.state_key !== 'filtered_results') {
+        qdmFilterSummaryValues.textContent = '';
+        return;
+    }
+
+    const criteria = responseData.criteria;
+    const summaryParts = [];
+
+    if (typeof criteria.text === 'string' && criteria.text !== '') {
+        summaryParts.push(criteria.text);
+    }
+
+    if (criteria.category_id !== null
+        && responseData.categories !== null
+        && typeof responseData.categories === 'object'
+        && typeof responseData.categories[criteria.category_id] === 'string'
+    ) {
+        summaryParts.push(responseData.categories[criteria.category_id]);
+    }
+
+    if (typeof criteria.item_state === 'string' && criteria.item_state !== '') {
+        summaryParts.push(criteria.item_state.charAt(0).toUpperCase() + criteria.item_state.slice(1));
+    }
+
+    if (criteria.minimum_price !== '' || criteria.maximum_price !== '') {
+        let minimumPrice = '0,00 €';
+        let maximumPrice = 'sans limite';
+
+        if (criteria.minimum_price !== '') {
+            minimumPrice = String(criteria.minimum_price) + ' €';
+        }
+
+        if (criteria.maximum_price !== '') {
+            maximumPrice = String(criteria.maximum_price) + ' €';
+        }
+
+        summaryParts.push(minimumPrice + ' à ' + maximumPrice);
+    }
+
+    if (criteria.sale_state === 'ended') {
+        summaryParts.push('Terminées');
+    } else if (criteria.sale_state === 'all') {
+        summaryParts.push('Toutes');
+    }
+
+    qdmFilterSummaryValues.textContent = summaryParts.join(' · ');
 }
 
 /**
@@ -237,22 +345,70 @@ function qdmRenderMessage(stateKey, message) {
         image.alt = '';
         image.width = 168;
         image.height = 238;
+        const copy = document.createElement('div');
         const title = document.createElement('h3');
-        title.textContent = 'Aucun résultat';
+        title.textContent = 'Aucune annonce ne correspond à vos critères';
         const paragraph = document.createElement('p');
-        paragraph.textContent = message;
-        emptyState.append(image, title, paragraph);
+        paragraph.textContent = 'Modifiez un ou plusieurs critères pour élargir votre recherche.';
+        const link = document.createElement('a');
+        link.className = 'button button--primary';
+        link.href = '#search-title';
+        link.textContent = 'Modifier mes critères';
+        copy.append(title, paragraph, link);
+        emptyState.append(image, copy);
         qdmResultsMessage.append(emptyState);
         return;
     }
 
     if (stateKey === 'invalid_criteria' || stateKey === 'search_error') {
-        const alert = document.createElement('div');
-        alert.className = 'alert alert--error';
-        alert.setAttribute('role', 'alert');
-        alert.textContent = message;
-        qdmResultsMessage.append(alert);
+        let title = 'Corrigez les critères indiqués';
+
+        if (stateKey === 'search_error') {
+            title = 'Recherche temporairement indisponible';
+        }
+
+        qdmResultsMessage.append(qdmCreateStateAlert('error', title, message, 'alert'));
+        const blockedState = document.createElement('div');
+        blockedState.className = 'search-blocked-state';
+        const blockedTitle = document.createElement('h3');
+        blockedTitle.textContent = 'La recherche n’a pas été exécutée.';
+        const blockedCopy = document.createElement('p');
+        blockedCopy.textContent = 'Corrigez les champs signalés, puis relancez la recherche. Vos autres critères sont conservés.';
+        const blockedImage = document.createElement('img');
+        blockedImage.src = 'public/assets/images/illustrations/shopping-cart.png';
+        blockedImage.alt = '';
+        blockedImage.width = 116;
+        blockedImage.height = 164;
+        blockedState.append(blockedTitle, blockedCopy, blockedImage);
+        qdmResultsMessage.append(blockedState);
+        return;
     }
+
+    if (stateKey === 'categories_unavailable') {
+        qdmResultsMessage.append(qdmCreateStateAlert(
+            'warning',
+            'Catégories temporairement indisponibles',
+            'Les autres critères restent utilisables et les annonces existantes conservent leur catégorie enregistrée.',
+            'status'
+        ));
+    }
+}
+
+/**
+ * Rôle : Construire une alerte d'état avec un titre et une explication distincts.
+ * Paramètres : Variante visuelle, titre, message et rôle accessible.
+ * Retour : Élément d'alerte prêt à insérer.
+ */
+function qdmCreateStateAlert(variant, title, message, role) {
+    const alert = document.createElement('div');
+    alert.className = 'alert alert--' + variant + ' home-state-alert';
+    alert.setAttribute('role', role);
+    const heading = document.createElement('strong');
+    heading.textContent = title;
+    const copy = document.createElement('span');
+    copy.textContent = message;
+    alert.append(heading, copy);
+    return alert;
 }
 
 /**
@@ -295,15 +451,18 @@ function qdmCreateListingCard(listing) {
     media.append(image);
     const body = document.createElement('div');
     body.className = 'auction-card__body';
-    const category = document.createElement('p');
-    category.className = 'auction-card__category';
-    category.textContent = String(listing.category);
+    const saleStatus = document.createElement('p');
+    saleStatus.className = 'auction-card__category';
+
+    if (listing.sale_state === 'active') {
+        saleStatus.textContent = 'Vente en cours';
+    } else {
+        saleStatus.textContent = 'Vente terminée';
+    }
+
     const title = document.createElement('h3');
     title.className = 'auction-card__title';
     title.textContent = String(listing.title);
-    const itemState = document.createElement('p');
-    itemState.className = 'auction-card__state';
-    itemState.textContent = String(listing.item_state);
     const meta = document.createElement('div');
     meta.className = 'auction-card__meta';
     const priceBlock = document.createElement('div');
@@ -318,9 +477,7 @@ function qdmCreateListingCard(listing) {
     deadline.dateTime = String(listing.deadline_utc);
 
     if (listing.sale_state === 'active') {
-        deadline.dataset.countdown = '';
-        deadline.dataset.deadlineUtc = String(listing.deadline_utc);
-        deadline.textContent = 'Fin le ' + String(listing.deadline_label);
+        deadline.textContent = String(listing.deadline_label);
     } else {
         deadline.textContent = 'Vente terminée';
     }
@@ -330,7 +487,7 @@ function qdmCreateListingCard(listing) {
     link.className = 'auction-card__link';
     link.href = String(listing.detail_url);
     link.textContent = 'Voir l’annonce : ' + String(listing.title);
-    body.append(category, title, itemState, meta, link);
+    body.append(saleStatus, title, meta, link);
     article.append(media, body);
     return article;
 }
@@ -343,32 +500,60 @@ function qdmCreateListingCard(listing) {
 function qdmRenderPagination(pagination) {
     const fragment = document.createDocumentFragment();
 
-    if (typeof pagination.previous_url === 'string') {
-        fragment.append(qdmCreatePaginationLink(pagination.previous_url, 'Page précédente', 'prev'));
+    if (pagination.total_pages <= 1) {
+        qdmPagination.replaceChildren();
+        return;
     }
 
-    if (pagination.total_pages > 1) {
-        const status = document.createElement('span');
-        status.className = 'pagination__status';
-        status.textContent = 'Page ' + pagination.current_page + ' sur ' + pagination.total_pages;
-        fragment.append(status);
+    fragment.append(qdmCreatePaginationBoundary(
+        pagination.previous_url,
+        'Précédent',
+        'prev',
+        'pagination__previous'
+    ));
+
+    for (let pageNumber = 1; pageNumber <= pagination.total_pages; pageNumber += 1) {
+        const pageLink = document.createElement('a');
+        pageLink.className = 'button pagination__page';
+        pageLink.href = qdmBuildSearchUrl(pageNumber).toString();
+        pageLink.textContent = String(pageNumber);
+
+        if (pageNumber === pagination.current_page) {
+            pageLink.classList.add('button--primary');
+            pageLink.setAttribute('aria-current', 'page');
+        } else {
+            pageLink.classList.add('button--secondary');
+        }
+
+        fragment.append(pageLink);
     }
 
-    if (typeof pagination.next_url === 'string') {
-        fragment.append(qdmCreatePaginationLink(pagination.next_url, 'Page suivante', 'next'));
-    }
+    fragment.append(qdmCreatePaginationBoundary(
+        pagination.next_url,
+        'Suivant',
+        'next',
+        'pagination__next'
+    ));
 
     qdmPagination.replaceChildren(fragment);
 }
 
 /**
- * Rôle : Créer un lien de pagination conservant sa navigation GET classique.
- * Paramètres : Adresse, libellé et relation de navigation.
- * Retour : Élément de lien prêt à être affiché.
+ * Rôle : Créer une action de bord de pagination active ou désactivée.
+ * Paramètres : Adresse éventuelle, libellé, relation et classe de positionnement.
+ * Retour : Élément de lien ou état désactivé prêt à être affiché.
  */
-function qdmCreatePaginationLink(url, label, relation) {
+function qdmCreatePaginationBoundary(url, label, relation, positionClass) {
+    if (typeof url !== 'string') {
+        const disabled = document.createElement('span');
+        disabled.className = 'button button--disabled ' + positionClass;
+        disabled.setAttribute('aria-disabled', 'true');
+        disabled.textContent = label;
+        return disabled;
+    }
+
     const link = document.createElement('a');
-    link.className = 'button button--secondary button--compact';
+    link.className = 'button button--secondary ' + positionClass;
     link.href = url;
     link.rel = relation;
     link.textContent = label;
