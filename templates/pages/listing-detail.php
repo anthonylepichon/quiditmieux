@@ -56,13 +56,23 @@ if ($viewer['is_following']) {
         </header>
 
         <section class="listing-detail__hero" aria-labelledby="listing-title">
-            <div class="listing-gallery">
+            <div class="listing-gallery" data-carousel data-carousel-interval="5000" role="region" aria-label="Photographies de l’annonce" aria-roledescription="carrousel">
                 <?php if ($photos !== []): ?>
-                    <img class="listing-gallery__main" src="<?= htmlspecialchars($photos[0]['url'], ENT_QUOTES, 'UTF-8') ?>" alt="Photographie principale de <?= htmlspecialchars($listing['title'], ENT_QUOTES, 'UTF-8') ?>">
+                    <div class="listing-gallery__viewport">
+                        <img class="listing-gallery__main" data-carousel-image src="<?= htmlspecialchars($photos[0]['url'], ENT_QUOTES, 'UTF-8') ?>" alt="Photographie 1 de <?= htmlspecialchars($listing['title'], ENT_QUOTES, 'UTF-8') ?>">
+                        <?php if (count($photos) > 1): ?>
+                            <button class="listing-gallery__arrow listing-gallery__arrow--previous" type="button" data-carousel-previous aria-label="Afficher la photographie précédente"><span aria-hidden="true">←</span></button>
+                            <button class="listing-gallery__toggle" type="button" data-carousel-toggle>Pause</button>
+                            <button class="listing-gallery__arrow listing-gallery__arrow--next" type="button" data-carousel-next aria-label="Afficher la photographie suivante"><span aria-hidden="true">→</span></button>
+                        <?php endif; ?>
+                    </div>
                     <?php if (count($photos) > 1): ?>
-                        <div class="listing-gallery__thumbnails">
+                        <p class="visually-hidden" data-carousel-status aria-live="off">Photographie 1 sur <?= count($photos) ?></p>
+                        <div class="listing-gallery__thumbnails" aria-label="Choisir une photographie">
                             <?php foreach ($photos as $index => $photo): ?>
-                                <img src="<?= htmlspecialchars($photo['url'], ENT_QUOTES, 'UTF-8') ?>" alt="Photographie <?= $index + 1 ?> de <?= htmlspecialchars($listing['title'], ENT_QUOTES, 'UTF-8') ?>">
+                                <button class="listing-gallery__thumbnail<?php if ($index === 0): ?> is-active<?php endif; ?>" type="button" data-carousel-thumbnail data-carousel-index="<?= $index ?>" data-carousel-src="<?= htmlspecialchars($photo['url'], ENT_QUOTES, 'UTF-8') ?>" data-carousel-alt="Photographie <?= $index + 1 ?> de <?= htmlspecialchars($listing['title'], ENT_QUOTES, 'UTF-8') ?>" aria-label="Afficher la photographie <?= $index + 1 ?> sur <?= count($photos) ?>"<?php if ($index === 0): ?> aria-current="true"<?php endif; ?>>
+                                    <img src="<?= htmlspecialchars($photo['url'], ENT_QUOTES, 'UTF-8') ?>" alt="">
+                                </button>
                             <?php endforeach; ?>
                         </div>
                     <?php endif; ?>
