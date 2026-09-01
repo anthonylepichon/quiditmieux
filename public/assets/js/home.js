@@ -339,6 +339,8 @@ function qdmRenderErrors(errors, categoriesAvailable) {
         if (errorElement instanceof HTMLElement && typeof errors[fieldName] === 'string') {
             if (hasPriceRangeError && fieldName === 'maximum_price') {
                 errorElement.textContent = 'Le maximum doit être supérieur ou égal au minimum.';
+            } else {
+                errorElement.textContent = errors[fieldName];
             }
         }
 
@@ -347,7 +349,7 @@ function qdmRenderErrors(errors, categoriesAvailable) {
         }
     });
 
-    if (categoriesAvailable === false) {
+    if (categoriesAvailable === false && typeof errors.category !== 'string') {
         const categoryError = qdmSearchForm.querySelector('[data-error-for="category"]');
 
         if (categoryError instanceof HTMLElement) {
