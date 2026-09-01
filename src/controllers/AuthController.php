@@ -48,7 +48,7 @@ class AuthController extends Controller
 
         if ($errors === []) {
             if ($userModel->pseudoExists($values['pseudo'])) {
-                $errors['pseudo'] = 'Ce nom d’utilisateur est déjà utilisé.';
+                $errors['pseudo'] = 'Ce pseudo est déjà utilisé.';
             }
 
             if ($userModel->emailExists($values['email'])) {
@@ -68,14 +68,14 @@ class AuthController extends Controller
         ]);
 
         if (!$created) {
-            $errors['form'] = 'Le compte ne peut pas être créé pour le moment.';
+            $errors['form'] = 'Veuillez réessayer. Aucun mécanisme technique n’est affiché.';
             $this->renderRegisterForm($values, $errors, null);
             return;
         }
 
         $this->session->enregistrerMessageTemporaire(
             'success',
-            'Votre compte a été créé. Vous pouvez maintenant vous connecter.'
+            'Vous pouvez maintenant vous connecter et participer aux enchères.'
         );
         $this->redirect('register_form');
     }
@@ -87,7 +87,9 @@ class AuthController extends Controller
      */
     public function showLoginForm(): void
     {
-        if ($this->session->estUtilisateurConnecte()) {
+        $successMessage = $this->session->recupererMessageTemporaire('login_success');
+
+        if ($this->session->estUtilisateurConnecte() && $successMessage === null) {
             $this->redirect('dashboard');
         }
 
@@ -95,7 +97,7 @@ class AuthController extends Controller
         $this->renderLoginForm(
             ['login' => '', 'destination' => $destination],
             [],
-            $this->session->recupererMessageTemporaire('success')
+            $successMessage
         );
     }
 
@@ -113,11 +115,11 @@ class AuthController extends Controller
         $errors = [];
 
         if (!$this->session->estJetonCsrfValide($csrfToken)) {
-            $errors['form'] = 'Le formulaire a expiré. Rechargez la page puis recommencez.';
+            $errors['form'] = 'Vérifiez vos informations puis essayez de nouveau.';
         }
 
         if ($login === '' || $password === '') {
-            $errors['form'] = 'Saisissez votre identifiant et votre mot de passe.';
+            $errors['form'] = 'Vérifiez vos informations puis essayez de nouveau.';
         }
 
         $account = null;
@@ -131,7 +133,7 @@ class AuthController extends Controller
                 || !is_string($account['password_hash'])
                 || !password_verify($password, $account['password_hash'])
             ) {
-                $errors['form'] = 'L’identifiant ou le mot de passe est incorrect.';
+                $errors['form'] = 'Vérifiez vos informations puis essayez de nouveau.';
             }
         }
 
@@ -141,8 +143,8 @@ class AuthController extends Controller
         }
 
         $this->session->connecterUtilisateur((int) $account['id']);
-        $this->session->enregistrerMessageTemporaire('success', 'Vous êtes maintenant connecté.');
-        $this->redirect($destination);
+        $this->session->enregistrerMessageTemporaire('login_success', 'Redirection en cours…');
+        $this->redirect('login_form', ['destination' => $destination]);
     }
 
     /**
@@ -157,12 +159,10 @@ class AuthController extends Controller
         if (!$this->session->estUtilisateurConnecte()
             || !$this->session->estJetonCsrfValide($csrfToken)
         ) {
-            $this->session->enregistrerMessageTemporaire('notice', 'La déconnexion ne peut pas être confirmée.');
             $this->redirect('home');
         }
 
         $this->session->deconnecterUtilisateur();
-        $this->session->enregistrerMessageTemporaire('success', 'Vous êtes maintenant déconnecté.');
         $this->redirect('home');
     }
 
@@ -257,31 +257,31 @@ class AuthController extends Controller
         $values['email'] = mb_strtolower(trim((string) $values['email']));
 
         if (!$this->session->estJetonCsrfValide($csrfToken)) {
-            $errors['form'] = 'Le formulaire a expiré. Rechargez la page puis recommencez.';
+            $errors['form'] = 'Veuillez réessayer. Aucun mécanisme technique n’est affiché.';
         }
 
         if ($honeypot !== '') {
-            $errors['form'] = 'La demande ne peut pas être traitée.';
+            $errors['form'] = 'Veuillez réessayer. Aucun mécanisme technique n’est affiché.';
         }
 
         if (mb_strlen($values['pseudo']) < 3 || mb_strlen($values['pseudo']) > 30) {
-            $errors['pseudo'] = 'Le nom d’utilisateur doit contenir entre 3 et 30 caractères.';
+            $errors['pseudo'] = 'Format du pseudo invalide.';
         } elseif (preg_match('/^[A-Za-z0-9_-]+$/D', $values['pseudo']) !== 1) {
-            $errors['pseudo'] = 'Utilisez uniquement des lettres, chiffres, tirets ou tirets bas.';
+            $errors['pseudo'] = 'Format du pseudo invalide.';
         }
 
         if (mb_strlen($values['email']) > 254
             || filter_var($values['email'], FILTER_VALIDATE_EMAIL) === false
         ) {
-            $errors['email'] = 'Saisissez une adresse électronique valide de 254 caractères au maximum.';
+            $errors['email'] = 'Adresse électronique invalide.';
         }
 
         if (!$this->isStrongPassword($password)) {
-            $errors['password'] = 'Le mot de passe doit contenir au moins 8 caractères, une majuscule, une minuscule, un chiffre et un caractère spécial.';
+            $errors['password'] = 'Le mot de passe ne respecte pas les règles.';
         }
 
         if ($confirmation === '' || !hash_equals($password, $confirmation)) {
-            $errors['password_confirmation'] = 'La confirmation doit être identique au mot de passe.';
+            $errors['password_confirmation'] = 'La confirmation ne correspond pas.';
         }
 
         return $errors;

@@ -84,6 +84,66 @@
   margin-top: 0.75rem;
 }
 
+.auth-confirmation {
+  position: relative;
+  overflow: hidden;
+  border: 0.0625rem solid var(--color-success);
+  background: var(--color-success-surface);
+  color: var(--color-text-secondary);
+}
+
+.auth-confirmation h2,
+.auth-confirmation p {
+  position: absolute;
+  margin: 0;
+}
+
+.auth-confirmation h2 {
+  color: var(--color-success);
+  font-weight: 900;
+  line-height: normal;
+}
+
+.auth-confirmation--register {
+  width: 38.75rem;
+  height: 21.25rem;
+  margin-top: 1.5rem;
+  border-radius: 1.5rem;
+}
+
+.auth-confirmation--register h2 {
+  top: 2.8125rem;
+  left: 1.9375rem;
+  width: 33.75rem;
+  font-size: 1.875rem;
+}
+
+.auth-confirmation--register .auth-confirmation__body {
+  top: 6.6875rem;
+  left: 1.9375rem;
+  width: 33.75rem;
+  font-size: 1rem;
+  line-height: normal;
+}
+
+.auth-confirmation--register .auth-confirmation__note {
+  top: 12.0625rem;
+  left: 1.9375rem;
+  width: 33.75rem;
+  color: var(--color-text-brand);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: normal;
+}
+
+.auth-confirmation--register .button {
+  position: absolute;
+  top: 15.8125rem;
+  left: 1.9375rem;
+  width: 13.75rem;
+  height: 3.25rem;
+}
+
 .auth-card--register .form-grid {
   grid-template-columns: repeat(2, 17.5rem);
   grid-auto-rows: 6.125rem;
@@ -242,12 +302,50 @@
   margin-top: 1.125rem;
 }
 
+.auth-confirmation--login {
+  width: 36.625rem;
+  height: 12.875rem;
+  margin-top: 1.125rem;
+  border-radius: 1.25rem;
+}
+
+.auth-confirmation--login h2 {
+  top: 1.5rem;
+  left: 1.6875rem;
+  width: 32.5rem;
+  font-size: 1.75rem;
+}
+
+.auth-confirmation--login .auth-confirmation__body {
+  top: 4.625rem;
+  left: 1.6875rem;
+  width: 32.5rem;
+  font-size: 1rem;
+  line-height: normal;
+}
+
+.auth-confirmation--login .auth-confirmation__note {
+  top: 9.125rem;
+  left: 1.6875rem;
+  width: 32.5rem;
+  color: var(--color-success);
+  font-size: 0.9375rem;
+  font-weight: 700;
+  line-height: 2rem;
+}
+
 .auth-card--login form > .form-field + .form-field {
   margin-top: 0.625rem;
 }
 
 .auth-card--login form > .form-field {
   height: 5.5rem;
+}
+
+.auth-card--login .form-field__error {
+  min-height: 0.875rem;
+  font-weight: 400;
+  line-height: 1.2;
 }
 
 .auth-card--login .auth-card__actions {
@@ -344,8 +442,10 @@
 
   .auth-card--register .auth-card__introduction,
   .auth-card--register form,
+  .auth-confirmation--register,
   .auth-card--login .auth-card__introduction,
-  .auth-card--login form {
+  .auth-card--login form,
+  .auth-confirmation--login {
     width: 100%;
   }
 

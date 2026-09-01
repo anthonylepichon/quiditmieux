@@ -28,9 +28,10 @@ $pageDescription = 'Consultez et recherchez les ventes aux enchères QUIDITMIEUX
 $pageScripts = ['public/assets/js/home.js'];
 $featuredListing = null;
 $resultsStateKey = $stateKey;
-$firstSearchError = (string) $message;
+$firstSearchError = 'Corrigez les champs signalés, puis relancez la recherche. Vos autres critères sont conservés.';
 $filterSummaryParts = [];
 $paginationUrls = [];
+$hasPriceRangeError = false;
 
 if ($listings !== []) {
     $featuredListing = $listings[0];
@@ -40,9 +41,11 @@ if ($stateKey === 'initial' && (int) $pagination['total_pages'] > 1) {
     $resultsStateKey = 'pagination';
 }
 
-foreach ($errors as $errorMessage) {
-    $firstSearchError = (string) $errorMessage;
-    break;
+if (isset($errors['minimum_price'], $errors['maximum_price'])
+    && $errors['maximum_price'] === 'Le prix maximum doit être supérieur ou égal au prix minimum.'
+) {
+    $hasPriceRangeError = true;
+    $firstSearchError = 'Le prix maximum doit être supérieur ou égal au prix minimum.';
 }
 
 if ((string) $criteria['text'] !== '') {
@@ -163,7 +166,7 @@ for ($pageNumber = 1; $pageNumber <= (int) $pagination['total_pages']; $pageNumb
                                 aria-describedby="error-q"
                                 <?= isset($errors['q']) ? 'aria-invalid="true"' : '' ?>
                             >
-                            <span class="form-field__error" id="error-q" data-error-for="q"><?= isset($errors['q']) ? htmlspecialchars((string) $errors['q'], ENT_QUOTES, 'UTF-8') : '' ?></span>
+                            <span class="form-field__error" id="error-q" data-error-for="q"></span>
                         </div>
 
                         <div class="form-field search-form__category">
@@ -176,7 +179,7 @@ for ($pageNumber = 1; $pageNumber <= (int) $pagination['total_pages']; $pageNumb
                                 <?= !$categoriesAvailable ? 'disabled' : '' ?>
                                 <?= isset($errors['category']) ? 'aria-invalid="true"' : '' ?>
                             >
-                                <option value="">Toutes les catégories</option>
+                                <option value=""><?php if ($categoriesAvailable): ?>Toutes les catégories<?php else: ?>Indisponible<?php endif; ?></option>
                                 <?php foreach ($categories as $categoryId => $categoryLabel): ?>
                                     <option
                                         value="<?= htmlspecialchars((string) $categoryId, ENT_QUOTES, 'UTF-8') ?>"
@@ -184,7 +187,7 @@ for ($pageNumber = 1; $pageNumber <= (int) $pagination['total_pages']; $pageNumb
                                     ><?= htmlspecialchars((string) $categoryLabel, ENT_QUOTES, 'UTF-8') ?></option>
                                 <?php endforeach; ?>
                             </select>
-                            <span class="form-field__error" id="error-category" data-error-for="category"><?= isset($errors['category']) ? htmlspecialchars((string) $errors['category'], ENT_QUOTES, 'UTF-8') : '' ?></span>
+                            <span class="form-field__error" id="error-category" data-error-for="category"><?php if (!$categoriesAvailable): ?>Catégories temporairement indisponibles.<?php endif; ?></span>
                         </div>
 
                         <div class="form-field search-form__item-state">
@@ -201,7 +204,7 @@ for ($pageNumber = 1; $pageNumber <= (int) $pagination['total_pages']; $pageNumb
                                     <option value="<?= htmlspecialchars($itemState, ENT_QUOTES, 'UTF-8') ?>" <?= $criteria['item_state'] === $itemState ? 'selected' : '' ?>><?= htmlspecialchars(ucfirst($itemState), ENT_QUOTES, 'UTF-8') ?></option>
                                 <?php endforeach; ?>
                             </select>
-                            <span class="form-field__error" id="error-item-state" data-error-for="item_state"><?= isset($errors['item_state']) ? htmlspecialchars((string) $errors['item_state'], ENT_QUOTES, 'UTF-8') : '' ?></span>
+                            <span class="form-field__error" id="error-item-state" data-error-for="item_state"></span>
                         </div>
 
                         <div class="form-field search-form__sale-state">
@@ -217,7 +220,7 @@ for ($pageNumber = 1; $pageNumber <= (int) $pagination['total_pages']; $pageNumb
                                 <option value="active" <?= $criteria['sale_state'] === 'active' ? 'selected' : '' ?>>En cours</option>
                                 <option value="ended" <?= $criteria['sale_state'] === 'ended' ? 'selected' : '' ?>>Terminées</option>
                             </select>
-                            <span class="form-field__error" id="error-sale-state" data-error-for="sale_state"><?= isset($errors['sale_state']) ? htmlspecialchars((string) $errors['sale_state'], ENT_QUOTES, 'UTF-8') : '' ?></span>
+                            <span class="form-field__error" id="error-sale-state" data-error-for="sale_state"></span>
                         </div>
 
                         <div class="form-field search-form__minimum-price">
@@ -236,7 +239,7 @@ for ($pageNumber = 1; $pageNumber <= (int) $pagination['total_pages']; $pageNumb
                                 aria-describedby="error-minimum-price"
                                 <?= isset($errors['minimum_price']) ? 'aria-invalid="true"' : '' ?>
                             >
-                            <span class="form-field__error" id="error-minimum-price" data-error-for="minimum_price"><?= isset($errors['minimum_price']) ? htmlspecialchars((string) $errors['minimum_price'], ENT_QUOTES, 'UTF-8') : '' ?></span>
+                            <span class="form-field__error" id="error-minimum-price" data-error-for="minimum_price"></span>
                         </div>
 
                         <div class="form-field search-form__maximum-price">
@@ -255,7 +258,7 @@ for ($pageNumber = 1; $pageNumber <= (int) $pagination['total_pages']; $pageNumb
                                 aria-describedby="error-maximum-price"
                                 <?= isset($errors['maximum_price']) ? 'aria-invalid="true"' : '' ?>
                             >
-                            <span class="form-field__error" id="error-maximum-price" data-error-for="maximum_price"><?= isset($errors['maximum_price']) ? htmlspecialchars((string) $errors['maximum_price'], ENT_QUOTES, 'UTF-8') : '' ?></span>
+                            <span class="form-field__error" id="error-maximum-price" data-error-for="maximum_price"><?php if ($hasPriceRangeError): ?>Le maximum doit être supérieur ou égal au minimum.<?php endif; ?></span>
                         </div>
                     </div>
                     <div class="search-form__actions">
@@ -272,15 +275,20 @@ for ($pageNumber = 1; $pageNumber <= (int) $pagination['total_pages']; $pageNumb
                 </div>
 
                 <div data-results-message>
-                    <?php if ($stateKey === 'invalid_criteria' || $stateKey === 'search_error'): ?>
+                    <?php if ($stateKey === 'invalid_criteria'): ?>
                         <div class="alert alert--error home-state-alert" role="alert">
-                            <strong><?php if ($stateKey === 'invalid_criteria'): ?>Corrigez les critères indiqués<?php else: ?>Recherche temporairement indisponible<?php endif; ?></strong>
+                            <strong>Corrigez les critères indiqués</strong>
                             <span><?= htmlspecialchars($firstSearchError, ENT_QUOTES, 'UTF-8') ?></span>
                         </div>
                         <div class="search-blocked-state">
                             <h3>La recherche n’a pas été exécutée.</h3>
                             <p>Corrigez les champs signalés, puis relancez la recherche. Vos autres critères sont conservés.</p>
                             <img src="public/assets/images/illustrations/shopping-cart.png" alt="" width="116" height="164">
+                        </div>
+                    <?php elseif ($stateKey === 'search_error'): ?>
+                        <div class="alert alert--error home-state-alert" role="alert">
+                            <strong>Recherche temporairement indisponible</strong>
+                            <span><?= htmlspecialchars((string) $message, ENT_QUOTES, 'UTF-8') ?></span>
                         </div>
                     <?php elseif ($stateKey === 'categories_unavailable'): ?>
                         <div class="alert alert--warning home-state-alert" role="status">

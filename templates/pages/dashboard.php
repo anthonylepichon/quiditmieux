@@ -20,6 +20,49 @@ $currentPage = 'dashboard';
 $pageTitle = 'Tableau de bord — QUIDITMIEUX';
 $pageDescription = 'Consultez vos ventes, suivis et enchères remportées.';
 $pageScripts = ['public/assets/js/dashboard.js'];
+$dashboardMessageVariant = 'info';
+$dashboardMessageTitle = 'Votre activité en un coup d’œil';
+$dashboardMessageBody = 'Les trois zones restent disponibles, même lorsqu’elles ne contiennent encore aucune annonce.';
+
+foreach ($data['sales'] as $sale) {
+    if ($sale['is_active']) {
+        $dashboardMessageVariant = 'info';
+        $dashboardMessageTitle = 'Vente active';
+        $dashboardMessageBody = 'Mes ventes actives sont actualisées automatiquement toutes les 10 secondes.';
+    } else {
+        $dashboardMessageVariant = 'success';
+        $dashboardMessageTitle = 'Ventes terminées';
+        $dashboardMessageBody = 'Les résultats finaux sont conservés sans actualisation périodique.';
+    }
+}
+
+if ($data['participations'] !== []) {
+    $participation = $data['participations'][0];
+
+    if (!$participation['is_active']) {
+        $dashboardMessageVariant = 'error';
+        $dashboardMessageTitle = 'Vente terminée';
+        $dashboardMessageBody = 'Cette enchère perdue reste visible dans votre historique, sans actualisation.';
+    } elseif ($participation['user_best_bid'] === null) {
+        $dashboardMessageVariant = 'info';
+        $dashboardMessageTitle = 'Annonce suivie';
+        $dashboardMessageBody = 'Les annonces actives suivies sont actualisées automatiquement toutes les 2 secondes.';
+    } elseif (!empty($participation['is_current_winner'])) {
+        $dashboardMessageVariant = 'success';
+        $dashboardMessageTitle = 'Vous avez la meilleure enchère';
+        $dashboardMessageBody = 'Cette annonce active est actualisée automatiquement toutes les 2 secondes.';
+    } else {
+        $dashboardMessageVariant = 'error';
+        $dashboardMessageTitle = 'Votre enchère a été dépassée';
+        $dashboardMessageBody = 'Cette annonce active est actualisée automatiquement toutes les 2 secondes.';
+    }
+}
+
+if ($data['wins'] !== []) {
+    $dashboardMessageVariant = 'success';
+    $dashboardMessageTitle = 'Enchère remportée';
+    $dashboardMessageBody = 'L’annonce apparaît uniquement dans la zone Enchères remportées.';
+}
 ?>
 <main class="dashboard container">
         <section class="dashboard__heading">
@@ -36,7 +79,7 @@ $pageScripts = ['public/assets/js/dashboard.js'];
 
         <?php if ($data['flash_success'] !== null): ?><div class="alert alert--success" role="status"><?= htmlspecialchars($data['flash_success'], ENT_QUOTES, 'UTF-8') ?></div><?php endif; ?>
         <?php if ($data['flash_notice'] !== null): ?><div class="alert alert--warning" role="status"><?= htmlspecialchars($data['flash_notice'], ENT_QUOTES, 'UTF-8') ?></div><?php endif; ?>
-        <div class="alert alert--info"><strong>Votre activité en un coup d’œil</strong><span>Les trois zones restent disponibles, même lorsqu’elles ne contiennent encore aucune annonce.</span></div>
+        <div class="alert alert--<?= $dashboardMessageVariant ?>" data-dashboard-message><strong><?= htmlspecialchars($dashboardMessageTitle, ENT_QUOTES, 'UTF-8') ?></strong><span><?= htmlspecialchars($dashboardMessageBody, ENT_QUOTES, 'UTF-8') ?></span></div>
         <p class="dashboard__status" data-dashboard-status role="status"></p>
 
         <?php foreach ($zones as $zone): ?>
@@ -53,8 +96,12 @@ $pageScripts = ['public/assets/js/dashboard.js'];
                         <?php foreach ($data[$zone['key']] as $listing): ?>
                             <?php
                             $deadlinePrefix = 'Terminée le ';
+                            $deadlineSuffix = ' — Europe/Paris';
+                            $deadlineLabel = $listing['deadline'];
                             $refreshLabel = '';
                             $statusLabel = 'Vente terminée';
+                            $statusSymbol = '●';
+                            $detailLinkLabel = 'Voir l’annonce  →';
 
                             if ($listing['is_active']) {
                                 $deadlinePrefix = 'Se termine le ';
@@ -62,22 +109,39 @@ $pageScripts = ['public/assets/js/dashboard.js'];
                             }
 
                             if ($zone['key'] === 'sales' && !$listing['is_active']) {
-                                $statusLabel = (int) $listing['bid_count'] > 0 ? 'Vente adjugée' : 'Non adjugée';
+                                $deadlineSuffix = ' · Europe/Paris';
+                                $deadlineLabel = $listing['deadline_date'];
+                                $statusSymbol = '✓';
+                                $detailLinkLabel = 'Voir →';
+
+                                if ((int) $listing['bid_count'] > 0) {
+                                    $statusLabel = 'Adjugée';
+                                } else {
+                                    $statusLabel = 'Non adjugée';
+                                }
                             }
 
                             if ($zone['key'] === 'participations') {
-                                $statusLabel = 'Enchère perdue';
+                                $statusLabel = 'Enchère perdue — vente terminée';
+                                $statusSymbol = '×';
                                 if ($listing['is_active'] && $listing['user_best_bid'] === null) {
                                     $statusLabel = 'Annonce suivie';
+                                    $statusSymbol = '○';
                                 } elseif ($listing['is_active'] && !empty($listing['is_current_winner'])) {
                                     $statusLabel = 'Meilleure enchère';
+                                    $statusSymbol = '★';
                                 } elseif ($listing['is_active']) {
                                     $statusLabel = 'Enchère dépassée';
+                                    $statusSymbol = '!';
+                                } else {
+                                    $deadlinePrefix = 'Vente terminée le ';
                                 }
                             }
 
                             if ($zone['key'] === 'wins') {
                                 $statusLabel = 'Enchère remportée';
+                                $statusSymbol = '✓';
+                                $deadlinePrefix = 'Vente terminée le ';
                             }
 
                             if ($listing['is_active']) {
@@ -88,9 +152,9 @@ $pageScripts = ['public/assets/js/dashboard.js'];
                                 <a class="dashboard-card__media" href="<?= htmlspecialchars($listing['detail_url'], ENT_QUOTES, 'UTF-8') ?>">
                                     <?php if ($listing['photo_url'] !== null): ?><img src="<?= htmlspecialchars($listing['photo_url'], ENT_QUOTES, 'UTF-8') ?>" alt="Photographie de <?= htmlspecialchars($listing['title'], ENT_QUOTES, 'UTF-8') ?>"><?php else: ?><img src="public/assets/images/illustrations/shopping-cart.png" alt="Aucune photographie disponible"><?php endif; ?>
                                 </a>
-                                <div class="dashboard-card__body"><h3><?= htmlspecialchars($listing['title'], ENT_QUOTES, 'UTF-8') ?></h3><p><?= $deadlinePrefix ?><?= htmlspecialchars($listing['deadline'], ENT_QUOTES, 'UTF-8') ?> — Europe/Paris<?= $refreshLabel ?></p><p class="dashboard-card__status">●&nbsp; <?= htmlspecialchars($statusLabel, ENT_QUOTES, 'UTF-8') ?></p></div>
+                                <div class="dashboard-card__body"><h3><?= htmlspecialchars($listing['title'], ENT_QUOTES, 'UTF-8') ?></h3><p><?= $deadlinePrefix ?><?= htmlspecialchars($deadlineLabel, ENT_QUOTES, 'UTF-8') ?><?= $deadlineSuffix ?><?= $refreshLabel ?></p><p class="dashboard-card__status"><?= $statusSymbol ?>  <?= htmlspecialchars($statusLabel, ENT_QUOTES, 'UTF-8') ?></p></div>
                                 <strong class="dashboard-card__price"><?= htmlspecialchars($listing['current_price'], ENT_QUOTES, 'UTF-8') ?></strong>
-                                <a class="dashboard-card__link" href="<?= htmlspecialchars($listing['detail_url'], ENT_QUOTES, 'UTF-8') ?>">Voir l’annonce&nbsp; →</a>
+                                <a class="dashboard-card__link" href="<?= htmlspecialchars($listing['detail_url'], ENT_QUOTES, 'UTF-8') ?>"><?= $detailLinkLabel ?></a>
                             </article>
                         <?php endforeach; ?>
                     <?php endif; ?>

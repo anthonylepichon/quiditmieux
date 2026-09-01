@@ -54,7 +54,7 @@ class ListingController extends Controller
         $hasCustomCriteria = $validation['has_custom_criteria'];
         $searchResult = $this->emptySearchResult();
         $stateKey = 'invalid_criteria';
-        $message = 'Certains critères doivent être corrigés.';
+        $message = 'Corrigez les champs signalés, puis relancez la recherche. Vos autres critères sont conservés.';
         $success = $errors === [];
 
         if ($success) {
@@ -180,6 +180,8 @@ class ListingController extends Controller
             $photos[] = $photo;
         }
 
+        $bidRejection = $this->recoverBidRejection($listingId);
+
         $this->render('pages/listing-detail.php', [
             'listing' => [
                 'id' => $listingId,
@@ -193,12 +195,17 @@ class ListingController extends Controller
                 'minimum_bid' => number_format($currentPrice + 0.01, 2, '.', ''),
                 'bid_count' => (int) $summary['bid_count'],
                 'deadline_utc' => $deadline->format('Y-m-d\TH:i:s\Z'),
-                'deadline_label' => $deadline->setTimezone($parisTimezone)->format('d/m/Y à H:i'),
+                'deadline_label' => $this->formatFrenchDateTime(
+                    $deadline->setTimezone($parisTimezone),
+                    true,
+                    false
+                ),
                 'is_ended' => $isEnded,
                 'final_state' => $this->determineFinalState($isEnded, (int) $summary['bid_count']),
             ],
             'photos' => $photos,
             'history' => $history,
+            'bid_rejection' => $bidRejection,
             'viewer' => [
                 'is_connected' => $viewerId !== null,
                 'is_owner' => $isOwner,
@@ -234,7 +241,7 @@ class ListingController extends Controller
 
         if ($categories === null) {
             $categories = [];
-            $errors['form'] = 'Les catégories sont indisponibles. La publication est temporairement bloquée.';
+            $errors['form'] = 'La création ou la modification de l’annonce est impossible pour le moment.';
         }
 
         $this->renderListingForm('create', $this->emptyListingFormValues(), $errors, $categories, []);
@@ -263,11 +270,11 @@ class ListingController extends Controller
 
         if ($categories === null) {
             $categories = [];
-            $errors['form'] = 'Les catégories sont indisponibles. Aucune annonce ne peut être publiée.';
+            $errors['form'] = 'La création ou la modification de l’annonce est impossible pour le moment.';
         }
 
-        $normalizedData = $this->validateListingValues($values, $categories, $errors);
-        $uploadedPhotos = $this->validateUploadedPhotos($errors);
+        $normalizedData = $this->validateListingValues($values, $categories, $errors, 'create');
+        $uploadedPhotos = $this->validateUploadedPhotos($errors, 'create');
 
         if ($errors !== []) {
             $this->renderListingForm('create', $values, $errors, $categories, []);
@@ -311,7 +318,6 @@ class ListingController extends Controller
             return;
         }
 
-        $this->session->enregistrerMessageTemporaire('success', 'Votre annonce a été publiée.');
         $this->redirect('listing_detail', ['id' => $listingId]);
     }
 
@@ -342,26 +348,32 @@ class ListingController extends Controller
         }
 
         $bidModel = new BidModel($this->database);
+        $lockedState = '';
 
-        if ($bidModel->listingHasBid($listingId)
-            || (string) $listing['date_heure_fin'] <= gmdate('Y-m-d H:i:s')
-        ) {
-            $this->session->enregistrerMessageTemporaire('notice', 'La modification de cette annonce est verrouillée.');
-            $this->redirect('listing_detail', ['id' => $listingId]);
+        if ((string) $listing['date_heure_fin'] <= gmdate('Y-m-d H:i:s')) {
+            $lockedState = 'ended';
+        } elseif ($bidModel->listingHasBid($listingId)) {
+            $lockedState = 'bid';
         }
 
         $categories = $this->fetchCategories();
         $errors = [];
 
         if ($categories === null) {
-            $categories = [];
-            $errors['form'] = 'Les catégories sont indisponibles. La modification est temporairement bloquée.';
+            if ($lockedState !== '') {
+                $categories = [
+                    (string) $listing['categorie_id_externe'] => (string) $listing['categorie_libelle'],
+                ];
+            } else {
+                $categories = [];
+                $errors['form'] = 'La création ou la modification de l’annonce est impossible pour le moment.';
+            }
         }
 
         $photoModel = new PhotoModel($this->database);
         $photos = $this->addPhotoUrls($photoModel->getListingPhotos($listingId));
         $values = $this->listingToFormValues($listing, $categories);
-        $this->renderListingForm('edit', $values, $errors, $categories, $photos);
+        $this->renderListingForm('edit', $values, $errors, $categories, $photos, $lockedState);
     }
 
     /**
@@ -394,11 +406,11 @@ class ListingController extends Controller
 
         if ($categories === null) {
             $categories = [];
-            $errors['form'] = 'Les catégories sont indisponibles. La modification est temporairement bloquée.';
+            $errors['form'] = 'La création ou la modification de l’annonce est impossible pour le moment.';
         }
 
-        $normalizedData = $this->validateListingValues($values, $categories, $errors);
-        $uploadedPhotos = $this->validateUploadedPhotos($errors);
+        $normalizedData = $this->validateListingValues($values, $categories, $errors, 'edit');
+        $uploadedPhotos = $this->validateUploadedPhotos($errors, 'edit');
         $photoModel = new PhotoModel($this->database);
         $existingPhotos = $photoModel->getListingPhotos($listingId);
         $removeIds = $this->readPhotoIdentifiersToRemove();
@@ -414,7 +426,7 @@ class ListingController extends Controller
         }
 
         if (count($keptPhotos) + count($uploadedPhotos) > 3) {
-            $errors['photos'] = 'Trois photographies sont autorisées au maximum après modification.';
+            $errors['photos'] = 'Capacité atteinte. Supprimez une photo pour en ajouter une autre. La suivante devient principale si la première est supprimée.';
         }
 
         if ($errors !== []) {
@@ -437,14 +449,25 @@ class ListingController extends Controller
         $listingModel = new ListingModel($this->database);
         $lockedListing = $listingModel->getForUpdate($listingId);
         $bidModel = new BidModel($this->database);
+        $listingHasBid = $bidModel->listingHasBid($listingId);
 
         if ($lockedListing === null
             || (int) $lockedListing['utilisateur_id'] !== $userId
             || (string) $lockedListing['date_heure_fin'] <= gmdate('Y-m-d H:i:s')
-            || $bidModel->listingHasBid($listingId)
+            || $listingHasBid
         ) {
             $this->database->rollback();
-            $this->session->enregistrerMessageTemporaire('notice', 'La modification est désormais verrouillée.');
+            $lockedMessage = 'Modification verrouillée';
+
+            if ($lockedListing !== null
+                && (string) $lockedListing['date_heure_fin'] <= gmdate('Y-m-d H:i:s')
+            ) {
+                $lockedMessage = 'L’échéance est atteinte. Cette annonce ne peut plus être modifiée ni supprimée.';
+            } elseif ($listingHasBid) {
+                $lockedMessage = 'Une enchère a été enregistrée. Cette annonce ne peut plus être modifiée ni supprimée.';
+            }
+
+            $this->session->enregistrerMessageTemporaire('notice', $lockedMessage);
             $this->redirect('listing_detail', ['id' => $listingId]);
         }
 
@@ -488,7 +511,6 @@ class ListingController extends Controller
         }
 
         $this->deletePhotoFiles($removedPhotos);
-        $this->session->enregistrerMessageTemporaire('success', 'L’annonce a été mise à jour.');
         $this->redirect('listing_detail', ['id' => $listingId]);
     }
 
@@ -512,7 +534,10 @@ class ListingController extends Controller
         }
 
         if (!$this->database->beginTransaction()) {
-            $this->session->enregistrerMessageTemporaire('notice', 'La suppression est temporairement indisponible.');
+            $this->session->enregistrerMessageTemporaire(
+                'notice',
+                'La suppression est temporairement indisponible.'
+            );
             $this->redirect('listing_detail', ['id' => $listingId]);
         }
 
@@ -526,7 +551,10 @@ class ListingController extends Controller
             || $bidModel->listingHasBid($listingId)
         ) {
             $this->database->rollback();
-            $this->session->enregistrerMessageTemporaire('notice', 'Cette annonce ne peut plus être supprimée.');
+            $this->session->enregistrerMessageTemporaire(
+                'notice',
+                'Cette annonce ne peut plus être supprimée.'
+            );
             $this->redirect('listing_detail', ['id' => $listingId]);
         }
 
@@ -535,7 +563,10 @@ class ListingController extends Controller
 
         if (!$listingModel->delete($listingId) || !$this->database->commit()) {
             $this->database->rollback();
-            $this->session->enregistrerMessageTemporaire('notice', 'L’annonce n’a pas pu être supprimée.');
+            $this->session->enregistrerMessageTemporaire(
+                'notice',
+                'L’annonce n’a pas pu être supprimée.'
+            );
             $this->redirect('listing_detail', ['id' => $listingId]);
         }
 
@@ -591,21 +622,31 @@ class ListingController extends Controller
 
     /**
      * Rôle : Valider et normaliser toutes les données textuelles d'une annonce.
-     * Paramètres : Valeurs reçues, catégories disponibles et erreurs à compléter.
+     * Paramètres : Valeurs reçues, catégories disponibles, erreurs à compléter et mode du formulaire.
      * Retour : Données normalisées destinées au modèle.
      */
-    private function validateListingValues(array $values, array $categories, array &$errors): array
+    private function validateListingValues(array $values, array $categories, array &$errors, string $mode): array
     {
         $title = trim($values['title']);
         $description = trim($values['description']);
         $categoryId = null;
         $categoryLabel = '';
 
-        if (mb_strlen($title) < 3 || mb_strlen($title) > 255) {
-            $errors['title'] = 'Le titre doit contenir entre 3 et 255 caractères.';
+        if ($title === '') {
+            if ($mode === 'edit') {
+                $errors['title'] = 'Le titre doit comporter au moins 3 caractères.';
+            } else {
+                $errors['title'] = 'Le titre est obligatoire.';
+            }
+        } elseif (mb_strlen($title) < 3) {
+            $errors['title'] = 'Le titre doit comporter au moins 3 caractères.';
+        } elseif (mb_strlen($title) > 255) {
+            $errors['title'] = 'Le titre ne doit pas dépasser 255 caractères.';
         }
 
-        if (mb_strlen($description) < 10 || mb_strlen($description) > 5000) {
+        if ($description === '') {
+            $errors['description'] = 'La description est obligatoire.';
+        } elseif (mb_strlen($description) < 10 || mb_strlen($description) > 5000) {
             $errors['description'] = 'La description doit contenir entre 10 et 5 000 caractères.';
         }
 
@@ -623,6 +664,15 @@ class ListingController extends Controller
         }
 
         $price = $this->normalizePrice($values['starting_price'], 'starting_price', 'Le prix de départ', $errors);
+
+        if ($price === null) {
+            if ($mode === 'edit') {
+                $errors['starting_price'] = 'Le prix de départ doit être strictement positif.';
+            } else {
+                $errors['starting_price'] = 'Montant strictement positif, 2 décimales maximum.';
+            }
+        }
+
         $deadlineUtc = $this->normalizeParisDeadline($values['end_date'], $values['end_time'], $errors);
 
         return [
@@ -652,12 +702,14 @@ class ListingController extends Controller
             || ($dateErrors !== false && ($dateErrors['warning_count'] > 0 || $dateErrors['error_count'] > 0))
             || $deadline->format('Y-m-d H:i') !== $date . ' ' . $time
         ) {
-            $errors['deadline'] = 'Saisissez une date et une heure de fin valides.';
+            $errors['end_date'] = 'La date doit être future.';
+            $errors['end_time'] = 'L’heure doit être future.';
             return null;
         }
 
         if ($deadline <= new DateTimeImmutable('now', $parisTimezone)) {
-            $errors['deadline'] = 'La date et l’heure de fin doivent être situées dans le futur.';
+            $errors['end_date'] = 'La date doit être future.';
+            $errors['end_time'] = 'L’heure doit être future.';
             return null;
         }
 
@@ -666,11 +718,17 @@ class ListingController extends Controller
 
     /**
      * Rôle : Contrôler les fichiers reçus sans encore les déplacer dans le dossier public.
-     * Paramètres : Erreurs à compléter.
+     * Paramètres : Erreurs à compléter et mode du formulaire.
      * Retour : Photographies validées avec leur fichier temporaire et leur extension sûre.
      */
-    private function validateUploadedPhotos(array &$errors): array
+    private function validateUploadedPhotos(array &$errors, string $mode): array
     {
+        $validationMessage = 'Corrigez les champs signalés avant de publier l’annonce.';
+
+        if ($mode === 'edit') {
+            $validationMessage = 'Corrigez les champs signalés avant d’enregistrer les modifications.';
+        }
+
         if (!isset($_FILES['photos'])) {
             return [];
         }
@@ -684,7 +742,7 @@ class ListingController extends Controller
             || !is_array($fileData['error'])
             || !is_array($fileData['size'])
         ) {
-            $errors['photos'] = 'Les photographies reçues ne sont pas utilisables.';
+            $errors['photos'] = $validationMessage;
             return [];
         }
 
@@ -703,12 +761,12 @@ class ListingController extends Controller
                 || !is_numeric($fileData['size'][$index])
                 || !is_uploaded_file($fileData['tmp_name'][$index])
             ) {
-                $errors['photos'] = 'Une photographie n’a pas été reçue correctement.';
+                $errors['photos'] = $validationMessage;
                 continue;
             }
 
             if ((int) $fileData['size'][$index] > 5 * 1024 * 1024) {
-                $errors['photos'] = 'Chaque photographie doit peser 5 Mo au maximum.';
+                $errors['photos'] = $validationMessage;
                 continue;
             }
 
@@ -718,7 +776,7 @@ class ListingController extends Controller
                 || !isset($allowedMimeTypes[$mimeType])
                 || getimagesize($fileData['tmp_name'][$index]) === false
             ) {
-                $errors['photos'] = 'Utilisez uniquement des images JPEG, PNG ou WebP valides.';
+                $errors['photos'] = $validationMessage;
                 continue;
             }
 
@@ -729,7 +787,7 @@ class ListingController extends Controller
         }
 
         if (count($photos) > 3) {
-            $errors['photos'] = 'Trois photographies sont autorisées au maximum.';
+            $errors['photos'] = 'Capacité atteinte. Supprimez une photo pour en ajouter une autre. La suivante devient principale si la première est supprimée.';
         }
 
         return array_slice($photos, 0, 3);
@@ -906,6 +964,38 @@ class ListingController extends Controller
     }
 
     /**
+     * Rôle : Récupérer l’état temporaire d’une enchère refusée pour la seule annonce concernée.
+     * Paramètres : Identifiant de l’annonce affichée.
+     * Retour : Montant saisi et minimum formatés, ou null si aucun refus ne correspond.
+     */
+    private function recoverBidRejection(int $listingId): ?array
+    {
+        $encodedData = $this->session->recupererMessageTemporaire('bid_rejection');
+
+        if ($encodedData === null) {
+            return null;
+        }
+
+        $data = json_decode($encodedData, true);
+
+        if (!is_array($data)
+            || !isset($data['listing_id'], $data['minimum'], $data['amount'])
+            || (int) $data['listing_id'] !== $listingId
+            || !is_numeric($data['minimum'])
+            || !is_numeric($data['amount'])
+        ) {
+            return null;
+        }
+
+        return [
+            'minimum' => number_format((float) $data['minimum'], 2, '.', ''),
+            'minimum_label' => number_format((float) $data['minimum'], 2, ',', ' ') . ' €',
+            'amount' => number_format((float) $data['amount'], 2, '.', ''),
+            'amount_label' => number_format((float) $data['amount'], 2, ',', ' ') . ' €',
+        ];
+    }
+
+    /**
      * Rôle : Supprimer du stockage les fichiers de photographies devenus inutiles après validation en base.
      * Paramètres : Photographies contenant des noms de fichiers sûrs.
      * Retour : Aucun.
@@ -929,7 +1019,7 @@ class ListingController extends Controller
 
     /**
      * Rôle : Afficher le formulaire partagé de création ou de modification d'annonce.
-     * Paramètres : Mode, valeurs, erreurs, catégories et photographies existantes.
+     * Paramètres : Mode, valeurs, erreurs, catégories, photographies et verrouillage éventuel.
      * Retour : Aucun.
      */
     private function renderListingForm(
@@ -937,7 +1027,8 @@ class ListingController extends Controller
         array $values,
         array $errors,
         array $categories,
-        array $existingPhotos
+        array $existingPhotos,
+        string $lockedState = ''
     ): void {
         $this->render('pages/listing-form.php', [
             'mode' => $mode,
@@ -945,6 +1036,7 @@ class ListingController extends Controller
             'errors' => $errors,
             'categories' => $categories,
             'existing_photos' => $existingPhotos,
+            'locked_state' => $lockedState,
             'csrf_token' => $this->session->obtenirJetonCsrf(),
         ]);
     }
@@ -999,7 +1091,11 @@ class ListingController extends Controller
             $history[] = [
                 'bidder' => (string) $row['pseudo'],
                 'amount' => number_format((float) $row['montant'], 2, ',', ' ') . ' €',
-                'date' => $date->setTimezone($parisTimezone)->format('d/m/Y à H:i'),
+                'date' => $this->formatFrenchDateTime(
+                    $date->setTimezone($parisTimezone),
+                    true,
+                    false
+                ),
             ];
         }
 
@@ -1333,7 +1429,11 @@ class ListingController extends Controller
                 'current_price' => round((float) $currentPrice, 2),
                 'current_price_label' => number_format((float) $currentPrice, 2, ',', ' ') . ' €',
                 'deadline_utc' => $deadline->format('Y-m-d\TH:i:s\Z'),
-                'deadline_label' => $deadline->setTimezone($parisTimezone)->format('d/m/Y à H:i'),
+                'deadline_label' => $this->formatFrenchDateTime(
+                    $deadline->setTimezone($parisTimezone),
+                    false,
+                    true
+                ),
                 'sale_state' => $deadline > $now ? 'active' : 'ended',
                 'photo_url' => $photoUrl,
                 'detail_url' => 'index.php?' . http_build_query([
@@ -1383,22 +1483,71 @@ class ListingController extends Controller
     private function buildStateMessage(string $stateKey, array $searchResult): string
     {
         if ($stateKey === 'categories_unavailable') {
-            return 'Les catégories sont temporairement indisponibles. Les autres critères restent utilisables.';
+            return 'Les autres critères restent utilisables et les annonces existantes conservent leur catégorie enregistrée.';
         }
 
         if ($stateKey === 'no_results') {
-            return 'Aucune annonce ne correspond à votre recherche.';
+            return 'Modifiez un ou plusieurs critères pour élargir votre recherche.';
         }
 
         if ($stateKey === 'pagination') {
-            return 'Page ' . $searchResult['current_page'] . ' sur ' . $searchResult['total_pages'] . '.';
+            return $searchResult['total_items']
+                . ' ventes · page '
+                . $searchResult['current_page']
+                . '/'
+                . $searchResult['total_pages'];
         }
 
         if ($stateKey === 'filtered_results') {
-            return $searchResult['total_items'] . ' annonce(s) correspondent à votre recherche.';
+            $resultLabel = ' annonce correspond à votre recherche';
+
+            if ((int) $searchResult['total_items'] > 1) {
+                $resultLabel = ' annonces correspondent à votre recherche';
+            }
+
+            return $searchResult['total_items'] . $resultLabel;
         }
 
-        return 'Découvrez les ventes actives dont l’échéance est la plus proche.';
+        return $searchResult['total_items'] . ' ventes actives · échéance croissante';
+    }
+
+    /**
+     * Rôle : Formater une date avec les mois français selon le contexte d’affichage de la maquette.
+     * Paramètres : Date en heure de Paris, présence de l’année et utilisation du séparateur médian.
+     * Retour : Date et heure lisibles en français.
+     */
+    private function formatFrenchDateTime(
+        DateTimeImmutable $date,
+        bool $includeYear,
+        bool $useMiddleDot
+    ): string {
+        $fullMonths = [
+            1 => 'janvier', 'février', 'mars', 'avril', 'mai', 'juin',
+            'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre',
+        ];
+        $shortMonths = [
+            1 => 'janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin',
+            'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.',
+        ];
+        $months = $fullMonths;
+
+        if (!$includeYear) {
+            $months = $shortMonths;
+        }
+
+        $label = $date->format('j') . ' ' . $months[(int) $date->format('n')];
+
+        if ($includeYear) {
+            $label .= ' ' . $date->format('Y');
+        }
+
+        $separator = ' à ';
+
+        if ($useMiddleDot) {
+            $separator = ' · ';
+        }
+
+        return $label . $separator . $date->format('H:i');
     }
 
     /**
