@@ -163,9 +163,16 @@ class BidModel extends Model
      */
     public function getSummary(int $listingId): array|false
     {
-        $sql = 'SELECT COUNT(*) AS bid_count, MAX(montant) AS best_bid'
-            . ' FROM `ENCHERE` WHERE annonce_id = :listing_id';
-        $summary = $this->database->fetchOne($sql, ['listing_id' => $listingId]);
+        $sql = 'SELECT COUNT(*) AS bid_count, MAX(summary_bid.montant) AS best_bid,'
+            . ' (SELECT winning_bid.utilisateur_id FROM `ENCHERE` winning_bid'
+            . ' WHERE winning_bid.annonce_id = :winner_listing_id'
+            . ' ORDER BY winning_bid.montant DESC, winning_bid.date_heure_enchere ASC,'
+            . ' winning_bid.id ASC LIMIT 1) AS best_bidder_id'
+            . ' FROM `ENCHERE` summary_bid WHERE summary_bid.annonce_id = :summary_listing_id';
+        $summary = $this->database->fetchOne($sql, [
+            'winner_listing_id' => $listingId,
+            'summary_listing_id' => $listingId,
+        ]);
 
         if ($summary === false) {
             return false;
@@ -175,27 +182,9 @@ class BidModel extends Model
             return ['bid_count' => 0, 'best_bid_in_euros' => null, 'best_bidder_id' => null];
         }
 
-        $bestBidderId = null;
-
-        if (isset($summary['best_bid']) && is_numeric($summary['best_bid'])) {
-            $winner = $this->database->fetchOne(
-                'SELECT utilisateur_id FROM `ENCHERE`'
-                . ' WHERE annonce_id = :listing_id AND montant = :best_bid'
-                . ' ORDER BY date_heure_enchere ASC, id ASC LIMIT 1',
-                ['listing_id' => $listingId, 'best_bid' => $summary['best_bid']]
-            );
-
-            if ($winner === false) {
-                return false;
-            }
-
-            if ($winner !== null && isset($winner['utilisateur_id'])) {
-                $bestBidderId = (int) $winner['utilisateur_id'];
-            }
-        }
-
         $bidCount = 0;
         $bestBidInEuros = null;
+        $bestBidderId = null;
 
         if (isset($summary['bid_count'])) {
             $bidCount = (int) $summary['bid_count'];
@@ -207,6 +196,10 @@ class BidModel extends Model
             if ($bestBidInEuros === null) {
                 return false;
             }
+        }
+
+        if (isset($summary['best_bidder_id'])) {
+            $bestBidderId = (int) $summary['best_bidder_id'];
         }
 
         return [
@@ -223,7 +216,7 @@ class BidModel extends Model
      */
     public function userHasBid(int $listingId, int $userId): ?bool
     {
-        $sql = 'SELECT id FROM `ENCHERE`'
+        $sql = 'SELECT 1 AS found FROM `ENCHERE`'
             . ' WHERE annonce_id = :listing_id AND utilisateur_id = :user_id LIMIT 1';
         $bid = $this->database->fetchOne($sql, [
             'listing_id' => $listingId,
@@ -245,7 +238,7 @@ class BidModel extends Model
     public function listingHasBid(int $listingId): ?bool
     {
         $bid = $this->database->fetchOne(
-            'SELECT id FROM `ENCHERE` WHERE annonce_id = :listing_id LIMIT 1',
+            'SELECT 1 AS found FROM `ENCHERE` WHERE annonce_id = :listing_id LIMIT 1',
             ['listing_id' => $listingId]
         );
 

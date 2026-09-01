@@ -162,7 +162,7 @@ class UserModel extends Model
             return false;
         }
 
-        $sql = 'SELECT id FROM UTILISATEUR WHERE LOWER(' . $column . ') = LOWER(:value)';
+        $sql = 'SELECT 1 AS found FROM UTILISATEUR WHERE ' . $column . ' = :value';
         $parameters = ['value' => $value];
 
         if ($excludedUserId !== null) {
@@ -212,7 +212,7 @@ class UserModel extends Model
 
         return $this->database->fetchOne(
             'SELECT id, pseudo, email, password_hash FROM UTILISATEUR '
-            . 'WHERE LOWER(' . $column . ') = LOWER(:login) LIMIT 1',
+            . 'WHERE ' . $column . ' = :login LIMIT 1',
             ['login' => $login]
         );
     }

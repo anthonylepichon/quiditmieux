@@ -24,7 +24,7 @@ class FollowModel extends Model
      */
     public function isFollowing(int $userId, int $listingId): ?bool
     {
-        $sql = 'SELECT id FROM `ASSOC_UTILISATEUR_ANNONCE`'
+        $sql = 'SELECT 1 AS found FROM `ASSOC_UTILISATEUR_ANNONCE`'
             . ' WHERE utilisateur_id = :user_id AND annonce_id = :listing_id LIMIT 1';
         $follow = $this->database->fetchOne($sql, [
             'user_id' => $userId,

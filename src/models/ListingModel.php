@@ -369,34 +369,35 @@ class ListingModel extends Model
             . ' WHERE winning_bid.annonce_id = listing.id'
             . ' ORDER BY winning_bid.montant DESC, winning_bid.date_heure_enchere ASC,'
             . ' winning_bid.id ASC LIMIT 1)';
-        $sql = 'SELECT listing.id, listing.titre, listing.etat_objet, listing.prix_depart,'
+        $sql = 'SELECT participation.id, participation.titre, participation.etat_objet,'
+            . ' participation.prix_depart, participation.date_heure_fin, participation.categorie_id,'
+            . ' participation.best_bid, participation.bid_count, participation.user_best_bid,'
+            . ' participation.winner_id, participation.is_following FROM ('
+            . 'SELECT listing.id, listing.titre, listing.etat_objet, listing.prix_depart,'
             . ' listing.date_heure_fin, listing.categorie_id,'
-            . ' (SELECT MAX(all_bid.montant) FROM `ENCHERE` all_bid WHERE all_bid.annonce_id = listing.id) AS best_bid,'
-            . ' (SELECT COUNT(*) FROM `ENCHERE` counted_bid WHERE counted_bid.annonce_id = listing.id) AS bid_count,'
-            . ' (SELECT MAX(user_bid.montant) FROM `ENCHERE` user_bid WHERE user_bid.annonce_id = listing.id'
-            . ' AND user_bid.utilisateur_id = :best_user_id) AS user_best_bid,'
+            . ' MAX(all_bid.montant) AS best_bid, COUNT(all_bid.id) AS bid_count,'
+            . ' MAX(CASE WHEN all_bid.utilisateur_id = :bid_user_id'
+            . ' THEN all_bid.montant ELSE NULL END) AS user_best_bid,'
             . ' ' . $winnerSql . ' AS winner_id,'
-            . ' EXISTS(SELECT 1 FROM `ASSOC_UTILISATEUR_ANNONCE` followed WHERE followed.annonce_id = listing.id'
-            . ' AND followed.utilisateur_id = :follow_user_id) AS is_following'
+            . ' CASE WHEN followed.id IS NULL THEN 0 ELSE 1 END AS is_following'
             . ' FROM `ANNONCE` listing'
+            . ' LEFT JOIN `ENCHERE` all_bid ON all_bid.annonce_id = listing.id'
+            . ' LEFT JOIN `ASSOC_UTILISATEUR_ANNONCE` followed'
+            . ' ON followed.annonce_id = listing.id AND followed.utilisateur_id = :follow_user_id'
             . ' WHERE listing.utilisateur_id <> :owner_user_id'
-            . ' AND ((listing.date_heure_fin > :current_time_active AND ('
-            . ' EXISTS(SELECT 1 FROM `ASSOC_UTILISATEUR_ANNONCE` active_follow WHERE active_follow.annonce_id = listing.id'
-            . ' AND active_follow.utilisateur_id = :active_follow_user_id)'
-            . ' OR EXISTS(SELECT 1 FROM `ENCHERE` active_bid WHERE active_bid.annonce_id = listing.id'
-            . ' AND active_bid.utilisateur_id = :active_bid_user_id)))'
-            . ' OR (listing.date_heure_fin <= :current_time_ended AND EXISTS(SELECT 1 FROM `ENCHERE` ended_bid'
-            . ' WHERE ended_bid.annonce_id = listing.id AND ended_bid.utilisateur_id = :ended_bid_user_id)))'
-            . ' ORDER BY CASE WHEN listing.date_heure_fin > :current_time_order THEN 0 ELSE 1 END,'
-            . ' listing.date_heure_fin ASC, listing.id ASC';
+            . ' GROUP BY listing.id, listing.titre, listing.etat_objet, listing.prix_depart,'
+            . ' listing.date_heure_fin, listing.categorie_id, followed.id) participation'
+            . ' WHERE ((participation.date_heure_fin > :current_time_active'
+            . ' AND (participation.is_following = 1 OR participation.user_best_bid IS NOT NULL))'
+            . ' OR (participation.date_heure_fin <= :current_time_ended'
+            . ' AND participation.user_best_bid IS NOT NULL))'
+            . ' ORDER BY CASE WHEN participation.date_heure_fin > :current_time_order THEN 0 ELSE 1 END,'
+            . ' participation.date_heure_fin ASC, participation.id ASC';
         $currentTimeForDatabase = Clock::formatForDatabase($currentTimeUtc);
         return $this->database->fetchAll($sql, [
-            'best_user_id' => $userId,
+            'bid_user_id' => $userId,
             'follow_user_id' => $userId,
             'owner_user_id' => $userId,
-            'active_follow_user_id' => $userId,
-            'active_bid_user_id' => $userId,
-            'ended_bid_user_id' => $userId,
             'current_time_active' => $currentTimeForDatabase,
             'current_time_ended' => $currentTimeForDatabase,
             'current_time_order' => $currentTimeForDatabase,
@@ -467,6 +468,19 @@ class ListingModel extends Model
         array &$parameters,
         string $currentPriceSql
     ): void {
+        if ($criteria['minimum_price_in_euros'] !== null
+            && $criteria['maximum_price_in_euros'] !== null
+        ) {
+            $whereParts[] = $currentPriceSql . ' BETWEEN :minimum_price AND :maximum_price';
+            $parameters['minimum_price'] = Money::eurosToDatabaseValue(
+                $criteria['minimum_price_in_euros']
+            );
+            $parameters['maximum_price'] = Money::eurosToDatabaseValue(
+                $criteria['maximum_price_in_euros']
+            );
+            return;
+        }
+
         if ($criteria['minimum_price_in_euros'] !== null) {
             $whereParts[] = $currentPriceSql . ' >= :minimum_price';
             $parameters['minimum_price'] = Money::eurosToDatabaseValue($criteria['minimum_price_in_euros']);

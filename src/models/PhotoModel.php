@@ -65,10 +65,9 @@ class PhotoModel extends Model
             $parameters[$parameterName] = $identifier;
         }
 
-        $sql = 'SELECT annonce_id, ref_fichier, ordre'
-            . ' FROM `PHOTOGRAPHIE`'
+        $sql = 'SELECT annonce_id, ref_fichier FROM `PHOTOGRAPHIE`'
             . ' WHERE annonce_id IN (' . implode(', ', $placeholders) . ')'
-            . ' ORDER BY annonce_id ASC, ordre ASC';
+            . ' AND ordre = 1 ORDER BY annonce_id ASC';
         $rows = $this->database->fetchAll($sql, $parameters);
 
         if ($rows === false) {
