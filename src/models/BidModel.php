@@ -98,7 +98,7 @@ class BidModel extends Model
      */
     public function getCurrentAmountsInEuros(array $listingIds, array $startingPrices): array|false
     {
-        $identifiers = $this->normalizeIdentifiers($listingIds);
+        $identifiers = $this->normalizePositiveIdentifiers($listingIds);
         $currentAmountsInEuros = [];
 
         foreach ($identifiers as $identifier) {
@@ -289,30 +289,6 @@ class BidModel extends Model
             . ' WHERE bid.annonce_id = :listing_id'
             . ' ORDER BY bid.montant DESC, bid.date_heure_enchere ASC, bid.id ASC';
         return $this->database->fetchAll($sql, ['listing_id' => $listingId]);
-    }
-
-    /**
-     * Rôle : Conserver uniquement des identifiants entiers strictement positifs et uniques.
-     * Paramètres : Valeurs candidates à normaliser.
-     * Retour : Liste d'identifiants utilisables dans une requête préparée.
-     */
-    private function normalizeIdentifiers(array $identifiers): array
-    {
-        $normalizedIdentifiers = [];
-
-        foreach ($identifiers as $identifier) {
-            if (!is_int($identifier) && !is_string($identifier)) {
-                continue;
-            }
-
-            if (filter_var($identifier, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]) === false) {
-                continue;
-            }
-
-            $normalizedIdentifiers[(int) $identifier] = (int) $identifier;
-        }
-
-        return array_values($normalizedIdentifiers);
     }
 
 }

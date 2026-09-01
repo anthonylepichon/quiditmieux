@@ -42,8 +42,7 @@ class AuthController extends Controller
         $password = $this->readPostString('password');
         $confirmation = $this->readPostString('password_confirmation');
         $honeypot = $this->readPostString('website');
-        $csrfToken = $this->readPostString('csrf_token');
-        $errors = $this->validateRegistration($values, $password, $confirmation, $honeypot, $csrfToken);
+        $errors = $this->validateRegistration($values, $password, $confirmation, $honeypot);
         $userModel = new UserModel($this->database);
 
         if ($errors === []) {
@@ -113,11 +112,10 @@ class AuthController extends Controller
     {
         $login = $this->readPostString('login');
         $password = $this->readPostString('password');
-        $csrfToken = $this->readPostString('csrf_token');
         $destination = $this->sanitizeDestination($this->readPostString('destination'));
         $errors = [];
 
-        if (!$this->session->estJetonCsrfValide($csrfToken)) {
+        if (!$this->isSubmittedCsrfTokenValid()) {
             $errors['form'] = 'Vérifiez vos informations puis essayez de nouveau.';
         }
 
@@ -156,10 +154,8 @@ class AuthController extends Controller
      */
     public function logout(): void
     {
-        $csrfToken = $this->readPostString('csrf_token');
-
         if (!$this->session->estUtilisateurConnecte()
-            || !$this->session->estJetonCsrfValide($csrfToken)
+            || !$this->isSubmittedCsrfTokenValid()
         ) {
             $this->redirect('home');
         }
@@ -216,21 +212,20 @@ class AuthController extends Controller
 
     /**
      * Rôle : Appliquer toutes les règles de validation du formulaire d'inscription.
-     * Paramètres : Valeurs publiques, mot de passe, confirmation, champ anti-robot et jeton CSRF.
+     * Paramètres : Valeurs publiques, mot de passe, confirmation et champ anti-robot.
      * Retour : Erreurs indexées par champ, éventuellement vides.
      */
     private function validateRegistration(
         array &$values,
         string $password,
         string $confirmation,
-        string $honeypot,
-        string $csrfToken
+        string $honeypot
     ): array {
         $errors = [];
         $values['pseudo'] = trim((string) $values['pseudo']);
         $values['email'] = mb_strtolower(trim((string) $values['email']));
 
-        if (!$this->session->estJetonCsrfValide($csrfToken)) {
+        if (!$this->isSubmittedCsrfTokenValid()) {
             $errors['form'] = 'Veuillez réessayer. Aucun mécanisme technique n’est affiché.';
         }
 
@@ -238,15 +233,11 @@ class AuthController extends Controller
             $errors['form'] = 'Veuillez réessayer. Aucun mécanisme technique n’est affiché.';
         }
 
-        if (mb_strlen($values['pseudo']) < 3 || mb_strlen($values['pseudo']) > 30) {
-            $errors['pseudo'] = 'Format du pseudo invalide.';
-        } elseif (preg_match('/^[A-Za-z0-9_-]+$/D', $values['pseudo']) !== 1) {
+        if (!$this->isValidPseudo($values['pseudo'])) {
             $errors['pseudo'] = 'Format du pseudo invalide.';
         }
 
-        if (mb_strlen($values['email']) > 255
-            || filter_var($values['email'], FILTER_VALIDATE_EMAIL) === false
-        ) {
+        if (!$this->isValidEmail($values['email'])) {
             $errors['email'] = 'Adresse électronique invalide.';
         }
 
@@ -261,19 +252,6 @@ class AuthController extends Controller
         return $errors;
     }
 
-    /**
-     * Rôle : Vérifier la robustesse minimale obligatoire d'un mot de passe.
-     * Paramètres : Mot de passe à contrôler.
-     * Retour : true lorsque toutes les règles sont respectées, sinon false.
-     */
-    private function isStrongPassword(string $password): bool
-    {
-        return strlen($password) >= 8
-            && preg_match('/[A-Z]/', $password) === 1
-            && preg_match('/[a-z]/', $password) === 1
-            && preg_match('/[0-9]/', $password) === 1
-            && preg_match('/[^A-Za-z0-9]/', $password) === 1;
-    }
 }
 
 

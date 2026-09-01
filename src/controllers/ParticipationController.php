@@ -34,7 +34,7 @@ class ParticipationController extends Controller
             return;
         }
 
-        if ($listingId === null || !$this->session->estJetonCsrfValide($this->readPostString('csrf_token'))) {
+        if ($listingId === null || !$this->isSubmittedCsrfTokenValid()) {
             $this->respondBid(false, 'Enchère refusée', $listingId);
             return;
         }
@@ -179,7 +179,7 @@ class ParticipationController extends Controller
             return;
         }
 
-        if ($listingId === null || !$this->session->estJetonCsrfValide($this->readPostString('csrf_token'))) {
+        if ($listingId === null || !$this->isSubmittedCsrfTokenValid()) {
             $this->respond(false, 'Le suivi ne peut pas être actualisé pour le moment.', $listingId, false);
             return;
         }
@@ -338,10 +338,10 @@ class ParticipationController extends Controller
     private function detailUrl(?int $listingId): string
     {
         if ($listingId === null) {
-            return 'index.php?route=home';
+            return $this->buildRouteUrl('home');
         }
 
-        return 'index.php?' . http_build_query(['route' => 'listing_detail', 'id' => $listingId]);
+        return $this->buildRouteUrl('listing_detail', ['id' => $listingId]);
     }
 }
 

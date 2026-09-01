@@ -205,10 +205,7 @@ class UserController extends Controller
     {
         $userId = $this->session->obtenirIdentifiantUtilisateurConnecte();
         if ($userId === null) {
-            $this->json([
-                'success' => false,
-                'message' => 'Les dernières informations reçues restent affichées.',
-            ]);
+            $this->respondDashboardUnavailable();
             return;
         }
 
@@ -217,20 +214,15 @@ class UserController extends Controller
         $rows = $model->getDashboardSales($userId, $currentTimeUtc);
 
         if ($rows === false) {
-            $this->json(['success' => false, 'message' => 'Les dernières informations reçues restent affichées.']);
+            $this->respondDashboardUnavailable();
             return;
         }
 
-        $categories = (new CategoryModel())->getAllCategories();
-
-        if ($categories === null) {
-            $categories = [];
-        }
-
+        $categories = $this->getDashboardCategories();
         $sales = $this->formatListings($rows, $categories, $currentTimeUtc);
 
         if ($sales === false) {
-            $this->json(['success' => false, 'message' => 'Les dernières informations reçues restent affichées.']);
+            $this->respondDashboardUnavailable();
             return;
         }
 
@@ -246,10 +238,7 @@ class UserController extends Controller
     {
         $userId = $this->session->obtenirIdentifiantUtilisateurConnecte();
         if ($userId === null) {
-            $this->json([
-                'success' => false,
-                'message' => 'Les dernières informations reçues restent affichées.',
-            ]);
+            $this->respondDashboardUnavailable();
             return;
         }
 
@@ -258,20 +247,15 @@ class UserController extends Controller
         $rows = $model->getDashboardParticipations($userId, $currentTimeUtc);
 
         if ($rows === false) {
-            $this->json(['success' => false, 'message' => 'Les dernières informations reçues restent affichées.']);
+            $this->respondDashboardUnavailable();
             return;
         }
 
-        $categories = (new CategoryModel())->getAllCategories();
-
-        if ($categories === null) {
-            $categories = [];
-        }
-
+        $categories = $this->getDashboardCategories();
         $listings = $this->formatListings($rows, $categories, $currentTimeUtc);
 
         if ($listings === false) {
-            $this->json(['success' => false, 'message' => 'Les dernières informations reçues restent affichées.']);
+            $this->respondDashboardUnavailable();
             return;
         }
 
@@ -295,20 +279,10 @@ class UserController extends Controller
         $salesRows = $model->getDashboardSales($userId, $currentTimeUtc);
 
         if ($participationRows === false || $salesRows === false) {
-            return [
-                'sales' => [],
-                'participations' => [],
-                'wins' => [],
-                'load_error' => true,
-            ];
+            return $this->failedDashboard();
         }
 
-        $categories = (new CategoryModel())->getAllCategories();
-
-        if ($categories === null) {
-            $categories = [];
-        }
-
+        $categories = $this->getDashboardCategories();
         $participationListings = $this->formatListings(
             $participationRows,
             $categories,
@@ -317,12 +291,7 @@ class UserController extends Controller
         $sales = $this->formatListings($salesRows, $categories, $currentTimeUtc);
 
         if ($participationListings === false || $sales === false) {
-            return [
-                'sales' => [],
-                'participations' => [],
-                'wins' => [],
-                'load_error' => true,
-            ];
+            return $this->failedDashboard();
         }
 
         $data = $this->partitionParticipations($participationListings, $userId);
@@ -333,6 +302,50 @@ class UserController extends Controller
             'wins' => $data['wins'],
             'load_error' => false,
         ];
+    }
+
+    /**
+     * Rôle : Charger les catégories du tableau de bord avec un repli simple en cas d'indisponibilité.
+     * Paramètres : Aucun.
+     * Retour : Catégories indexées ou tableau vide.
+     */
+    private function getDashboardCategories(): array
+    {
+        $categories = (new CategoryModel())->getAllCategories();
+
+        if ($categories === null) {
+            return [];
+        }
+
+        return $categories;
+    }
+
+    /**
+     * Rôle : Construire l'état vide commun utilisé lorsque le tableau de bord ne peut pas être chargé.
+     * Paramètres : Aucun.
+     * Retour : Zones vides accompagnées de l'indicateur d'erreur.
+     */
+    private function failedDashboard(): array
+    {
+        return [
+            'sales' => [],
+            'participations' => [],
+            'wins' => [],
+            'load_error' => true,
+        ];
+    }
+
+    /**
+     * Rôle : Envoyer la réponse JSON commune lorsqu'une actualisation du tableau de bord échoue.
+     * Paramètres : Aucun.
+     * Retour : Aucun, la réponse JSON est envoyée.
+     */
+    private function respondDashboardUnavailable(): void
+    {
+        $this->json([
+            'success' => false,
+            'message' => 'Les dernières informations reçues restent affichées.',
+        ]);
     }
 
     /**
@@ -423,16 +436,17 @@ class UserController extends Controller
                 'user_best_bid' => $userBestBid,
                 'winner_id' => $this->readWinnerId($row),
                 'is_active' => $deadline > $currentTimeUtc,
-                'deadline' => $this->formatFrenchDashboardDate(
+                'deadline' => $this->formatFrenchDateTime(
                     $deadline->setTimezone($paris),
-                    true
+                    false,
+                    false
                 ),
-                'deadline_date' => $this->formatFrenchDashboardDate(
+                'deadline_date' => $this->formatFrenchDate(
                     $deadline->setTimezone($paris),
                     false
                 ),
                 'photo_url' => $this->buildPhotoUrl($photos, $id),
-                'detail_url' => 'index.php?' . http_build_query(['route' => 'listing_detail', 'id' => $id]),
+                'detail_url' => $this->buildRouteUrl('listing_detail', ['id' => $id]),
             ];
         }
         return $listings;
@@ -462,26 +476,6 @@ class UserController extends Controller
             return (int) $row['bid_count'];
         }
         return 0;
-    }
-
-    /**
-     * Rôle : Formater une échéance du tableau de bord avec un mois français abrégé.
-     * Paramètres : Date en heure de Paris et présence souhaitée de l’heure.
-     * Retour : Date lisible conforme aux cartes de la maquette.
-     */
-    private function formatFrenchDashboardDate(DateTimeImmutable $date, bool $includeTime): string
-    {
-        $months = [
-            1 => 'janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin',
-            'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.',
-        ];
-        $label = $date->format('j') . ' ' . $months[(int) $date->format('n')];
-
-        if ($includeTime) {
-            $label .= ' à ' . $date->format('H:i');
-        }
-
-        return $label;
     }
 
     /**
@@ -519,21 +513,6 @@ class UserController extends Controller
     }
 
     /**
-     * Rôle : Exiger une session connectée et mémoriser la destination interne.
-     * Paramètres : Destination interne demandée après authentification.
-     * Retour : Identifiant connecté ou null lorsqu'une redirection est envoyée.
-     */
-    private function requireConnectedUser(string $destination): ?int
-    {
-        $userId = $this->session->obtenirIdentifiantUtilisateurConnecte();
-        if ($userId !== null) {
-            return $userId;
-        }
-        $this->redirect('login_form', ['destination' => $destination]);
-        return null;
-    }
-
-    /**
      * Rôle : Afficher le formulaire de compte sans réafficher les mots de passe reçus.
      * Paramètres : Valeurs publiques, erreurs et message de réussite éventuel.
      * Retour : Aucun.
@@ -561,17 +540,15 @@ class UserController extends Controller
     ): array {
         $errors = [];
 
-        if (!$this->session->estJetonCsrfValide($this->readPostString('csrf_token'))) {
+        if (!$this->isSubmittedCsrfTokenValid()) {
             $errors['form'] = 'Plusieurs champs doivent être corrigés avant l’enregistrement.';
         }
 
-        if (mb_strlen($values['pseudo']) < 3 || mb_strlen($values['pseudo']) > 30) {
-            $errors['pseudo'] = 'Format du pseudo invalide.';
-        } elseif (preg_match('/^[A-Za-z0-9_-]+$/D', $values['pseudo']) !== 1) {
+        if (!$this->isValidPseudo($values['pseudo'])) {
             $errors['pseudo'] = 'Format du pseudo invalide.';
         }
 
-        if (mb_strlen($values['email']) > 255 || filter_var($values['email'], FILTER_VALIDATE_EMAIL) === false) {
+        if (!$this->isValidEmail($values['email'])) {
             $errors['email'] = 'Adresse électronique invalide.';
         }
 
@@ -590,20 +567,6 @@ class UserController extends Controller
         }
 
         return $errors;
-    }
-
-    /**
-     * Rôle : Vérifier la robustesse minimale du nouveau mot de passe.
-     * Paramètres : Mot de passe à contrôler.
-     * Retour : true lorsque toutes les règles sont respectées, sinon false.
-     */
-    private function isStrongPassword(string $password): bool
-    {
-        return strlen($password) >= 8
-            && preg_match('/[A-Z]/', $password) === 1
-            && preg_match('/[a-z]/', $password) === 1
-            && preg_match('/[0-9]/', $password) === 1
-            && preg_match('/[^A-Za-z0-9]/', $password) === 1;
     }
 
 }

@@ -3,11 +3,13 @@
 /**
  * Description générale : Contrôleur parent abstrait commun de l'application.
  * Rôle : Définir les aides simples que les contrôleurs enfants utilisent par héritage.
- * Tâches : Conserver Database et Session, composer une page avec le layout, lire les paramètres simples, rediriger et produire une réponse JSON.
+ * Tâches : Conserver Database et Session, composer une page, lire et contrôler les données communes, construire les adresses internes et produire les réponses.
  * Liens avec les autres fichiers : Est étendu par les contrôleurs enfants et utilise les templates ainsi que base.php.
  */
 
 namespace App\core;
+
+use DateTimeImmutable;
 
 abstract class Controller
 {
@@ -89,6 +91,17 @@ abstract class Controller
      */
     protected function redirect(string $route, array $parameters = []): void
     {
+        header('Location: ' . $this->buildRouteUrl($route, $parameters));
+        exit;
+    }
+
+    /**
+     * Rôle : Construire une adresse interne à partir d'une route connue de l'application.
+     * Paramètres : Nom de route et paramètres scalaires facultatifs.
+     * Retour : Adresse relative utilisable par une redirection ou un lien.
+     */
+    protected function buildRouteUrl(string $route, array $parameters = []): string
+    {
         $queryParameters = ['route' => $route];
 
         foreach ($parameters as $name => $value) {
@@ -97,8 +110,7 @@ abstract class Controller
             }
         }
 
-        header('Location: index.php?' . http_build_query($queryParameters));
-        exit;
+        return 'index.php?' . http_build_query($queryParameters);
     }
 
     /**
@@ -191,5 +203,125 @@ abstract class Controller
     protected function isJsonRequest(): bool
     {
         return $this->readGetString('format') === 'json';
+    }
+
+    /**
+     * Rôle : Exiger un utilisateur connecté avant l'exécution d'une page privée.
+     * Paramètres : Destination interne à retrouver après la connexion.
+     * Retour : Identifiant de l'utilisateur ou null lorsqu'une redirection est envoyée.
+     */
+    protected function requireConnectedUser(string $destination): ?int
+    {
+        $userId = $this->session->obtenirIdentifiantUtilisateurConnecte();
+
+        if ($userId !== null) {
+            return $userId;
+        }
+
+        $this->redirect('login_form', ['destination' => $destination]);
+        return null;
+    }
+
+    /**
+     * Rôle : Vérifier le jeton CSRF transmis par un formulaire POST.
+     * Paramètres : Aucun, le jeton est lu dans la requête POST.
+     * Retour : true lorsque le jeton est valide, sinon false.
+     */
+    protected function isSubmittedCsrfTokenValid(): bool
+    {
+        return $this->session->estJetonCsrfValide($this->readPostString('csrf_token'));
+    }
+
+    /**
+     * Rôle : Vérifier la robustesse minimale commune des mots de passe.
+     * Paramètres : Mot de passe à contrôler.
+     * Retour : true lorsque toutes les règles sont respectées, sinon false.
+     */
+    protected function isStrongPassword(string $password): bool
+    {
+        return strlen($password) >= 8
+            && preg_match('/[A-Z]/', $password) === 1
+            && preg_match('/[a-z]/', $password) === 1
+            && preg_match('/[0-9]/', $password) === 1
+            && preg_match('/[^A-Za-z0-9]/', $password) === 1;
+    }
+
+    /**
+     * Rôle : Vérifier le format commun d'un pseudo utilisateur.
+     * Paramètres : Pseudo à contrôler.
+     * Retour : true lorsque la longueur et les caractères sont autorisés, sinon false.
+     */
+    protected function isValidPseudo(string $pseudo): bool
+    {
+        if (mb_strlen($pseudo) < 3 || mb_strlen($pseudo) > 30) {
+            return false;
+        }
+
+        return preg_match('/^[A-Za-z0-9_-]+$/D', $pseudo) === 1;
+    }
+
+    /**
+     * Rôle : Vérifier le format commun d'une adresse électronique.
+     * Paramètres : Adresse électronique à contrôler.
+     * Retour : true lorsque la longueur et le format sont valides, sinon false.
+     */
+    protected function isValidEmail(string $email): bool
+    {
+        if (mb_strlen($email) > 255) {
+            return false;
+        }
+
+        return filter_var($email, FILTER_VALIDATE_EMAIL) !== false;
+    }
+
+    /**
+     * Rôle : Formater une date avec un mois français complet ou abrégé.
+     * Paramètres : Date en heure locale et présence souhaitée de l'année.
+     * Retour : Date lisible en français sans indication de l'heure.
+     */
+    protected function formatFrenchDate(DateTimeImmutable $date, bool $includeYear): string
+    {
+        $fullMonths = [
+            1 => 'janvier', 'février', 'mars', 'avril', 'mai', 'juin',
+            'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre',
+        ];
+        $shortMonths = [
+            1 => 'janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin',
+            'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.',
+        ];
+        $months = $shortMonths;
+
+        if ($includeYear) {
+            $months = $fullMonths;
+        }
+
+        $label = $date->format('j') . ' ' . $months[(int) $date->format('n')];
+
+        if ($includeYear) {
+            $label .= ' ' . $date->format('Y');
+        }
+
+        return $label;
+    }
+
+    /**
+     * Rôle : Formater une date et une heure en français selon le contexte d'affichage.
+     * Paramètres : Date locale, présence de l'année et utilisation du séparateur médian.
+     * Retour : Date et heure lisibles en français.
+     */
+    protected function formatFrenchDateTime(
+        DateTimeImmutable $date,
+        bool $includeYear,
+        bool $useMiddleDot
+    ): string {
+        $separator = ' à ';
+
+        if ($useMiddleDot) {
+            $separator = ' · ';
+        }
+
+        return $this->formatFrenchDate($date, $includeYear)
+            . $separator
+            . $date->format('H:i');
     }
 }

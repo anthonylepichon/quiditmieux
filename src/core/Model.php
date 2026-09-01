@@ -249,6 +249,30 @@ abstract class Model
     }
 
     /**
+     * Rôle : Conserver uniquement des identifiants entiers strictement positifs et uniques.
+     * Paramètres : Valeurs candidates à normaliser.
+     * Retour : Liste d'identifiants utilisables dans une requête préparée.
+     */
+    protected function normalizePositiveIdentifiers(array $identifiers): array
+    {
+        $normalizedIdentifiers = [];
+
+        foreach ($identifiers as $identifier) {
+            if (!is_int($identifier) && !is_string($identifier)) {
+                continue;
+            }
+
+            if (filter_var($identifier, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]) === false) {
+                continue;
+            }
+
+            $normalizedIdentifiers[(int) $identifier] = (int) $identifier;
+        }
+
+        return array_values($normalizedIdentifiers);
+    }
+
+    /**
      * Rôle : Vérifier que les noms SQL proviennent bien de métadonnées internes valides.
      * Paramètres : Aucun.
      * Retour : true si la table, la clé primaire et les champs sont utilisables, sinon false.

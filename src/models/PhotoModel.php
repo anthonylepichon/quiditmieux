@@ -50,7 +50,7 @@ class PhotoModel extends Model
      */
     public function getPrimaryPhotos(array $listingIds): array|false
     {
-        $identifiers = $this->normalizeIdentifiers($listingIds);
+        $identifiers = $this->normalizePositiveIdentifiers($listingIds);
 
         if ($identifiers === []) {
             return [];
@@ -167,28 +167,5 @@ class PhotoModel extends Model
         return true;
     }
 
-    /**
-     * Rôle : Conserver uniquement des identifiants entiers strictement positifs et uniques.
-     * Paramètres : Valeurs candidates à normaliser.
-     * Retour : Liste d'identifiants utilisables dans une requête préparée.
-     */
-    private function normalizeIdentifiers(array $identifiers): array
-    {
-        $normalizedIdentifiers = [];
-
-        foreach ($identifiers as $identifier) {
-            if (!is_int($identifier) && !is_string($identifier)) {
-                continue;
-            }
-
-            if (filter_var($identifier, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]) === false) {
-                continue;
-            }
-
-            $normalizedIdentifiers[(int) $identifier] = (int) $identifier;
-        }
-
-        return array_values($normalizedIdentifiers);
-    }
 }
 

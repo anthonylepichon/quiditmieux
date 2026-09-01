@@ -324,10 +324,8 @@ class ListingController extends Controller
      */
     public function showCreateForm(): void
     {
-        $userId = $this->session->obtenirIdentifiantUtilisateurConnecte();
-
-        if ($userId === null) {
-            $this->redirect('login_form', ['destination' => 'listing_create_form']);
+        if ($this->requireConnectedUser('listing_create_form') === null) {
+            return;
         }
 
         $categories = (new CategoryModel())->getAllCategories();
@@ -348,17 +346,16 @@ class ListingController extends Controller
      */
     public function create(): void
     {
-        $userId = $this->session->obtenirIdentifiantUtilisateurConnecte();
-
+        $userId = $this->requireConnectedUser('listing_create_form');
         if ($userId === null) {
-            $this->redirect('login_form', ['destination' => 'listing_create_form']);
+            return;
         }
 
         $categories = (new CategoryModel())->getAllCategories();
         $values = $this->readListingFormValues();
         $errors = [];
 
-        if (!$this->session->estJetonCsrfValide($this->readPostString('csrf_token'))) {
+        if (!$this->isSubmittedCsrfTokenValid()) {
             $errors['form'] = 'Le formulaire a expiré. Rechargez la page puis recommencez.';
         }
 
@@ -420,10 +417,9 @@ class ListingController extends Controller
      */
     public function showEditForm(): void
     {
-        $userId = $this->session->obtenirIdentifiantUtilisateurConnecte();
-
+        $userId = $this->requireConnectedUser('dashboard');
         if ($userId === null) {
-            $this->redirect('login_form', ['destination' => 'dashboard']);
+            return;
         }
 
         $listingId = $this->readPositiveGetIdentifier('id');
@@ -498,11 +494,11 @@ class ListingController extends Controller
      */
     public function update(): void
     {
-        $userId = $this->session->obtenirIdentifiantUtilisateurConnecte();
+        $userId = $this->requireConnectedUser('dashboard');
         $listingId = $this->readPositivePostIdentifier('id');
 
         if ($userId === null) {
-            $this->redirect('login_form', ['destination' => 'dashboard']);
+            return;
         }
 
         if ($listingId === null) {
@@ -510,7 +506,7 @@ class ListingController extends Controller
             $this->redirect('dashboard');
         }
 
-        $csrfIsValid = $this->session->estJetonCsrfValide($this->readPostString('csrf_token'));
+        $csrfIsValid = $this->isSubmittedCsrfTokenValid();
         $listingModel = $this->requireListingOwner($listingId, $userId, 'Modification verrouillée');
         $values = $this->readListingFormValues();
         $values['id'] = $listingId;
@@ -647,14 +643,14 @@ class ListingController extends Controller
      */
     public function delete(): void
     {
-        $userId = $this->session->obtenirIdentifiantUtilisateurConnecte();
+        $userId = $this->requireConnectedUser('dashboard');
         $listingId = $this->readPositivePostIdentifier('id');
 
         if ($userId === null) {
-            $this->redirect('login_form', ['destination' => 'dashboard']);
+            return;
         }
 
-        if ($listingId === null || !$this->session->estJetonCsrfValide($this->readPostString('csrf_token'))) {
+        if ($listingId === null || !$this->isSubmittedCsrfTokenValid()) {
             $this->session->enregistrerMessageTemporaire('notice', 'La suppression ne peut pas être confirmée.');
             $this->redirect('dashboard');
         }
@@ -1522,10 +1518,7 @@ class ListingController extends Controller
                 ),
                 'sale_state' => $saleState,
                 'photo_url' => $photoUrl,
-                'detail_url' => 'index.php?' . http_build_query([
-                    'route' => 'listing_detail',
-                    'id' => $identifier,
-                ]),
+                'detail_url' => $this->buildRouteUrl('listing_detail', ['id' => $identifier]),
             ];
         }
 
@@ -1598,45 +1591,6 @@ class ListingController extends Controller
     }
 
     /**
-     * Rôle : Formater une date avec les mois français selon le contexte d’affichage de la maquette.
-     * Paramètres : Date en heure de Paris, présence de l’année et utilisation du séparateur médian.
-     * Retour : Date et heure lisibles en français.
-     */
-    private function formatFrenchDateTime(
-        DateTimeImmutable $date,
-        bool $includeYear,
-        bool $useMiddleDot
-    ): string {
-        $fullMonths = [
-            1 => 'janvier', 'février', 'mars', 'avril', 'mai', 'juin',
-            'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre',
-        ];
-        $shortMonths = [
-            1 => 'janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin',
-            'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.',
-        ];
-        $months = $fullMonths;
-
-        if (!$includeYear) {
-            $months = $shortMonths;
-        }
-
-        $label = $date->format('j') . ' ' . $months[(int) $date->format('n')];
-
-        if ($includeYear) {
-            $label .= ' ' . $date->format('Y');
-        }
-
-        $separator = ' à ';
-
-        if ($useMiddleDot) {
-            $separator = ' · ';
-        }
-
-        return $label . $separator . $date->format('H:i');
-    }
-
-    /**
      * Rôle : Construire les informations et liens de pagination en conservant les critères.
      * Paramètres : Critères normalisés et résultat de recherche.
      * Retour : Informations de pagination nécessaires à l'affichage.
@@ -1671,7 +1625,7 @@ class ListingController extends Controller
      */
     private function buildSearchUrl(array $criteria, int $page): string
     {
-        $parameters = ['route' => 'home'];
+        $parameters = [];
 
         if ($criteria['text'] !== '') {
             $parameters['q'] = $criteria['text'];
@@ -1701,7 +1655,7 @@ class ListingController extends Controller
             $parameters['page'] = $page;
         }
 
-        return 'index.php?' . http_build_query($parameters);
+        return $this->buildRouteUrl('home', $parameters);
     }
 
     /**
