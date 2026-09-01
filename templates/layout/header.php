@@ -7,6 +7,10 @@
  * Liens avec les autres fichiers : Est inclus par base.php et utilise les informations de session préparées par les templates.
  */
 
+/** @var bool $isConnected Indique si un utilisateur est connecté. */
+/** @var string $csrfToken Jeton de protection du formulaire de déconnexion. */
+/** @var string $currentPage Identifiant de la page courante. */
+
 $layoutCurrentPage = '';
 
 if (isset($currentPage) && is_string($currentPage)) {

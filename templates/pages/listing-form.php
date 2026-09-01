@@ -7,6 +7,8 @@
  * Liens avec les autres fichiers : Est affiché par ListingController.php, inséré dans base.php et complété par listing-form.js.
  */
 
+/** @var array<string, mixed> $data Données préparées par le contrôleur. */
+
 $mode = $data['mode'];
 $values = $data['values'];
 $errors = $data['errors'];

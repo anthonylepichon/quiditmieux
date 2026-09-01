@@ -7,6 +7,8 @@
  * Liens avec les autres fichiers : Est affiché par UserController.php, inséré dans base.php et actualisé par dashboard.js.
  */
 
+/** @var array<string, mixed> $data Données préparées par le contrôleur. */
+
 $zones = [
     ['key' => 'sales', 'title' => 'Mes ventes', 'description' => 'Annonces dont vous êtes le vendeur.', 'empty_title' => 'Aucune vente', 'empty' => 'Vos annonces publiées apparaîtront ici.', 'class' => 'dashboard-zone--sales'],
     ['key' => 'participations', 'title' => 'Annonces suivies ou enchéries', 'description' => 'Suivis actifs et historique de vos enchères.', 'empty_title' => 'Aucune annonce suivie ou enchérie', 'empty' => 'Suivez une annonce ou enchérissez pour la retrouver ici.', 'class' => 'dashboard-zone--participations'],

@@ -6,6 +6,8 @@
  * Tâches : Éviter la répétition de la structure du document et conserver un ordre d'affichage uniforme.
  * Liens avec les autres fichiers : Est affiché par Controller.php et inclut head.php, header.php et footer.php.
  */
+
+/** @var string $content Contenu HTML construit par le template de la page. */
 ?>
 <!doctype html>
 <html lang="fr">
