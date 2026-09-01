@@ -41,6 +41,20 @@ class PhotoModel extends Model
     }
 
     /**
+     * Rôle : Associer une nouvelle photographie à une annonce dans son ordre d'affichage.
+     * Paramètres : Identifiant de l'annonce, nom sécurisé du fichier et position d'affichage.
+     * Retour : true lorsque la photographie est enregistrée, sinon false.
+     */
+    public function addPhoto(int $listingId, string $filename, int $order): bool
+    {
+        return $this->create([
+            'annonce_id' => $listingId,
+            'ref_fichier' => $filename,
+            'ordre' => $order,
+        ]);
+    }
+
+    /**
      * Rôle : Obtenir la première photographie ordonnée de chaque annonce demandée.
      * Paramètres : Liste d'identifiants d'annonces.
      * Retour : Références indexées par annonce ou false en cas d'erreur SQL.

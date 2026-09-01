@@ -68,11 +68,7 @@ class AuthController extends Controller
             return;
         }
 
-        $created = $userModel->create([
-            'pseudo' => $values['pseudo'],
-            'email' => $values['email'],
-            'password_hash' => password_hash($password, PASSWORD_DEFAULT),
-        ]);
+        $created = $userModel->createAccount($values['pseudo'], $values['email'], $password);
 
         if (!$created) {
             $errors['form'] = 'Veuillez réessayer. Aucun mécanisme technique n’est affiché.';

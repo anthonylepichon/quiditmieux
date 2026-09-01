@@ -3,7 +3,7 @@
 /**
  * Description générale : Modèle des comptes utilisateurs de l'application.
  * Rôle : Créer, authentifier et modifier les comptes utilisateurs.
- * Tâches : Déclarer la table UTILISATEUR, lire un compte et vérifier l'unicité de ses informations.
+ * Tâches : Déclarer la table UTILISATEUR, gérer les mots de passe et vérifier l'unicité des comptes.
  * Liens avec les autres fichiers : Étend Model.php et est utilisé par AuthController.php et UserController.php.
  */
 
@@ -37,36 +37,36 @@ class UserModel extends Model
     }
 
     /**
-     * Rôle : Rechercher un compte à partir du pseudo ou de l'adresse électronique.
-     * Paramètres : Identifiant saisi et indication précisant s'il s'agit d'une adresse électronique.
-     * Retour : Compte avec son empreinte, null s'il est absent ou false en cas d'erreur SQL.
-     */
-    public function findByLogin(string $login, bool $isEmail): array|false|null
-    {
-        $column = 'pseudo';
-
-        if ($isEmail) {
-            $column = 'email';
-        }
-
-        return $this->database->fetchOne(
-            'SELECT id, pseudo, email, password_hash FROM UTILISATEUR '
-            . 'WHERE LOWER(' . $column . ') = LOWER(:login) LIMIT 1',
-            ['login' => $login]
-        );
-    }
-
-    /**
      * Rôle : Récupérer les informations privées nécessaires au formulaire du compte.
      * Paramètres : Identifiant de l'utilisateur connecté.
-     * Retour : Identité et empreinte, null si le compte est absent ou false en cas d'erreur SQL.
+     * Retour : Identité du compte, null si le compte est absent ou false en cas d'erreur SQL.
      */
     public function getAccount(int $userId): array|false|null
     {
         return $this->database->fetchOne(
-            'SELECT id, pseudo, email, password_hash FROM `UTILISATEUR` WHERE id = :user_id LIMIT 1',
+            'SELECT id, pseudo, email FROM `UTILISATEUR` WHERE id = :user_id LIMIT 1',
             ['user_id' => $userId]
         );
+    }
+
+    /**
+     * Rôle : Créer un compte en produisant l'empreinte du mot de passe dans le modèle utilisateur.
+     * Paramètres : Pseudo, adresse électronique et mot de passe déjà validés par le contrôleur.
+     * Retour : true lorsque le compte est créé, sinon false.
+     */
+    public function createAccount(string $pseudo, string $email, string $password): bool
+    {
+        $passwordHash = $this->hashPassword($password);
+
+        if ($passwordHash === null) {
+            return false;
+        }
+
+        return $this->create([
+            'pseudo' => $pseudo,
+            'email' => $email,
+            'password_hash' => $passwordHash,
+        ]);
     }
 
     /**
@@ -95,16 +95,50 @@ class UserModel extends Model
     }
 
     /**
-     * Rôle : Enregistrer les informations de compte déjà validées par le contrôleur.
-     * Paramètres : Identifiant du compte, pseudo, adresse et empreinte facultative du nouveau mot de passe.
-     * Retour : true lorsque la mise à jour est exécutée, sinon false.
+     * Rôle : Vérifier le mot de passe actuel d'un compte sans exposer son empreinte au contrôleur.
+     * Paramètres : Identifiant du compte et mot de passe en clair reçu par le formulaire.
+     * Retour : true si le mot de passe correspond, false s'il est incorrect ou null en cas d'erreur SQL.
      */
-    public function updateAccount(int $userId, string $pseudo, string $email, ?string $passwordHash = null): bool
+    public function verifyPassword(int $userId, string $password): ?bool
+    {
+        $account = $this->database->fetchOne(
+            'SELECT password_hash FROM `UTILISATEUR` WHERE id = :user_id LIMIT 1',
+            ['user_id' => $userId]
+        );
+
+        if ($account === false) {
+            return null;
+        }
+
+        if ($account === null
+            || !isset($account['password_hash'])
+            || !is_string($account['password_hash'])
+        ) {
+            return false;
+        }
+
+        return password_verify($password, $account['password_hash']);
+    }
+
+    /**
+     * Rôle : Enregistrer les informations de compte déjà validées par le contrôleur.
+     * Paramètres : Identifiant du compte, pseudo, adresse et nouveau mot de passe facultatif déjà validés.
+     * Retour : true si la mise à jour réussit, false en cas d'échec SQL ou null si l'empreinte ne peut pas être créée.
+     */
+    public function updateAccount(int $userId, string $pseudo, string $email, ?string $newPassword = null): ?bool
     {
         $data = ['pseudo' => $pseudo, 'email' => $email];
-        if ($passwordHash !== null) {
+
+        if ($newPassword !== null) {
+            $passwordHash = $this->hashPassword($newPassword);
+
+            if ($passwordHash === null) {
+                return null;
+            }
+
             $data['password_hash'] = $passwordHash;
         }
+
         return $this->update($userId, $data);
     }
 
@@ -156,5 +190,41 @@ class UserModel extends Model
         }
 
         return $account !== null;
+    }
+
+    /**
+     * Rôle : Produire une empreinte sécurisée pour un mot de passe déjà validé.
+     * Paramètres : Mot de passe en clair.
+     * Retour : Empreinte créée ou null lorsque sa création échoue.
+     */
+    private function hashPassword(string $password): ?string
+    {
+        $passwordHash = password_hash($password, PASSWORD_DEFAULT);
+
+        if (!is_string($passwordHash)) {
+            return null;
+        }
+
+        return $passwordHash;
+    }
+
+    /**
+     * Rôle : Rechercher un compte à partir du pseudo ou de l'adresse électronique.
+     * Paramètres : Identifiant saisi et indication précisant s'il s'agit d'une adresse électronique.
+     * Retour : Compte avec son empreinte, null s'il est absent ou false en cas d'erreur SQL.
+     */
+    private function findByLogin(string $login, bool $isEmail): array|false|null
+    {
+        $column = 'pseudo';
+
+        if ($isEmail) {
+            $column = 'email';
+        }
+
+        return $this->database->fetchOne(
+            'SELECT id, pseudo, email, password_hash FROM UTILISATEUR '
+            . 'WHERE LOWER(' . $column . ') = LOWER(:login) LIMIT 1',
+            ['login' => $login]
+        );
     }
 }

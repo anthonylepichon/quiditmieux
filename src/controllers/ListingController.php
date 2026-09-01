@@ -363,19 +363,18 @@ class ListingController extends Controller
         }
 
         $listingModel = new ListingModel($this->database);
-        $created = $listingModel->create([
-            'utilisateur_id' => $userId,
-            'titre' => $normalizedData['title'],
-            'description' => $normalizedData['description'],
-            'etat_objet' => $normalizedData['item_state'],
-            'prix_depart' => $normalizedData['starting_price'],
-            'date_heure_fin' => $normalizedData['deadline_utc'],
-            'categorie_id' => $normalizedData['category_id'],
-        ]);
-        $listingId = $listingModel->getValue('id');
+        $listingId = $listingModel->createListing(
+            $userId,
+            $normalizedData['title'],
+            $normalizedData['description'],
+            $normalizedData['item_state'],
+            $normalizedData['starting_price'],
+            $normalizedData['deadline_utc'],
+            $normalizedData['category_id']
+        );
         $storedFiles = [];
 
-        if (!$created || !is_int($listingId)) {
+        if ($listingId === null) {
             $this->database->rollback();
             $errors['form'] = 'L’annonce ne peut pas être enregistrée pour le moment.';
             $this->renderListingForm('create', $values, $errors, $categories, []);
@@ -576,14 +575,15 @@ class ListingController extends Controller
             $this->redirect('listing_detail', ['id' => $listingId]);
         }
 
-        $updated = $listingModel->update($listingId, [
-            'titre' => $normalizedData['title'],
-            'description' => $normalizedData['description'],
-            'etat_objet' => $normalizedData['item_state'],
-            'prix_depart' => $normalizedData['starting_price'],
-            'date_heure_fin' => $normalizedData['deadline_utc'],
-            'categorie_id' => $normalizedData['category_id'],
-        ]);
+        $updated = $listingModel->updateListing(
+            $listingId,
+            $normalizedData['title'],
+            $normalizedData['description'],
+            $normalizedData['item_state'],
+            $normalizedData['starting_price'],
+            $normalizedData['deadline_utc'],
+            $normalizedData['category_id']
+        );
 
         foreach ($removedPhotos as $photo) {
             if (!$photoModel->deleteFromListing((int) $photo['id'], $listingId)) {
@@ -678,7 +678,7 @@ class ListingController extends Controller
             $this->redirect('listing_detail', ['id' => $listingId]);
         }
 
-        if (!$listingModel->delete($listingId) || !$this->database->commit()) {
+        if (!$listingModel->deleteListing($listingId) || !$this->database->commit()) {
             $this->database->rollback();
             $this->session->enregistrerMessageTemporaire(
                 'notice',
@@ -945,11 +945,7 @@ class ListingController extends Controller
 
             $storedFiles[] = $path;
 
-            if (!$photoModel->create([
-                'annonce_id' => $listingId,
-                'ref_fichier' => $filename,
-                'ordre' => $startingOrder + $index,
-            ])) {
+            if (!$photoModel->addPhoto($listingId, $filename, $startingOrder + $index)) {
                 return false;
             }
         }

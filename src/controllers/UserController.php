@@ -101,10 +101,14 @@ class UserController extends Controller
             return;
         }
 
-        if ($currentPassword !== '' && (!isset($account['password_hash'])
-            || !is_string($account['password_hash'])
-            || !password_verify($currentPassword, $account['password_hash']))) {
-            $errors['current_password'] = 'Le mot de passe actuel est incorrect.';
+        if ($currentPassword !== '') {
+            $passwordIsValid = $model->verifyPassword($userId, $currentPassword);
+
+            if ($passwordIsValid === null) {
+                $errors['form'] = 'Les informations du compte sont momentanément indisponibles.';
+            } elseif (!$passwordIsValid) {
+                $errors['current_password'] = 'Le mot de passe actuel est incorrect.';
+            }
         }
 
         if ($errors === []) {
@@ -129,19 +133,29 @@ class UserController extends Controller
             return;
         }
 
-        $passwordHash = null;
+        $passwordToUpdate = null;
+
         if ($newPassword !== '') {
-            $passwordHash = password_hash($newPassword, PASSWORD_DEFAULT);
-            if (!is_string($passwordHash)) {
-                $this->renderAccountForm(
-                    $values,
-                    ['form' => 'Le nouveau mot de passe ne peut pas être sécurisé pour le moment.'],
-                    null
-                );
-                return;
-            }
+            $passwordToUpdate = $newPassword;
         }
-        if (!$model->updateAccount($userId, $values['pseudo'], $values['email'], $passwordHash)) {
+
+        $accountUpdated = $model->updateAccount(
+            $userId,
+            $values['pseudo'],
+            $values['email'],
+            $passwordToUpdate
+        );
+
+        if ($accountUpdated === null) {
+            $this->renderAccountForm(
+                $values,
+                ['form' => 'Le nouveau mot de passe ne peut pas être sécurisé pour le moment.'],
+                null
+            );
+            return;
+        }
+
+        if (!$accountUpdated) {
             $this->renderAccountForm(
                 $values,
                 ['form' => 'Les modifications ne peuvent pas être enregistrées pour le moment.'],

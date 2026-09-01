@@ -47,6 +47,77 @@ class ListingModel extends Model
     }
 
     /**
+     * Rôle : Créer une annonce à partir des informations déjà validées par le contrôleur.
+     * Paramètres : Auteur, titre, description, état, prix, échéance UTC et catégorie.
+     * Retour : Identifiant de l'annonce créée ou null lorsque la création échoue.
+     */
+    public function createListing(
+        int $userId,
+        string $title,
+        string $description,
+        string $itemState,
+        float $startingPrice,
+        string $deadlineUtc,
+        int $categoryId
+    ): ?int {
+        $created = $this->create([
+            'utilisateur_id' => $userId,
+            'titre' => $title,
+            'description' => $description,
+            'etat_objet' => $itemState,
+            'prix_depart' => $startingPrice,
+            'date_heure_fin' => $deadlineUtc,
+            'categorie_id' => $categoryId,
+        ]);
+
+        if (!$created) {
+            return null;
+        }
+
+        $listingId = $this->getValue($this->primaryKeyName);
+
+        if (!is_int($listingId)) {
+            return null;
+        }
+
+        return $listingId;
+    }
+
+    /**
+     * Rôle : Modifier les informations autorisées d'une annonce déjà validées par le contrôleur.
+     * Paramètres : Identifiant, titre, description, état, prix, échéance UTC et catégorie.
+     * Retour : true lorsque la mise à jour est exécutée, sinon false.
+     */
+    public function updateListing(
+        int $listingId,
+        string $title,
+        string $description,
+        string $itemState,
+        float $startingPrice,
+        string $deadlineUtc,
+        int $categoryId
+    ): bool {
+        return $this->update($listingId, [
+            'titre' => $title,
+            'description' => $description,
+            'etat_objet' => $itemState,
+            'prix_depart' => $startingPrice,
+            'date_heure_fin' => $deadlineUtc,
+            'categorie_id' => $categoryId,
+        ]);
+    }
+
+    /**
+     * Rôle : Supprimer une annonce dont l'autorisation a déjà été vérifiée.
+     * Paramètres : Identifiant de l'annonce.
+     * Retour : true lorsque la suppression est exécutée, sinon false.
+     */
+    public function deleteListing(int $listingId): bool
+    {
+        return $this->delete($listingId);
+    }
+
+    /**
      * Rôle : Vérifier si une annonce peut être modifiée par l'utilisateur demandé.
      * Paramètres : Identifiants de l'annonce et de l'utilisateur.
      * Retour : true si la modification est autorisée, false si elle est interdite ou null en cas d'erreur SQL.
