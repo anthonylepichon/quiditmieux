@@ -4,7 +4,7 @@
  * Description générale : Page publique de création d'un compte utilisateur.
  * Rôle : Afficher le formulaire d'inscription, ses erreurs et son état de réussite.
  * Tâches : Présenter uniquement les données publiques préparées par AuthController et transmettre un POST protégé.
- * Liens avec les autres fichiers : Est affiché par AuthController.php et utilise main.css.
+ * Liens avec les autres fichiers : Est affiché par AuthController.php puis inséré dans base.php.
  */
 
 $values = $data['values'];
@@ -13,23 +13,10 @@ $successMessage = $data['success_message'];
 $csrfToken = $data['csrf_token'];
 $isConnected = false;
 $currentPage = 'register';
+$pageTitle = 'Créer un compte — QUIDITMIEUX';
+$pageDescription = 'Créez votre compte QUIDITMIEUX.';
 ?>
-<!doctype html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="Créez votre compte QUIDITMIEUX.">
-    <title>Créer un compte — QUIDITMIEUX</title>
-    <link rel="icon" href="public/assets/images/favicon/favicon.ico" sizes="any">
-    <link rel="icon" href="public/assets/images/favicon/favicon.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="public/assets/css/main.css">
-    <script src="public/assets/js/main.js" defer></script>
-</head>
-<body>
-    <?php require dirname(__DIR__) . '/layout/header.php'; ?>
-
-    <main class="auth-page container">
+<main class="auth-page container">
         <section class="auth-card glass-panel" aria-labelledby="register-title">
             <div class="auth-card__form-panel">
                 <div class="section-heading">
@@ -95,8 +82,4 @@ $currentPage = 'register';
                 </div>
             </aside>
         </section>
-    </main>
-
-    <?php require dirname(__DIR__) . '/layout/footer.php'; ?>
-</body>
-</html>
+</main>

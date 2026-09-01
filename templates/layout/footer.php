@@ -4,7 +4,7 @@
  * Description générale : Pied de page partagé par toutes les pages de l'application.
  * Rôle : Regrouper l'identité et les liens secondaires de QUIDITMIEUX.
  * Tâches : Centraliser la navigation de fin de page et le lien de confidentialité demandé.
- * Liens avec les autres fichiers : Est inclus par les sept templates de pages et utilise main.css.
+ * Liens avec les autres fichiers : Est inclus par base.php après le contenu propre à chaque page.
  */
 ?>
 <footer class="site-footer">

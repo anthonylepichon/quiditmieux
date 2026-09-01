@@ -4,7 +4,7 @@
  * Description générale : Page publique de détail d'une annonce mise aux enchères.
  * Rôle : Afficher la vente, ses photographies, son prix et les actions adaptées aux droits du visiteur.
  * Tâches : Présenter les états public, vendeur, suiveur, enchérisseur et vente terminée sans exposer de donnée privée.
- * Liens avec les autres fichiers : Est affiché par ListingController.php et complété par main.js et listing-detail.js.
+ * Liens avec les autres fichiers : Est affiché par ListingController.php, inséré dans base.php et complété par listing-detail.js.
  */
 
 $listing = $data['listing'];
@@ -14,6 +14,9 @@ $viewer = $data['viewer'];
 $csrfToken = $data['csrf_token'];
 $isConnected = $viewer['is_connected'];
 $currentPage = 'listing_detail';
+$pageTitle = $listing['title'] . ' — QUIDITMIEUX';
+$pageDescription = 'Consultez le détail de l’annonce ' . $listing['title'] . '.';
+$pageScripts = ['public/assets/js/listing-detail.js'];
 $saleStatusLabel = 'Vente en cours';
 
 if ($listing['is_ended']) {
@@ -39,23 +42,7 @@ if ($viewer['is_following']) {
     $followLabel = 'Ne plus suivre';
 }
 ?>
-<!doctype html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="Consultez le détail de l'annonce <?= htmlspecialchars($listing['title'], ENT_QUOTES, 'UTF-8') ?>.">
-    <title><?= htmlspecialchars($listing['title'], ENT_QUOTES, 'UTF-8') ?> — QUIDITMIEUX</title>
-    <link rel="icon" href="public/assets/images/favicon/favicon.ico" sizes="any">
-    <link rel="icon" href="public/assets/images/favicon/favicon.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="public/assets/css/main.css">
-    <script src="public/assets/js/main.js" defer></script>
-    <script src="public/assets/js/listing-detail.js" defer></script>
-</head>
-<body>
-    <?php require dirname(__DIR__) . '/layout/header.php'; ?>
-
-    <main class="listing-detail container">
+<main class="listing-detail container">
         <a class="back-link" href="index.php?route=home#annonces">← Retour aux annonces</a>
         <?php if ($data['flash_success'] !== null): ?><div class="alert alert--success" role="status"><?= htmlspecialchars($data['flash_success'], ENT_QUOTES, 'UTF-8') ?></div><?php endif; ?>
         <?php if ($data['flash_notice'] !== null): ?><div class="alert alert--warning" role="status"><?= htmlspecialchars($data['flash_notice'], ENT_QUOTES, 'UTF-8') ?></div><?php endif; ?>
@@ -132,7 +119,4 @@ if ($viewer['is_following']) {
                 <?php if ($history === []): ?><p>Aucune enchère enregistrée.</p><?php else: ?><ul><?php foreach ($history as $bid): ?><li><strong><?= htmlspecialchars($bid['amount'], ENT_QUOTES, 'UTF-8') ?></strong> par <?= htmlspecialchars($bid['bidder'], ENT_QUOTES, 'UTF-8') ?> — <?= htmlspecialchars($bid['date'], ENT_QUOTES, 'UTF-8') ?></li><?php endforeach; ?></ul><?php endif; ?>
             </section>
         <?php endif; ?>
-    </main>
-    <?php require dirname(__DIR__) . '/layout/footer.php'; ?>
-</body>
-</html>
+</main>

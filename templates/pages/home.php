@@ -4,7 +4,7 @@
  * Description générale : Page publique d'accueil et de recherche des annonces.
  * Rôle : Afficher le formulaire multicritère, les états de recherche, les cartes et la pagination.
  * Tâches : Présenter les données préparées par ListingController et fournir une navigation sans JavaScript.
- * Liens avec les autres fichiers : Est affiché par ListingController.php et complété par main.js, home.js et main.css.
+ * Liens avec les autres fichiers : Est affiché par ListingController.php, inséré dans base.php et complété par home.js.
  */
 
 $criteria = $data['criteria'];
@@ -20,30 +20,16 @@ $csrfToken = $data['csrf_token'];
 $flashSuccess = $data['flash_success'];
 $flashNotice = $data['flash_notice'];
 $currentPage = 'home';
+$pageTitle = 'Accueil — QUIDITMIEUX';
+$pageDescription = 'Consultez et recherchez les ventes aux enchères QUIDITMIEUX.';
+$pageScripts = ['public/assets/js/home.js'];
 $featuredListing = null;
 
 if ($listings !== []) {
     $featuredListing = $listings[0];
 }
 ?>
-<!doctype html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="Consultez et recherchez les ventes aux enchères QUIDITMIEUX.">
-    <title>Accueil — QUIDITMIEUX</title>
-    <link rel="icon" href="public/assets/images/favicon/favicon.ico" sizes="any">
-    <link rel="icon" href="public/assets/images/favicon/favicon.svg" type="image/svg+xml">
-    <link rel="apple-touch-icon" href="public/assets/images/favicon/apple-touch-icon.png">
-    <link rel="stylesheet" href="public/assets/css/main.css">
-    <script src="public/assets/js/main.js" defer></script>
-    <script src="public/assets/js/home.js" defer></script>
-</head>
-<body>
-    <?php require dirname(__DIR__) . '/layout/header.php'; ?>
-
-    <main>
+<main>
         <!-- ==================== PRÉSENTATION ==================== -->
         <section class="home-hero container glass-panel" aria-labelledby="home-title">
             <div class="home-hero__content">
@@ -273,8 +259,4 @@ if ($listings !== []) {
                 </nav>
             </section>
         </div>
-    </main>
-
-    <?php require dirname(__DIR__) . '/layout/footer.php'; ?>
-</body>
-</html>
+</main>

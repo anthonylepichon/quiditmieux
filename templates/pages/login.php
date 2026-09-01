@@ -4,7 +4,7 @@
  * Description générale : Page publique de connexion à un compte utilisateur.
  * Rôle : Afficher le formulaire, les erreurs génériques et la destination interne conservée.
  * Tâches : Transmettre les identifiants par POST avec un jeton CSRF sans réafficher le mot de passe.
- * Liens avec les autres fichiers : Est affiché par AuthController.php et utilise main.css.
+ * Liens avec les autres fichiers : Est affiché par AuthController.php puis inséré dans base.php.
  */
 
 $values = $data['values'];
@@ -13,23 +13,10 @@ $successMessage = $data['success_message'];
 $csrfToken = $data['csrf_token'];
 $isConnected = false;
 $currentPage = 'login';
+$pageTitle = 'Connexion — QUIDITMIEUX';
+$pageDescription = 'Connectez-vous à votre compte QUIDITMIEUX.';
 ?>
-<!doctype html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="Connectez-vous à votre compte QUIDITMIEUX.">
-    <title>Connexion — QUIDITMIEUX</title>
-    <link rel="icon" href="public/assets/images/favicon/favicon.ico" sizes="any">
-    <link rel="icon" href="public/assets/images/favicon/favicon.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="public/assets/css/main.css">
-    <script src="public/assets/js/main.js" defer></script>
-</head>
-<body>
-    <?php require dirname(__DIR__) . '/layout/header.php'; ?>
-
-    <main class="auth-page container">
+<main class="auth-page container">
         <section class="auth-card auth-card--login glass-panel" aria-labelledby="login-title">
             <div class="auth-card__form-panel auth-card__form-panel--login">
                 <div class="section-heading">
@@ -71,7 +58,4 @@ $currentPage = 'login';
                 </div>
             </aside>
         </section>
-    </main>
-    <?php require dirname(__DIR__) . '/layout/footer.php'; ?>
-</body>
-</html>
+</main>

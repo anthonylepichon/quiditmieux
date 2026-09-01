@@ -14,7 +14,7 @@ class App
     // ====================
     // ATTRIBUTS
     // ====================
-    
+
     private string $projectRoot;
 
     // ====================

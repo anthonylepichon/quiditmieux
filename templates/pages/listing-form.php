@@ -4,7 +4,7 @@
  * Description générale : Formulaire protégé de création et de modification d'une annonce.
  * Rôle : Afficher les informations de vente, les catégories externes et la gestion de zéro à trois photographies.
  * Tâches : Réafficher les valeurs sûres, les erreurs et transmettre les données en multipart par POST.
- * Liens avec les autres fichiers : Est affiché par ListingController.php et complété par listing-form.js et main.css.
+ * Liens avec les autres fichiers : Est affiché par ListingController.php, inséré dans base.php et complété par listing-form.js.
  */
 
 $mode = $data['mode'];
@@ -16,31 +16,22 @@ $csrfToken = $data['csrf_token'];
 $isConnected = true;
 $currentPage = 'listing_form';
 $isEditMode = $mode === 'edit';
-$pageTitle = 'Publier une annonce';
+$formTitle = 'Publier une annonce';
 $formRoute = 'listing_create';
 $submitLabel = 'Publier l’annonce';
 
 if ($isEditMode) {
-    $pageTitle = 'Modifier l’annonce';
+    $formTitle = 'Modifier l’annonce';
     $formRoute = 'listing_update';
     $submitLabel = 'Enregistrer les modifications';
 }
+$pageTitle = $formTitle . ' — QUIDITMIEUX';
+$pageDescription = $formTitle . ' sur QUIDITMIEUX.';
+$pageScripts = ['public/assets/js/listing-form.js'];
 ?>
-<!doctype html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="<?= htmlspecialchars($pageTitle, ENT_QUOTES, 'UTF-8') ?> sur QUIDITMIEUX.">
-    <title><?= htmlspecialchars($pageTitle, ENT_QUOTES, 'UTF-8') ?> — QUIDITMIEUX</title>
-    <link rel="icon" href="public/assets/images/favicon/favicon.ico" sizes="any"><link rel="icon" href="public/assets/images/favicon/favicon.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="public/assets/css/main.css"><script src="public/assets/js/main.js" defer></script><script src="public/assets/js/listing-form.js" defer></script>
-</head>
-<body>
-    <?php require dirname(__DIR__) . '/layout/header.php'; ?>
-
-    <main class="listing-form-page container">
+<main class="listing-form-page container">
         <section class="listing-form-panel glass-panel" aria-labelledby="listing-form-title">
-            <div class="listing-form-panel__introduction"><div class="section-heading"><p class="eyebrow">Nouvelle vente</p><h1 id="listing-form-title"><?= htmlspecialchars($pageTitle, ENT_QUOTES, 'UTF-8') ?></h1><p>Décrivez l’objet, fixez un prix de départ et une échéance en heure de Paris.</p></div><img src="public/assets/images/illustrations/shopping-cart.png" alt="" width="178" height="160"></div>
+            <div class="listing-form-panel__introduction"><div class="section-heading"><p class="eyebrow">Nouvelle vente</p><h1 id="listing-form-title"><?= htmlspecialchars($formTitle, ENT_QUOTES, 'UTF-8') ?></h1><p>Décrivez l’objet, fixez un prix de départ et une échéance en heure de Paris.</p></div><img src="public/assets/images/illustrations/shopping-cart.png" alt="" width="178" height="160"></div>
             <div class="alert alert--info" role="note"><strong>Préparez votre vente</strong><br>Tous les champs marqués sont requis. Vous pouvez ajouter jusqu’à trois photographies.</div>
             <?php if (isset($errors['form'])): ?><div class="alert alert--error" role="alert"><?= htmlspecialchars((string) $errors['form'], ENT_QUOTES, 'UTF-8') ?></div><?php endif; ?>
             <form action="index.php?route=<?= $formRoute ?>" method="post" enctype="multipart/form-data" novalidate data-listing-form>
@@ -66,6 +57,4 @@ if ($isEditMode) {
                 <div class="listing-form-actions"><a class="button button--secondary" href="index.php?route=dashboard">Annuler</a><button class="button button--primary" type="submit" <?= $categories === [] ? 'disabled' : '' ?>><?= htmlspecialchars($submitLabel, ENT_QUOTES, 'UTF-8') ?></button></div>
             </form>
         </section>
-    </main>
-    <?php require dirname(__DIR__) . '/layout/footer.php'; ?>
-</body></html>
+</main>

@@ -3,8 +3,8 @@
 /**
  * Description générale : Contrôleur parent commun de l'application.
  * Rôle : Fournir les aides simples partagées par les contrôleurs enfants.
- * Tâches : Conserver Database et Session, afficher un template, rediriger et produire une réponse JSON.
- * Liens avec les autres fichiers : Est étendu par les contrôleurs enfants et utilise les templates de l'application.
+ * Tâches : Conserver Database et Session, composer une page avec le layout, rediriger et produire une réponse JSON.
+ * Liens avec les autres fichiers : Est étendu par les contrôleurs enfants et utilise les templates ainsi que base.php.
  */
 
 namespace App\core;
@@ -34,7 +34,7 @@ class Controller
     }
 
     /**
-     * Rôle : Afficher un template en lui transmettant les données utiles dans un tableau.
+     * Rôle : Capturer le contenu d'un template puis l'afficher dans le layout principal.
      * Paramètres : Chemin du template relatif au dossier templates et tableau des données d'affichage.
      * Retour : Aucun.
      */
@@ -55,7 +55,31 @@ class Controller
             return;
         }
 
+        $basePath = $templatesDirectory . '/layout/base.php';
+
+        if (!is_file($basePath)) {
+            echo 'La page demandée est momentanément indisponible.';
+            return;
+        }
+
+        $pageTitle = 'QUIDITMIEUX';
+        $pageDescription = 'Ventes aux enchères entre particuliers.';
+        $pageScripts = [];
+        $isConnected = false;
+        $csrfToken = '';
+        $currentPage = '';
+
+        ob_start();
         require $templatePath;
+        $capturedContent = ob_get_clean();
+
+        if (!is_string($capturedContent)) {
+            echo 'La page demandée est momentanément indisponible.';
+            return;
+        }
+
+        $content = $capturedContent;
+        require $basePath;
     }
 
     /**

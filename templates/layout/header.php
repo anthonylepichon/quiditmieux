@@ -4,7 +4,7 @@
  * Description générale : En-tête partagé par toutes les pages de l'application.
  * Rôle : Afficher l'identité, la navigation et les actions adaptées à la session.
  * Tâches : Centraliser les liens publics, les accès privés et le formulaire de déconnexion protégé.
- * Liens avec les autres fichiers : Est inclus par les sept templates de pages et utilise main.css ainsi que main.js.
+ * Liens avec les autres fichiers : Est inclus par base.php et utilise les informations de session préparées par les templates.
  */
 
 $layoutCurrentPage = '';

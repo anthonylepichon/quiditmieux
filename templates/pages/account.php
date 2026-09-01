@@ -4,7 +4,7 @@
  * Description générale : Formulaire privé de modification du compte utilisateur.
  * Rôle : Modifier le pseudo, l'adresse électronique et éventuellement le mot de passe.
  * Tâches : Afficher les erreurs par champ sans jamais réafficher un mot de passe.
- * Liens avec les autres fichiers : Est affiché par UserController.php et utilise les layouts communs.
+ * Liens avec les autres fichiers : Est affiché par UserController.php puis inséré dans base.php.
  */
 
 $values = $data['values'];
@@ -13,6 +13,8 @@ $successMessage = $data['success_message'];
 $csrfToken = $data['csrf_token'];
 $isConnected = true;
 $currentPage = 'account';
+$pageTitle = 'Mon compte — QUIDITMIEUX';
+$pageDescription = 'Modifiez les informations de votre compte QUIDITMIEUX.';
 $invalid = ['pseudo' => '', 'email' => '', 'current_password' => '', 'new_password' => '', 'new_password_confirmation' => ''];
 foreach ($invalid as $field => $attribute) {
     if (isset($errors[$field])) {
@@ -20,21 +22,7 @@ foreach ($invalid as $field => $attribute) {
     }
 }
 ?>
-<!doctype html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="Modifiez les informations de votre compte QUIDITMIEUX.">
-    <title>Mon compte — QUIDITMIEUX</title>
-    <link rel="icon" href="public/assets/images/favicon/favicon.ico" sizes="any">
-    <link rel="icon" href="public/assets/images/favicon/favicon.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="public/assets/css/main.css">
-    <script src="public/assets/js/main.js" defer></script>
-</head>
-<body>
-    <?php require __DIR__ . '/../layout/header.php'; ?>
-    <main class="account-page container">
+<main class="account-page container">
         <section class="account-card glass-panel" aria-labelledby="account-title">
             <div class="account-card__form-panel">
                 <div class="section-heading"><p class="eyebrow">Vos informations</p><h1 id="account-title">Mon compte</h1></div>
@@ -62,7 +50,4 @@ foreach ($invalid as $field => $attribute) {
                 <p class="account-card__security"><span aria-hidden="true">✓</span> Contrôle requis avant chaque enregistrement.</p>
             </aside>
         </section>
-    </main>
-    <?php require __DIR__ . '/../layout/footer.php'; ?>
-</body>
-</html>
+</main>

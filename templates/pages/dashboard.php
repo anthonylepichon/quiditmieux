@@ -4,7 +4,7 @@
  * Description générale : Tableau de bord privé de l'utilisateur connecté.
  * Rôle : Présenter ses ventes, ses annonces suivies ou enchéries et ses enchères remportées.
  * Tâches : Afficher trois zones autonomes et leurs états vides conformément à la maquette.
- * Liens avec les autres fichiers : Est affiché par UserController.php et actualisé par dashboard.js.
+ * Liens avec les autres fichiers : Est affiché par UserController.php, inséré dans base.php et actualisé par dashboard.js.
  */
 
 $zones = [
@@ -15,23 +15,11 @@ $zones = [
 $isConnected = true;
 $csrfToken = $data['csrf_token'];
 $currentPage = 'dashboard';
+$pageTitle = 'Tableau de bord — QUIDITMIEUX';
+$pageDescription = 'Consultez vos ventes, suivis et enchères remportées.';
+$pageScripts = ['public/assets/js/dashboard.js'];
 ?>
-<!doctype html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="Consultez vos ventes, suivis et enchères remportées.">
-    <title>Tableau de bord — QUIDITMIEUX</title>
-    <link rel="icon" href="public/assets/images/favicon/favicon.ico" sizes="any">
-    <link rel="icon" href="public/assets/images/favicon/favicon.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="public/assets/css/main.css">
-    <script src="public/assets/js/main.js" defer></script>
-    <script src="public/assets/js/dashboard.js" defer></script>
-</head>
-<body>
-    <?php require __DIR__ . '/../layout/header.php'; ?>
-    <main class="dashboard container">
+<main class="dashboard container">
         <section class="dashboard__heading">
             <div>
                 <p class="eyebrow">Votre activité</p>
@@ -72,7 +60,4 @@ $currentPage = 'dashboard';
                 </div>
             </section>
         <?php endforeach; ?>
-    </main>
-    <?php require __DIR__ . '/../layout/footer.php'; ?>
-</body>
-</html>
+</main>
