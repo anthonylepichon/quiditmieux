@@ -4,14 +4,17 @@
  * Description générale : Contrôleur de l'espace personnel de l'utilisateur connecté.
  * Rôle : Afficher le tableau de bord et coordonner la modification sécurisée du compte.
  * Tâches : Protéger les routes privées, préparer les cartes, appeler les modèles et limiter les réponses JSON.
- * Liens avec les autres fichiers : Étend Controller.php et utilise Clock.php ainsi que les modèles de l'espace personnel.
+ * Liens avec les autres fichiers : Étend Controller.php et utilise Clock.php, PhotoStorage.php ainsi que les modèles de l'espace personnel.
  */
 
 namespace App\controllers;
 
 use App\core\Clock;
 use App\core\Controller;
+use App\core\Database;
 use App\core\Money;
+use App\core\PhotoStorage;
+use App\core\Session;
 use App\models\CategoryModel;
 use App\models\ListingModel;
 use App\models\PhotoModel;
@@ -22,14 +25,25 @@ use DateTimeZone;
 class UserController extends Controller
 {
     // ====================
-    // CONSTANTES
+    // ATTRIBUTS
     // ====================
 
-    private const PHOTO_PUBLIC_DIRECTORY = 'public/uploads/annonces/';
+    private PhotoStorage $photoStorage;
 
     // ====================
     // MÉTHODES
     // ====================
+
+    /**
+     * Rôle : Conserver les dépendances communes et préparer le gestionnaire des fichiers photographiques.
+     * Paramètres : Gestionnaires de base de données et de session partagés avec l'application.
+     * Retour : Aucun.
+     */
+    public function __construct(Database $database, Session $session)
+    {
+        parent::__construct($database, $session);
+        $this->photoStorage = new PhotoStorage();
+    }
 
     /**
      * Rôle : Afficher le formulaire privé avec les informations actuelles du compte.
@@ -486,7 +500,7 @@ class UserController extends Controller
     private function buildPhotoUrl(array $photos, int $listingId): ?string
     {
         if (isset($photos[$listingId])) {
-            return self::PHOTO_PUBLIC_DIRECTORY . rawurlencode($photos[$listingId]);
+            return $this->photoStorage->getPublicUrl($photos[$listingId]);
         }
         return null;
     }

@@ -1,13 +1,16 @@
 /**
  * Description générale : Actualisations périodiques du tableau de bord privé.
  * Rôle : Rafraîchir séparément les ventes et les participations sans recharger la page.
- * Tâches : Éviter les requêtes simultanées, ignorer les réponses obsolètes et reconstruire les cartes en sécurité.
+ * Tâches : Éviter les requêtes simultanées, arrêter les actualisations devenues inutiles et reconstruire les cartes en sécurité.
  * Liens avec les autres fichiers : Est chargé par dashboard.php et appelle les routes JSON de UserController.php.
  */
 
 const qdmDashboardStatus = document.querySelector('[data-dashboard-status]');
 const qdmDashboardMessage = document.querySelector('[data-dashboard-message]');
-const qdmDashboardStreams = {sales: {busy: false, sequence: 0}, participations: {busy: false, sequence: 0}};
+const qdmDashboardStreams = {
+    sales: {busy: false, sequence: 0, timer: null},
+    participations: {busy: false, sequence: 0, timer: null},
+};
 let qdmDashboardLastUpdate = new Date();
 
 /** Rôle : Créer un élément HTML sûr. Paramètres : Balise, classe et texte. Retour : Élément DOM. */
@@ -232,6 +235,48 @@ function qdmRenderDashboardZone(zoneKey, listings, emptyMessage) {
     listings.forEach(function appendListing(listing) { zone.appendChild(qdmBuildDashboardCard(listing, zoneKey)); });
 }
 
+/**
+ * Rôle : Vérifier si une liste contient encore au moins une annonce active.
+ * Paramètres : Liste des annonces reçues du serveur.
+ * Retour : true si une annonce est active, sinon false.
+ */
+function qdmHasActiveListing(listings) {
+    if (!Array.isArray(listings)) {
+        return false;
+    }
+
+    return listings.some(function isActiveListing(listing) {
+        return listing.is_active === true;
+    });
+}
+
+/**
+ * Rôle : Arrêter le minuteur d'un flux qui ne contient plus d'annonce active.
+ * Paramètres : Clé du flux à arrêter.
+ * Retour : Aucun.
+ */
+function qdmStopDashboardStream(streamKey) {
+    const stream = qdmDashboardStreams[streamKey];
+
+    if (stream.timer !== null) {
+        window.clearInterval(stream.timer);
+        stream.timer = null;
+    }
+}
+
+/**
+ * Rôle : Démarrer l'actualisation immédiate puis périodique d'un flux du tableau de bord.
+ * Paramètres : Clé du flux, adresse JSON et délai entre deux demandes.
+ * Retour : Aucun.
+ */
+function qdmStartDashboardStream(streamKey, url, delay) {
+    const stream = qdmDashboardStreams[streamKey];
+    stream.timer = window.setInterval(function refreshDashboardStream() {
+        qdmRefreshDashboard(streamKey, url);
+    }, delay);
+    qdmRefreshDashboard(streamKey, url);
+}
+
 /** Rôle : Charger un flux sans chevauchement. Paramètres : Clé et adresse JSON. Retour : Aucun. */
 async function qdmRefreshDashboard(streamKey, url) {
     const stream = qdmDashboardStreams[streamKey];
@@ -248,6 +293,10 @@ async function qdmRefreshDashboard(streamKey, url) {
         if (streamKey === 'sales') {
             qdmRenderDashboardZone('sales', data.sales, 'Vos annonces publiées apparaîtront ici.');
             qdmSetDashboardState('sales', data.sales);
+
+            if (!qdmHasActiveListing(data.sales)) {
+                qdmStopDashboardStream('sales');
+            }
         }
         else {
             qdmRenderDashboardZone('participations', data.participations, 'Suivez une annonce ou enchérissez pour la retrouver ici.');
@@ -258,6 +307,10 @@ async function qdmRefreshDashboard(streamKey, url) {
             } else {
                 qdmSetDashboardState('participations', data.participations);
             }
+
+            if (!qdmHasActiveListing(data.participations)) {
+                qdmStopDashboardStream('participations');
+            }
         }
         qdmDashboardLastUpdate = new Date();
         qdmDashboardStatus.textContent = '';
@@ -265,5 +318,5 @@ async function qdmRefreshDashboard(streamKey, url) {
     finally { stream.busy = false; }
 }
 
-window.setInterval(function refreshSales() { qdmRefreshDashboard('sales', 'index.php?route=dashboard_sales'); }, 10000);
-window.setInterval(function refreshParticipations() { qdmRefreshDashboard('participations', 'index.php?route=dashboard_participations'); }, 2000);
+qdmStartDashboardStream('sales', 'index.php?route=dashboard_sales', 10000);
+qdmStartDashboardStream('participations', 'index.php?route=dashboard_participations', 2000);

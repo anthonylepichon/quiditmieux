@@ -4,14 +4,17 @@
  * Description générale : Contrôleur des annonces proposées aux enchères.
  * Rôle : Coordonner les demandes liées aux annonces et choisir leur réponse HTML ou JSON.
  * Tâches : Lire et valider les requêtes, interroger les modèles et préparer l'affichage.
- * Liens avec les autres fichiers : Étend Controller.php et utilise Clock.php ainsi que les modèles liés aux annonces.
+ * Liens avec les autres fichiers : Étend Controller.php et utilise Clock.php, PhotoStorage.php ainsi que les modèles liés aux annonces.
  */
 
 namespace App\controllers;
 
 use App\core\Clock;
 use App\core\Controller;
+use App\core\Database;
 use App\core\Money;
+use App\core\PhotoStorage;
+use App\core\Session;
 use App\models\BidModel;
 use App\models\CategoryModel;
 use App\models\FollowModel;
@@ -29,12 +32,27 @@ class ListingController extends Controller
     private const ITEMS_PER_PAGE = 12;
     private const ITEM_STATES = ['neuf', 'très bon état', 'bon état', 'état correct'];
     private const SALE_STATES = ['all', 'active', 'ended'];
-    private const PHOTO_PUBLIC_DIRECTORY = 'public/uploads/annonces/';
-    private const PHOTO_STORAGE_DIRECTORY = '/public/uploads/annonces';
+
+    // ====================
+    // ATTRIBUTS
+    // ====================
+
+    private PhotoStorage $photoStorage;
 
     // ====================
     // MÉTHODES
     // ====================
+
+    /**
+     * Rôle : Conserver les dépendances communes et préparer le gestionnaire des fichiers photographiques.
+     * Paramètres : Gestionnaires de base de données et de session partagés avec l'application.
+     * Retour : Aucun.
+     */
+    public function __construct(Database $database, Session $session)
+    {
+        parent::__construct($database, $session);
+        $this->photoStorage = new PhotoStorage();
+    }
 
     /**
      * Rôle : Afficher l'accueil ou renvoyer les résultats actualisés d'une recherche paginée.
@@ -250,7 +268,7 @@ class ListingController extends Controller
         }
 
         foreach ($photoRows as $photo) {
-            $photo['url'] = self::PHOTO_PUBLIC_DIRECTORY . rawurlencode($photo['filename']);
+            $photo['url'] = $this->photoStorage->getPublicUrl($photo['filename']);
             $photos[] = $photo;
         }
 
@@ -950,7 +968,7 @@ class ListingController extends Controller
 
     /**
      * Rôle : Déplacer les photographies validées et enregistrer leurs références ordonnées.
-     * Paramètres : Identifiant de l'annonce, photographies et chemins stockés à compléter.
+     * Paramètres : Identifiant de l'annonce, photographies et noms de fichiers stockés à compléter.
      * Retour : true lorsque toutes les photographies sont enregistrées, sinon false.
      */
     private function storeUploadedPhotos(
@@ -960,31 +978,24 @@ class ListingController extends Controller
         int $startingOrder = 1
     ): bool
     {
-        $directory = dirname(__DIR__, 2) . self::PHOTO_STORAGE_DIRECTORY;
-
         if ($photos === []) {
             return true;
-        }
-
-        if (!is_dir($directory) && !mkdir($directory, 0775, true)) {
-            return false;
-        }
-
-        if (!is_writable($directory)) {
-            return false;
         }
 
         $photoModel = new PhotoModel($this->database);
 
         foreach ($photos as $index => $photo) {
-            $filename = 'annonce-' . $listingId . '-' . bin2hex(random_bytes(12)) . '.' . $photo['extension'];
-            $path = $directory . '/' . $filename;
+            $filename = $this->photoStorage->storeUploadedFile(
+                $listingId,
+                $photo['temporary_path'],
+                $photo['extension']
+            );
 
-            if (!move_uploaded_file($photo['temporary_path'], $path)) {
+            if ($filename === false) {
                 return false;
             }
 
-            $storedFiles[] = $path;
+            $storedFiles[] = $filename;
 
             if (!$photoModel->addPhoto($listingId, $filename, $startingOrder + $index)) {
                 return false;
@@ -996,14 +1007,14 @@ class ListingController extends Controller
 
     /**
      * Rôle : Supprimer les nouveaux fichiers déplacés lorsqu'une création échoue.
-     * Paramètres : Liste de chemins absolus créés pendant la demande.
+     * Paramètres : Liste des noms de fichiers créés pendant la demande.
      * Retour : Aucun.
      */
     private function deleteStoredFiles(array $storedFiles): void
     {
-        foreach ($storedFiles as $path) {
-            if (is_string($path) && is_file($path)) {
-                unlink($path);
+        foreach ($storedFiles as $filename) {
+            if (is_string($filename)) {
+                $this->photoStorage->deleteFile($filename);
             }
         }
     }
@@ -1087,7 +1098,7 @@ class ListingController extends Controller
     private function addPhotoUrls(array $photos): array
     {
         foreach ($photos as &$photo) {
-            $photo['url'] = self::PHOTO_PUBLIC_DIRECTORY . rawurlencode($photo['filename']);
+            $photo['url'] = $this->photoStorage->getPublicUrl($photo['filename']);
         }
         unset($photo);
 
@@ -1133,18 +1144,12 @@ class ListingController extends Controller
      */
     private function deletePhotoFiles(array $photos): void
     {
-        $directory = dirname(__DIR__, 2) . self::PHOTO_STORAGE_DIRECTORY . '/';
-
         foreach ($photos as $photo) {
             if (!isset($photo['filename']) || !is_string($photo['filename'])) {
                 continue;
             }
 
-            $path = $directory . basename($photo['filename']);
-
-            if (is_file($path)) {
-                unlink($path);
-            }
+            $this->photoStorage->deleteFile($photo['filename']);
         }
     }
 
@@ -1481,8 +1486,7 @@ class ListingController extends Controller
             $photoUrl = null;
 
             if (isset($primaryPhotos[$identifier])) {
-                $photoUrl = self::PHOTO_PUBLIC_DIRECTORY
-                    . rawurlencode($primaryPhotos[$identifier]);
+                $photoUrl = $this->photoStorage->getPublicUrl($primaryPhotos[$identifier]);
             }
 
             if (!isset($currentAmountsInEuros[$identifier])) {

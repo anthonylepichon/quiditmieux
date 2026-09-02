@@ -152,7 +152,7 @@ function qdmRenderPhotoPreviews(files) {
         const image = document.createElement('img');
         const label = document.createElement('span');
         const removeButton = document.createElement('button');
-        article.className = 'photo-preview';
+        article.className = 'photo-preview photo-preview--new';
         image.src = URL.createObjectURL(file);
         image.alt = 'Aperçu de ' + file.name;
         label.textContent = 'Photo ' + (activeExistingPhotoCount + index + 1);
@@ -174,6 +174,25 @@ function qdmRenderPhotoPreviews(files) {
 
         article.append(image, label, removeButton);
         qdmPhotoPreviews.append(article);
+    });
+}
+
+/**
+ * Rôle : Distinguer visuellement les photographies conservées de celles dont la suppression est demandée.
+ * Paramètres : Aucun.
+ * Retour : Aucun.
+ */
+function qdmUpdateExistingPhotoAppearance() {
+    qdmExistingPhotoRemovalInputs.forEach(function updateExistingPhoto(input) {
+        if (!(input instanceof HTMLInputElement)) {
+            return;
+        }
+
+        const photoPreview = input.closest('[data-existing-photo]');
+
+        if (photoPreview instanceof HTMLElement) {
+            photoPreview.classList.toggle('photo-preview--removed', input.checked);
+        }
     });
 }
 
@@ -241,9 +260,29 @@ function qdmHandleExistingPhotoChange(event) {
         return;
     }
 
+    qdmUpdateExistingPhotoAppearance();
     qdmRenderPhotoPreviews(qdmSelectedPhotos);
-    qdmSynchronizePhotoInput();
     qdmUpdatePhotoStatus();
+}
+
+/**
+ * Rôle : Confirmer visuellement la prise en compte du formulaire avant son envoi au serveur.
+ * Paramètres : Événement de soumission du formulaire d'annonce.
+ * Retour : Aucun.
+ */
+function qdmHandleListingFormSubmission(event) {
+    const totalPhotoCount = qdmActiveExistingPhotoCount() + qdmSelectedPhotos.length;
+
+    if (totalPhotoCount > 3) {
+        event.preventDefault();
+        qdmPhotoStatus.textContent = 'Capacité atteinte. Supprimez une photo pour en ajouter une autre. La suivante devient principale si la première est supprimée.';
+        return;
+    }
+
+    if (event.submitter instanceof HTMLButtonElement) {
+        event.submitter.disabled = true;
+        event.submitter.textContent = 'Enregistrement en cours…';
+    }
 }
 
 if (qdmPhotoInput && qdmPhotoPreviews && qdmPhotoStatus) {
@@ -251,6 +290,11 @@ if (qdmPhotoInput && qdmPhotoPreviews && qdmPhotoStatus) {
     qdmExistingPhotoRemovalInputs.forEach(function observeExistingPhoto(input) {
         input.addEventListener('change', qdmHandleExistingPhotoChange);
     });
+    qdmUpdateExistingPhotoAppearance();
     qdmUpdatePhotoStatus();
+}
+
+if (qdmListingForm) {
+    qdmListingForm.addEventListener('submit', qdmHandleListingFormSubmission);
 }
 

@@ -3,7 +3,7 @@
 /**
  * Description générale : Modèle parent abstrait et générique de l'application.
  * Rôle : Définir les opérations communes d'accès aux données que les modèles SQL utilisent par héritage.
- * Tâches : Conserver Database, hydrater les objets et exécuter les opérations CRUD génériques.
+ * Tâches : Conserver Database, hydrater les objets et exécuter les opérations d'écriture génériques réellement utilisées.
  * Liens avec les autres fichiers : Est étendu par les modèles enfants et reçoit Database depuis les contrôleurs.
  */
 
@@ -62,74 +62,6 @@ abstract class Model
         }
 
         return null;
-    }
-
-    /**
-     * Rôle : Modifier une valeur lorsque le champ est modifiable et différent de la clé primaire.
-     * Paramètres : Nom du champ et nouvelle valeur.
-     * Retour : true si la valeur est enregistrée dans l'objet, sinon false.
-     */
-    public function setValue(string $field, mixed $value): bool
-    {
-        if ($field === $this->primaryKeyName || !in_array($field, $this->writableFields, true)) {
-            return false;
-        }
-
-        $this->recordData[$field] = $value;
-        return true;
-    }
-
-    /**
-     * Rôle : Rechercher un enregistrement à partir de sa clé primaire.
-     * Paramètres : Identifiant de l'enregistrement.
-     * Retour : Objet du modèle enfant, null si l'enregistrement est absent ou false en cas d'erreur SQL.
-     */
-    public function find(int $identifier): static|false|null
-    {
-        if (!$this->metadataIsValid()) {
-            return false;
-        }
-
-        $sql = 'SELECT * FROM `' . $this->tableName . '`'
-            . ' WHERE `' . $this->primaryKeyName . '` = :identifier LIMIT 1';
-        $data = $this->database->fetchOne($sql, ['identifier' => $identifier]);
-
-        if ($data === false || $data === null) {
-            return $data;
-        }
-
-        if (!is_array($data)) {
-            return false;
-        }
-
-        return new static($this->database, $data);
-    }
-
-    /**
-     * Rôle : Récupérer tous les enregistrements de la table du modèle enfant.
-     * Paramètres : Aucun.
-     * Retour : Tableau d'objets du modèle enfant, éventuellement vide, ou false en cas d'erreur SQL.
-     */
-    public function findAll(): array|false
-    {
-        if (!$this->metadataIsValid()) {
-            return false;
-        }
-
-        $sql = 'SELECT * FROM `' . $this->tableName . '`';
-        $rows = $this->database->fetchAll($sql);
-
-        if ($rows === false) {
-            return false;
-        }
-
-        $models = [];
-
-        foreach ($rows as $row) {
-            $models[] = new static($this->database, $row);
-        }
-
-        return $models;
     }
 
     /**

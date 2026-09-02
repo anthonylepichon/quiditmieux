@@ -184,6 +184,11 @@ class ParticipationController extends Controller
             return;
         }
 
+        if (!$this->database->beginTransaction()) {
+            $this->respond(false, 'Le suivi ne peut pas être actualisé pour le moment.', $listingId, false);
+            return;
+        }
+
         $currentTimeUtc = Clock::nowUtc();
         $listingModel = new ListingModel($this->database);
         $canParticipate = $listingModel->canReceiveParticipationFrom(
@@ -193,6 +198,7 @@ class ParticipationController extends Controller
         );
 
         if ($canParticipate === null) {
+            $this->database->rollback();
             $this->respond(false, 'Le suivi ne peut pas être actualisé pour le moment.', $listingId, false);
             return;
         }
@@ -200,6 +206,8 @@ class ParticipationController extends Controller
         $restriction = $listingModel->getLastParticipationRestriction();
 
         if (!$canParticipate) {
+            $this->database->rollback();
+
             if ($restriction === 'ended') {
                 $this->respond(false, 'Vente terminée', $listingId, false);
             } else {
@@ -221,6 +229,13 @@ class ParticipationController extends Controller
         }
 
         if (!$changed) {
+            $this->database->rollback();
+            $this->respond(false, 'Le suivi ne peut pas être actualisé pour le moment.', $listingId, !$shouldFollow);
+            return;
+        }
+
+        if (!$this->database->commit()) {
+            $this->database->rollback();
             $this->respond(false, 'Le suivi ne peut pas être actualisé pour le moment.', $listingId, !$shouldFollow);
             return;
         }
