@@ -79,6 +79,126 @@ Les contrôleurs héritent de Controller, qui fournit les opérations communes d
 
 Le fichier private/database-secret.php, les photographies téléversées et le cache local ne sont pas versionnés.
 
+## Création de la base de données
+
+Le script suivant crée la base et les cinq tables conformément au MPD. Il peut être exécuté depuis phpMyAdmin ou depuis un client MySQL. Si un autre nom de base est utilisé, il faut modifier les deux premières lignes et reporter ce nom dans private/database-secret.php.
+
+```sql
+CREATE DATABASE IF NOT EXISTS quiditmieux
+    CHARACTER SET utf8mb4
+    COLLATE utf8mb4_unicode_ci;
+
+USE quiditmieux;
+
+CREATE TABLE IF NOT EXISTS UTILISATEUR (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    pseudo VARCHAR(30) NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    PRIMARY KEY (id),
+    CONSTRAINT uq_utilisateur_pseudo UNIQUE (pseudo),
+    CONSTRAINT uq_utilisateur_email UNIQUE (email)
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS ANNONCE (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    utilisateur_id INT UNSIGNED NOT NULL,
+    titre VARCHAR(255) NOT NULL,
+    description TEXT NOT NULL,
+    etat_objet VARCHAR(20) NOT NULL,
+    prix_depart INT UNSIGNED NOT NULL,
+    date_heure_fin DATETIME NOT NULL,
+    categorie_id INT UNSIGNED NOT NULL,
+    PRIMARY KEY (id),
+    INDEX idx_annonce_utilisateur (utilisateur_id),
+    INDEX idx_annonce_date_heure_fin (date_heure_fin),
+    INDEX idx_annonce_categorie_date_fin (categorie_id, date_heure_fin),
+    INDEX idx_annonce_etat_date_fin (etat_objet, date_heure_fin),
+    CONSTRAINT fk_annonce_utilisateur
+        FOREIGN KEY (utilisateur_id)
+        REFERENCES UTILISATEUR (id)
+        ON DELETE RESTRICT
+        ON UPDATE RESTRICT,
+    CONSTRAINT chk_annonce_prix_depart
+        CHECK (prix_depart > 0)
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS PHOTOGRAPHIE (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    annonce_id INT UNSIGNED NOT NULL,
+    ref_fichier VARCHAR(255) NOT NULL,
+    ordre TINYINT UNSIGNED NOT NULL,
+    PRIMARY KEY (id),
+    CONSTRAINT uq_photographie_annonce_ordre
+        UNIQUE (annonce_id, ordre),
+    CONSTRAINT fk_photographie_annonce
+        FOREIGN KEY (annonce_id)
+        REFERENCES ANNONCE (id)
+        ON DELETE CASCADE
+        ON UPDATE RESTRICT,
+    CONSTRAINT chk_photographie_ordre
+        CHECK (ordre BETWEEN 1 AND 3)
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS ENCHERE (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    utilisateur_id INT UNSIGNED NOT NULL,
+    annonce_id INT UNSIGNED NOT NULL,
+    montant INT UNSIGNED NOT NULL,
+    date_heure_enchere DATETIME NOT NULL,
+    PRIMARY KEY (id),
+    INDEX idx_enchere_utilisateur_annonce (utilisateur_id, annonce_id),
+    INDEX idx_enchere_classement (
+        annonce_id,
+        montant DESC,
+        date_heure_enchere,
+        id
+    ),
+    CONSTRAINT fk_enchere_utilisateur
+        FOREIGN KEY (utilisateur_id)
+        REFERENCES UTILISATEUR (id)
+        ON DELETE RESTRICT
+        ON UPDATE RESTRICT,
+    CONSTRAINT fk_enchere_annonce
+        FOREIGN KEY (annonce_id)
+        REFERENCES ANNONCE (id)
+        ON DELETE RESTRICT
+        ON UPDATE RESTRICT,
+    CONSTRAINT chk_enchere_montant
+        CHECK (montant > 0)
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS ASSOC_UTILISATEUR_ANNONCE (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    utilisateur_id INT UNSIGNED NOT NULL,
+    annonce_id INT UNSIGNED NOT NULL,
+    PRIMARY KEY (id),
+    CONSTRAINT uq_assoc_utilisateur_annonce
+        UNIQUE (utilisateur_id, annonce_id),
+    INDEX idx_assoc_utilisateur_annonce_annonce (annonce_id),
+    CONSTRAINT fk_assoc_utilisateur_annonce_utilisateur
+        FOREIGN KEY (utilisateur_id)
+        REFERENCES UTILISATEUR (id)
+        ON DELETE CASCADE
+        ON UPDATE RESTRICT,
+    CONSTRAINT fk_assoc_utilisateur_annonce_annonce
+        FOREIGN KEY (annonce_id)
+        REFERENCES ANNONCE (id)
+        ON DELETE CASCADE
+        ON UPDATE RESTRICT
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COLLATE=utf8mb4_unicode_ci;
+```
+
 ## Styles
 
 Les styles sont écrits dans resources/scss puis compilés vers public/assets/css/main.css :
