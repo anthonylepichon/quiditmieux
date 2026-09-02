@@ -1821,15 +1821,13 @@ main:has(.home-hero)::before {
 }
 
 .pagination {
-  position: absolute;
-  top: -0.5rem;
-  right: 0;
   display: flex;
-  width: auto;
   height: 3.25rem;
   align-items: center;
   justify-content: center;
+  flex-wrap: wrap;
   gap: 0.5rem;
+  margin-top: 2rem;
 }
 
 .pagination:empty {
@@ -2619,7 +2617,7 @@ main:has(.home-hero)::before {
 
 .listing-detail__hero {
   display: grid;
-  height: 37.5rem;
+  min-height: 37.5rem;
   grid-template-columns: 38.75rem 33.75rem;
   gap: 2.5rem;
   margin-top: 1.625rem;
@@ -2630,6 +2628,12 @@ main:has(.home-hero)::before {
   position: relative;
   height: 37.5rem;
   overflow: hidden;
+}
+
+.listing-gallery {
+  height: auto;
+  min-height: 37.5rem;
+  padding: 28.9375rem 1.4375rem 1.4375rem;
 }
 
 .listing-gallery__viewport,
@@ -2736,10 +2740,8 @@ main:has(.home-hero)::before {
 }
 
 .listing-gallery__description {
-  position: absolute;
-  top: 28.9375rem;
-  left: 1.4375rem;
-  width: 35.625rem;
+  position: static;
+  width: auto;
 }
 
 .listing-gallery__description h2 {
@@ -2749,12 +2751,11 @@ main:has(.home-hero)::before {
 }
 
 .listing-gallery__description > p:not(.listing-gallery__metadata) {
-  max-height: 2.75rem;
   margin-top: 0.75rem;
-  overflow: hidden;
   color: var(--color-text-secondary);
   font-size: 0.9375rem;
   line-height: normal;
+  overflow-wrap: anywhere;
 }
 
 .listing-gallery__metadata {
@@ -3042,7 +3043,9 @@ main:has(.home-hero)::before {
 
 @media (min-width: 64.0625rem) {
   .listing-detail__hero:has(.bid-form):has(.listing-summary__owner-copy),
-  .listing-detail__hero:has(.bid-form):has(.listing-summary__owner-copy) .listing-gallery,
+  .listing-detail__hero:has(.bid-form):has(.listing-summary__owner-copy) .listing-gallery {
+    min-height: 42rem;
+  }
   .listing-detail__hero:has(.bid-form):has(.listing-summary__owner-copy) .listing-summary {
     height: 42rem;
   }
