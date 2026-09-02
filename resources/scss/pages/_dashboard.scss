@@ -101,8 +101,8 @@
 
 .dashboard-zone {
   position: relative;
-  height: 15rem;
-  overflow: hidden;
+  min-height: 15rem;
+  padding: 5.4375rem 1.9375rem 1.9375rem;
   border: 0.0625rem solid var(--color-border-default);
   border-radius: 1.375rem;
 }
@@ -147,30 +147,17 @@
 }
 
 .dashboard-grid {
-  position: absolute;
-  top: 5.4375rem;
-  left: 1.9375rem;
   display: grid;
-  width: 71rem;
-  height: 7.5rem;
-  grid-auto-columns: 71rem;
-  grid-auto-flow: column;
+  width: 100%;
+  grid-template-columns: minmax(0, 1fr);
   gap: 0.75rem;
-  overflow-x: auto;
-}
-
-.dashboard-zone--populated .dashboard-grid {
-  left: 2.4375rem;
-  width: 70rem;
-  height: 8rem;
-  grid-auto-columns: 70rem;
 }
 
 .dashboard-zone__empty {
   grid-column: 1 / -1;
   display: flex;
   width: 100%;
-  height: 7.5rem;
+  min-height: 7.5rem;
   align-items: center;
   gap: 1.25rem;
   padding: 1.25rem 1.75rem;
@@ -202,13 +189,12 @@
 
 .dashboard-card {
   display: grid;
-  width: 70rem;
-  height: 8rem;
+  width: 100%;
+  min-height: 8rem;
   grid-template-columns: 6rem 26.875rem 10rem 11.25rem;
   align-items: center;
   gap: 1.25rem;
   padding: 1rem 1.25rem 1rem 1rem;
-  overflow: hidden;
   border: 0.0625rem solid var(--color-border-default);
   border-radius: var(--radius-card);
   background: var(--color-surface);
@@ -291,20 +277,6 @@
     left: auto;
   }
 
-  .dashboard-grid {
-    right: 1.5rem;
-    left: 1.5rem;
-    width: auto;
-    grid-auto-columns: min(44rem, calc(100vw - 6rem));
-  }
-
-  .dashboard-zone--populated .dashboard-grid {
-    right: 1.5rem;
-    left: 1.5rem;
-    width: auto;
-    grid-auto-columns: min(44rem, calc(100vw - 6rem));
-  }
-
   .dashboard-card {
     width: 100%;
     grid-template-columns: 6rem minmax(0, 1fr) 8rem;
@@ -319,14 +291,6 @@
   .dashboard__heading > img,
   .dashboard__metrics {
     display: none;
-  }
-
-  .dashboard-grid {
-    grid-auto-columns: calc(100vw - 5rem);
-  }
-
-  .dashboard-zone--populated .dashboard-grid {
-    grid-auto-columns: calc(100vw - 5rem);
   }
 
   .dashboard-card {
