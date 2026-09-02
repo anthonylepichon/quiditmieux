@@ -91,7 +91,7 @@
   font-size: 0.8125rem;
 }
 
-.listing-form-panel > form {
+.listing-form-panel > form[data-listing-form] {
   position: absolute;
   inset: 0;
   margin: 0;
@@ -367,7 +367,7 @@
 
   .listing-form-panel__introduction,
   .listing-form-panel > .alert,
-  .listing-form-panel > form,
+  .listing-form-panel > form[data-listing-form],
   .listing-form-grid .form-field,
   .photo-manager,
   .listing-form-actions {
@@ -377,7 +377,7 @@
   }
 
   .listing-form-panel > .alert,
-  .listing-form-panel > form {
+  .listing-form-panel > form[data-listing-form] {
     margin-top: 1rem;
   }
 
