@@ -2972,6 +2972,29 @@ main:has(.home-hero)::before {
   top: 31.375rem;
 }
 
+.listing-summary:has(.bid-form):has(.listing-summary__owner-copy) .listing-summary__owner-copy {
+  top: 21.75rem;
+}
+
+.listing-summary:has(.bid-form):has(.listing-summary__owner-copy) .bid-form {
+  top: 25.125rem;
+}
+
+.listing-summary:has(.bid-form):has(.listing-summary__owner-copy) .listing-summary__actions {
+  top: 35.625rem;
+}
+
+.listing-summary:has(.bid-form):has(.listing-summary__owner-copy) > [data-participation-status] {
+  top: 39.375rem;
+}
+
+@media (min-width: 64.0625rem) {
+  .listing-detail__hero:has(.bid-form):has(.listing-summary__owner-copy),
+  .listing-detail__hero:has(.bid-form):has(.listing-summary__owner-copy) .listing-gallery,
+  .listing-detail__hero:has(.bid-form):has(.listing-summary__owner-copy) .listing-summary {
+    height: 42rem;
+  }
+}
 .bid-history {
   position: relative;
   height: 33.75rem;
@@ -3107,6 +3130,9 @@ main:has(.home-hero)::before {
   .listing-summary,
   .bid-history {
     min-height: 37.5rem;
+  }
+  .listing-summary:has(.bid-form):has(.listing-summary__owner-copy) {
+    min-height: 42rem;
   }
   .bid-history__locked,
   .bid-history__content,
