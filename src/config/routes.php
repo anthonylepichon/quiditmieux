@@ -8,6 +8,7 @@
  */
 
 use App\controllers\AuthController;
+use App\controllers\LegalController;
 use App\controllers\ListingController;
 use App\controllers\ParticipationController;
 use App\controllers\UserController;
@@ -18,6 +19,12 @@ return [
         'controller' => ListingController::class,
         'action' => 'search',
         'response' => 'HTML ou JSON selon le paramètre de format',
+    ],
+    'privacy' => [
+        'method' => 'GET',
+        'controller' => LegalController::class,
+        'action' => 'showPrivacyPolicy',
+        'response' => 'HTML',
     ],
     'listing_detail' => [
         'method' => 'GET',

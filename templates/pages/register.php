@@ -48,6 +48,7 @@ $isConnected = false;
 $currentPage = 'register';
 $pageTitle = 'Créer un compte — QUIDITMIEUX';
 $pageDescription = 'Créez votre compte QUIDITMIEUX.';
+$pageScripts = ['public/assets/js/register.js'];
 ?>
 <main class="auth-page auth-page--register container">
         <section class="auth-card auth-card--register glass-panel" aria-labelledby="register-title">
@@ -109,10 +110,18 @@ $pageDescription = 'Créez votre compte QUIDITMIEUX.';
                     <p>Pseudo : 3 à 30 caractères, lettres, chiffres, _ ou -, sans espace ni @.</p>
                     <p>Mot de passe : 8 caractères minimum avec majuscule, minuscule, chiffre et caractère spécial.</p>
                 </div>
+                <div class="privacy-consent form-field">
+                    <label class="privacy-consent__label" for="privacy-policy">
+                        <input id="privacy-policy" name="privacy_policy" type="checkbox" value="1" required data-privacy-policy aria-describedby="privacy-policy-error" <?= !empty($values['privacy_policy']) ? 'checked' : '' ?>>
+                        <span>J’ai lu et j’accepte la <a href="index.php?route=privacy">politique de confidentialité</a>.</span>
+                    </label>
+                    <span class="form-field__error" id="privacy-policy-error"><?= isset($errors['privacy_policy']) ? htmlspecialchars((string) $errors['privacy_policy'], ENT_QUOTES, 'UTF-8') : '' ?></span>
+                </div>
                 <div class="auth-card__actions">
-                    <button class="button button--primary" type="submit">Créer mon compte</button>
+                    <button class="button button--primary" type="submit" data-register-button disabled aria-disabled="true">Créer mon compte</button>
                     <a href="index.php?route=login_form">Déjà inscrit ?  Se connecter →</a>
                 </div>
+                <noscript><p class="auth-card__noscript">JavaScript doit être activé pour confirmer la politique de confidentialité et créer le compte.</p></noscript>
             </form>
             <?php else: ?>
                 <div class="auth-confirmation auth-confirmation--register" role="status" aria-labelledby="register-confirmation-title">
