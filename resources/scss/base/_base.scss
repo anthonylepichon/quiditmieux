@@ -17,6 +17,10 @@ body {
   overflow-x: clip;
 }
 
+html {
+  scroll-padding-top: 8.5rem;
+}
+
 body {
   min-width: 20rem;
   min-height: 100vh;
