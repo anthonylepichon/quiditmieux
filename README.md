@@ -399,6 +399,34 @@ Les livrables validés qui ont guidé le développement sont conservés dans doc
 
 [![Aperçu du MPD](<documents/conceptualisation/Modèles de données/MPD.png>)](<documents/conceptualisation/Modèles de données/MPD.png>)
 
+## Diagrammes de classes UML
+
+Les diagrammes suivants présentent l’architecture de l’application sous plusieurs angles afin de conserver des schémas lisibles. Chaque aperçu est cliquable pour ouvrir l’image en taille réelle. Le fichier modifiable est disponible dans [Diagramme de classe UML - QDM.drawio](<documents/readme/Diagramme de classe UML - QDM.drawio>).
+
+### 1. Vue générale
+
+[![Diagramme UML — Vue générale](<documents/readme/01 - UML - Vue générale - QDM.png>)](<documents/readme/01 - UML - Vue générale - QDM.png>)
+
+### 2. Socle technique
+
+[![Diagramme UML — Socle technique](<documents/readme/02 - UML - Socle technique - QDM.png>)](<documents/readme/02 - UML - Socle technique - QDM.png>)
+
+### 3. Comptes et authentification
+
+[![Diagramme UML — Comptes et authentification](<documents/readme/03 - UML - Compte et authentification - QDM.png>)](<documents/readme/03 - UML - Compte et authentification - QDM.png>)
+
+### 4. Annonces et photographies
+
+[![Diagramme UML — Annonces et photographies](<documents/readme/04 - UML - Annonces et photographie - QDM.png>)](<documents/readme/04 - UML - Annonces et photographie - QDM.png>)
+
+### 5. Suivis et enchères
+
+[![Diagramme UML — Suivis et enchères](<documents/readme/05 - UML - Suivis et enchères - QDM.png>)](<documents/readme/05 - UML - Suivis et enchères - QDM.png>)
+
+### 6. Templates et vues
+
+[![Diagramme UML — Templates et vues](<documents/readme/06 - Templates - QDM.png>)](<documents/readme/06 - Templates - QDM.png>)
+
 ## Limites du périmètre
 
 Le projet ne prend pas en charge le paiement, la livraison, la messagerie, la modération, la récupération d’un mot de passe oublié ni la suppression autonome d’un compte. La politique de confidentialité précise que les demandes relatives aux données sont traitées manuellement dans cette version pédagogique.
