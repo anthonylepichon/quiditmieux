@@ -231,25 +231,6 @@ class BidModel extends Model
     }
 
     /**
-     * Rôle : Indiquer si une annonce possède déjà au moins une enchère.
-     * Paramètres : Identifiant de l'annonce.
-     * Retour : true si une enchère existe, false sinon, ou null en cas d'erreur SQL.
-     */
-    public function listingHasBid(int $listingId): ?bool
-    {
-        $bid = $this->database->fetchOne(
-            'SELECT 1 AS found FROM `ENCHERE` WHERE annonce_id = :listing_id LIMIT 1',
-            ['listing_id' => $listingId]
-        );
-
-        if ($bid === false) {
-            return null;
-        }
-
-        return $bid !== null;
-    }
-
-    /**
      * Rôle : Enregistrer une enchère validée par le modèle dans la transaction en cours.
      * Paramètres : Identifiants, montant proposé en euros et instant UTC de référence.
      * Retour : true lorsque l'enchère est enregistrée, sinon false.

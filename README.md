@@ -55,7 +55,7 @@ Les contrôleurs héritent de Controller, qui fournit les opérations communes d
 
 ### Prérequis
 
-- PHP 8.3 avec les extensions PDO MySQL, cURL, mbstring et fileinfo ;
+- PHP 8.1 avec les extensions PDO MySQL, cURL, mbstring et fileinfo ;
 - MySQL ou MariaDB ;
 - Composer ;
 - un serveur Web local tel que Laragon ;
@@ -203,7 +203,7 @@ CREATE TABLE IF NOT EXISTS ASSOC_UTILISATEUR_ANNONCE (
 
 Le script ci-dessous correspond au jeu de données local utilisé pour la démonstration. Il doit être exécuté après la création des tables et sur des tables vides, car les identifiants sont conservés pour respecter toutes les relations.
 
-Les neuf comptes utilisent le même mot de passe de démonstration : **DemoQdm1!**
+Les neuf comptes utilisent le même mot de passe de démonstration : DemoQdm1!
 
 Les adresses utilisent le domaine réservé example.test et ne correspondent pas à des boîtes électroniques réelles. Le neuvième compte local a été anonymisé avant publication afin de ne pas placer de donnée personnelle dans le dépôt.
 
@@ -212,7 +212,7 @@ Les noms enregistrés dans PHOTOGRAPHIE correspondent aux images de démonstrati
 ```sql
 START TRANSACTION;
 
-INSERT INTO utilisateur (id, pseudo, email, password_hash) VALUES
+INSERT INTO UTILISATEUR (id, pseudo, email, password_hash) VALUES
     (1, 'AliceDemo', 'alice.demo@example.test', '$2y$10$XMU1YsfZQYFiJ2bVtiU5LODm6/o6JobyKC172sdDUshQM37898NrC'),
     (2, 'BilalDemo', 'bilal.demo@example.test', '$2y$10$XMU1YsfZQYFiJ2bVtiU5LODm6/o6JobyKC172sdDUshQM37898NrC'),
     (3, 'ChloeDemo', 'chloe.demo@example.test', '$2y$10$XMU1YsfZQYFiJ2bVtiU5LODm6/o6JobyKC172sdDUshQM37898NrC'),
@@ -223,7 +223,7 @@ INSERT INTO utilisateur (id, pseudo, email, password_hash) VALUES
     (8, 'HanaDemo', 'hana.demo@example.test', '$2y$10$XMU1YsfZQYFiJ2bVtiU5LODm6/o6JobyKC172sdDUshQM37898NrC'),
     (9, 'IrisDemo', 'iris.demo@example.test', '$2y$10$XMU1YsfZQYFiJ2bVtiU5LODm6/o6JobyKC172sdDUshQM37898NrC');
 
-INSERT INTO annonce (id, utilisateur_id, titre, description, etat_objet, prix_depart, date_heure_fin, categorie_id) VALUES
+INSERT INTO ANNONCE (id, utilisateur_id, titre, description, etat_objet, prix_depart, date_heure_fin, categorie_id) VALUES
     (1, 1, 'Vélo de ville restauré', 'Vélo confortable révisé et prêt à rouler.', 'très bon état', 120, '2026-09-11 16:55:10', 17),
     (2, 1, 'Console rétro avec deux manettes', 'Console fonctionnelle fournie avec ses câbles et deux manettes.', 'bon état', 40, '2026-09-04 16:55:10', 14),
     (3, 1, 'Vase ancien décoratif', 'Vase ancien en bon état général avec quelques traces du temps.', 'bon état', 60, '2026-08-27 16:55:10', 20),
@@ -245,7 +245,7 @@ INSERT INTO annonce (id, utilisateur_id, titre, description, etat_objet, prix_de
     (19, 6, 'Coffre de toit compact', 'Coffre avec fixations et double des clés.', 'bon état', 90, '2026-08-26 16:55:10', 18),
     (20, 7, 'Gravure numérotée', 'Gravure encadrée et numérotée en série limitée.', 'très bon état', 70, '2026-08-24 16:55:10', 20);
 
-INSERT INTO photographie (id, annonce_id, ref_fichier, ordre) VALUES
+INSERT INTO PHOTOGRAPHIE (id, annonce_id, ref_fichier, ordre) VALUES
     (1, 1, 'demo-velo-ville-1.jpg', 1),
     (2, 1, 'demo-velo-ville-2.jpg', 2),
     (3, 2, 'demo-console-retro-1.jpg', 1),
@@ -272,7 +272,7 @@ INSERT INTO photographie (id, annonce_id, ref_fichier, ordre) VALUES
     (24, 16, 'demo-bmx-2.jpg', 2),
     (25, 17, 'demo-montre-automatique-1.jpg', 1);
 
-INSERT INTO enchere (id, utilisateur_id, annonce_id, montant, date_heure_enchere) VALUES
+INSERT INTO ENCHERE (id, utilisateur_id, annonce_id, montant, date_heure_enchere) VALUES
     (1, 2, 2, 55, '2026-08-26 16:55:10'),
     (2, 3, 2, 70, '2026-08-27 16:55:10'),
     (3, 3, 3, 80, '2026-08-25 16:55:10'),
@@ -305,7 +305,7 @@ INSERT INTO enchere (id, utilisateur_id, annonce_id, montant, date_heure_enchere
     (30, 8, 19, 130, '2026-08-25 16:55:10'),
     (31, 9, 13, 50, '2026-08-31 22:09:12');
 
-INSERT INTO assoc_utilisateur_annonce (id, utilisateur_id, annonce_id) VALUES
+INSERT INTO ASSOC_UTILISATEUR_ANNONCE (id, utilisateur_id, annonce_id) VALUES
     (1, 3, 1),
     (2, 2, 2),
     (3, 4, 1),
@@ -401,7 +401,7 @@ Les livrables validés qui ont guidé le développement sont conservés dans doc
 
 ## Diagrammes de classes UML
 
-Les diagrammes suivants présentent l’architecture de l’application sous plusieurs angles afin de conserver des schémas lisibles. Chaque aperçu est cliquable pour ouvrir l’image en taille réelle. Le fichier modifiable est disponible dans [Diagramme de classe UML - QDM.drawio](<documents/readme/Diagramme de classe UML - QDM.drawio>).
+Les diagrammes suivants présentent l’architecture de l’application sous plusieurs angles afin de conserver des schémas lisibles. Chaque aperçu est cliquable pour ouvrir l’image en taille réelle.
 
 ### 1. Vue générale
 

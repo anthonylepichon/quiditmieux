@@ -239,7 +239,8 @@ class Database
             return false;
         }
 
-        if (!is_string($databaseConfig['host'])
+        if (
+            !is_string($databaseConfig['host'])
             || (!is_int($databaseConfig['port']) && !is_string($databaseConfig['port']))
             || !is_string($databaseConfig['database'])
             || !is_string($databaseConfig['charset'])

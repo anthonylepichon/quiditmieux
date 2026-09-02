@@ -324,18 +324,6 @@ class ListingModel extends Model
     }
 
     /**
-     * Rôle : Verrouiller et récupérer une annonce pendant une opération concurrente.
-     * Paramètres : Identifiant de l'annonce.
-     * Retour : Données verrouillées, null si elles sont absentes ou false en cas d'erreur SQL.
-     */
-    public function getForUpdate(int $listingId): array|false|null
-    {
-        $sql = 'SELECT id, utilisateur_id, prix_depart, date_heure_fin FROM `ANNONCE`'
-            . ' WHERE id = :listing_id LIMIT 1 FOR UPDATE';
-        return $this->database->fetchOne($sql, ['listing_id' => $listingId]);
-    }
-
-    /**
      * Rôle : Récupérer les annonces vendues par l'utilisateur avec leur prix courant.
      * Paramètres : Identifiant de l'utilisateur connecté et instant UTC de référence.
      * Retour : Liste des ventes ou false en cas d'erreur SQL.
