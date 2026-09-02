@@ -1,6 +1,6 @@
-<mxfile host="app.diagrams.net" compressed="false">
+<mxfile host="Electron" compressed="false">
   <diagram name="MPD" id="quiditmieux-mpd-simplifie">
-    <mxGraphModel dx="1179" dy="737" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+    <mxGraphModel dx="3590" dy="914" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -70,7 +70,7 @@
         <mxCell id="listing_end" parent="table_listing" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=12;" value="date_heure_fin : DATETIME" vertex="1">
           <mxGeometry height="24" width="260" x="20" y="230" as="geometry" />
         </mxCell>
-        <mxCell id="listing_category" parent="table_listing" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=12;" value="categorie_id : INT (Clé étrangère)" vertex="1">
+        <mxCell id="listing_category" parent="table_listing" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=12;" value="categorie_id : INT (API externe)" vertex="1">
           <mxGeometry height="24" width="260" x="20" y="261" as="geometry" />
         </mxCell>
         <mxCell id="HstdUK0sLIduTE6p3Ptb-1" parent="table_listing" style="text;align=left;verticalAlign=middle;fontSize=12;fontFamily=Helvetica;fontStyle=2" value="idx_annonce_utilisateur (utilisateur_id)" vertex="1">
