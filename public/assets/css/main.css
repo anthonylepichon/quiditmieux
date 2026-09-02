@@ -3508,16 +3508,6 @@ main:has(.home-hero)::before {
   order: 1;
 }
 
-.photo-preview--removed {
-  order: 2;
-  border-style: dashed;
-  opacity: 0.55;
-}
-
-.photo-preview--removed img {
-  filter: grayscale(1);
-}
-
 .photo-preview img {
   width: 100%;
   height: 6rem;

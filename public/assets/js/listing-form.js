@@ -12,6 +12,7 @@ const qdmPhotoTitle = document.querySelector('[data-photo-title]');
 const qdmPhotoCounter = document.querySelector('[data-photo-counter]');
 const qdmPhotoTileStatus = document.querySelector('[data-photo-tile-status]');
 const qdmExistingPhotoRemovalInputs = document.querySelectorAll('input[name="remove_photos[]"]');
+const qdmExistingPhotoRemovalButtons = document.querySelectorAll('[data-remove-existing-photo]');
 const qdmListingForm = document.querySelector('[data-listing-form]');
 let qdmIsEditMode = false;
 let qdmSelectedPhotos = [];
@@ -178,7 +179,7 @@ function qdmRenderPhotoPreviews(files) {
 }
 
 /**
- * Rôle : Distinguer visuellement les photographies conservées de celles dont la suppression est demandée.
+ * Rôle : Masquer les photographies existantes dont la suppression est demandée.
  * Paramètres : Aucun.
  * Retour : Aucun.
  */
@@ -191,9 +192,30 @@ function qdmUpdateExistingPhotoAppearance() {
         const photoPreview = input.closest('[data-existing-photo]');
 
         if (photoPreview instanceof HTMLElement) {
-            photoPreview.classList.toggle('photo-preview--removed', input.checked);
+            photoPreview.hidden = input.checked;
         }
     });
+}
+
+/**
+ * Rôle : Retirer une photographie existante avec le même bouton que pour une nouvelle photographie.
+ * Paramètres : Événement de clic sur le bouton Supprimer.
+ * Retour : Aucun.
+ */
+function qdmHandleExistingPhotoRemoval(event) {
+    if (!(event.currentTarget instanceof HTMLButtonElement)) {
+        return;
+    }
+
+    const photoPreview = event.currentTarget.closest('[data-existing-photo]');
+    const removalInput = photoPreview?.querySelector('input[name="remove_photos[]"]');
+
+    if (!(removalInput instanceof HTMLInputElement)) {
+        return;
+    }
+
+    removalInput.checked = true;
+    removalInput.dispatchEvent(new Event('change', { bubbles: true }));
 }
 
 /**
@@ -247,8 +269,8 @@ function qdmHandlePhotoSelection(event) {
 }
 
 /**
- * Rôle : Réagir au retrait ou au rétablissement d'une photographie existante.
- * Paramètres : Événement de changement de la case de retrait.
+ * Rôle : Réagir au retrait d'une photographie existante.
+ * Paramètres : Événement de changement du champ technique de retrait.
  * Retour : Aucun.
  */
 function qdmHandleExistingPhotoChange(event) {
@@ -289,6 +311,9 @@ if (qdmPhotoInput && qdmPhotoPreviews && qdmPhotoStatus) {
     qdmPhotoInput.addEventListener('change', qdmHandlePhotoSelection);
     qdmExistingPhotoRemovalInputs.forEach(function observeExistingPhoto(input) {
         input.addEventListener('change', qdmHandleExistingPhotoChange);
+    });
+    qdmExistingPhotoRemovalButtons.forEach(function observeExistingPhotoRemoval(button) {
+        button.addEventListener('click', qdmHandleExistingPhotoRemoval);
     });
     qdmUpdateExistingPhotoAppearance();
     qdmUpdatePhotoStatus();
