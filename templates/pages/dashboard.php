@@ -71,7 +71,9 @@ if ($data['wins'] !== []) {
                 <h1>Tableau de bord</h1>
                 <p>Vos ventes, vos annonces suivies et vos enchères réunies au même endroit.</p>
                 <ul class="dashboard__metrics" aria-label="Rubriques du tableau de bord">
-                    <li>Mes ventes</li><li>Suivis &amp; enchères</li><li>Remportées</li>
+                    <li><a href="#dashboard-sales">Mes ventes</a></li>
+                    <li><a href="#dashboard-participations">Suivis &amp; enchères</a></li>
+                    <li><a href="#dashboard-wins">Remportées</a></li>
                 </ul>
             </div>
             <img src="public/assets/images/illustrations/growth-chart.png" alt="" width="180" height="160">
@@ -83,7 +85,7 @@ if ($data['wins'] !== []) {
         <p class="dashboard__status" data-dashboard-status role="status"></p>
 
         <?php foreach ($zones as $zone): ?>
-            <section class="dashboard-zone <?= $zone['class'] ?><?php if ($data[$zone['key']] !== []): ?> dashboard-zone--populated<?php endif; ?>" aria-labelledby="<?= $zone['key'] ?>-title">
+            <section class="dashboard-zone <?= $zone['class'] ?><?php if ($data[$zone['key']] !== []): ?> dashboard-zone--populated<?php endif; ?>" id="dashboard-<?= $zone['key'] ?>" aria-labelledby="<?= $zone['key'] ?>-title">
                 <img class="dashboard-zone__asset" src="public/assets/images/illustrations/<?= htmlspecialchars($zone['asset'], ENT_QUOTES, 'UTF-8') ?>" alt="" width="54" height="54">
                 <div class="dashboard-zone__heading">
                     <h2 id="<?= $zone['key'] ?>-title"><?= htmlspecialchars($zone['title'], ENT_QUOTES, 'UTF-8') ?></h2>
