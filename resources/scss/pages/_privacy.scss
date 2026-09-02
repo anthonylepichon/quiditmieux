@@ -1,0 +1,128 @@
+/*
+ * Description générale :
+ * Mise en page de la politique de confidentialité.
+ *
+ * Rôle :
+ * Présenter une information légale longue de manière claire et accessible.
+ *
+ * Tâches :
+ * Organiser le titre, le sommaire, les sections, les listes et le tableau récapitulatif.
+ *
+ * Liens avec les autres fichiers :
+ * Complète les composants communs pour privacy.php.
+ */
+
+.privacy-page {
+  padding-block: 1rem 4rem;
+}
+
+.privacy-hero {
+  padding: 2.5rem;
+  border: 0.0625rem solid var(--color-border-accent);
+  border-radius: 1.75rem;
+  background: var(--color-surface-accent-soft);
+}
+
+.privacy-hero h1 {
+  margin-top: 0.75rem;
+  color: var(--color-text-brand);
+  font-size: clamp(2rem, 4vw, 3.25rem);
+}
+
+.privacy-hero > p:not(.eyebrow) {
+  max-width: 52rem;
+  margin-top: 0.75rem;
+  color: var(--color-text-secondary);
+}
+
+.privacy-hero .privacy-hero__date {
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.privacy-content {
+  display: grid;
+  gap: 2.25rem;
+  margin-top: 1.5rem;
+  padding: 2.5rem;
+}
+
+.privacy-content section {
+  scroll-margin-top: 2rem;
+}
+
+.privacy-content h2 {
+  margin-bottom: 0.75rem;
+  color: var(--color-text-brand);
+  font-size: 1.5rem;
+}
+
+.privacy-content p,
+.privacy-content li {
+  color: var(--color-text-secondary);
+  line-height: 1.65;
+}
+
+.privacy-content p + p,
+.privacy-content p + ul,
+.privacy-content ul + p {
+  margin-top: 0.75rem;
+}
+
+.privacy-content ul,
+.privacy-summary ol {
+  display: grid;
+  gap: 0.5rem;
+  padding-left: 1.5rem;
+}
+
+.privacy-content a {
+  color: var(--color-text-action);
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.privacy-summary {
+  padding: 1.5rem;
+  border: 0.0625rem solid var(--color-border-accent);
+  border-radius: 1.25rem;
+  background: var(--color-surface-accent-soft);
+}
+
+.privacy-table-wrapper {
+  overflow-x: auto;
+  margin-top: 1rem;
+}
+
+.privacy-content table {
+  width: 100%;
+  min-width: 42rem;
+  border-collapse: collapse;
+}
+
+.privacy-content th,
+.privacy-content td {
+  padding: 1rem;
+  border: 0.0625rem solid var(--color-border-default);
+  color: var(--color-text-secondary);
+  line-height: 1.45;
+  text-align: left;
+  vertical-align: top;
+}
+
+.privacy-content th {
+  background: var(--color-surface-accent-soft);
+  color: var(--color-text-brand);
+}
+
+@media (max-width: 40rem) {
+  .privacy-page {
+    padding-block: 0.5rem 2.5rem;
+  }
+
+  .privacy-hero,
+  .privacy-content {
+    padding: 1.5rem;
+  }
+}

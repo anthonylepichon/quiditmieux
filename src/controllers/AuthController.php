@@ -42,7 +42,15 @@ class AuthController extends Controller
         $password = $this->readPostString('password');
         $confirmation = $this->readPostString('password_confirmation');
         $honeypot = $this->readPostString('website');
-        $errors = $this->validateRegistration($values, $password, $confirmation, $honeypot);
+        $privacyPolicyAccepted = $this->readPostString('privacy_policy') === '1';
+        $values['privacy_policy'] = $privacyPolicyAccepted;
+        $errors = $this->validateRegistration(
+            $values,
+            $password,
+            $confirmation,
+            $honeypot,
+            $privacyPolicyAccepted
+        );
         $userModel = new UserModel($this->database);
 
         if ($errors === []) {
@@ -212,14 +220,15 @@ class AuthController extends Controller
 
     /**
      * Rôle : Appliquer toutes les règles de validation du formulaire d'inscription.
-     * Paramètres : Valeurs publiques, mot de passe, confirmation et champ anti-robot.
+     * Paramètres : Valeurs publiques, mot de passe, confirmation, champ anti-robot et acceptation de la politique.
      * Retour : Erreurs indexées par champ, éventuellement vides.
      */
     private function validateRegistration(
         array &$values,
         string $password,
         string $confirmation,
-        string $honeypot
+        string $honeypot,
+        bool $privacyPolicyAccepted
     ): array {
         $errors = [];
         $values['pseudo'] = trim((string) $values['pseudo']);
@@ -247,6 +256,10 @@ class AuthController extends Controller
 
         if ($confirmation === '' || !hash_equals($password, $confirmation)) {
             $errors['password_confirmation'] = 'La confirmation ne correspond pas.';
+        }
+
+        if (!$privacyPolicyAccepted) {
+            $errors['privacy_policy'] = 'Vous devez accepter la politique de confidentialité.';
         }
 
         return $errors;
