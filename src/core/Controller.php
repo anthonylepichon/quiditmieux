@@ -275,6 +275,16 @@ abstract class Controller
     }
 
     /**
+     * Rôle : Formater un montant entier en euros pour l’affichage.
+     * Paramètres : Montant exprimé en euros entiers.
+     * Retour : Montant lisible avec le symbole euro.
+     */
+    protected function formatEuros(int $amount): string
+    {
+        return number_format($amount, 0, ',', ' ') . ' €';
+    }
+
+    /**
      * Rôle : Formater une date avec un mois français complet ou abrégé.
      * Paramètres : Date en heure locale et présence souhaitée de l'année.
      * Retour : Date lisible en français sans indication de l'heure.

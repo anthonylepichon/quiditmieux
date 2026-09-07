@@ -11,7 +11,6 @@ namespace App\controllers;
 
 use App\core\Clock;
 use App\core\Controller;
-use App\core\Money;
 use App\models\BidModel;
 use App\models\FollowModel;
 use App\models\ListingModel;
@@ -39,9 +38,13 @@ class ParticipationController extends Controller
             return;
         }
 
-        $amountInEuros = Money::userInputToEuros($amountText);
+        $amountInEuros = null;
 
-        if ($amountInEuros === null) {
+        if (preg_match('/^[0-9]+$/D', $amountText) === 1) {
+            $amountInEuros = (int) $amountText;
+        }
+
+        if ($amountInEuros === null || $amountInEuros > 99_999) {
             $this->respondBid(false, 'Enchère refusée', $listingId);
             return;
         }
@@ -101,7 +104,7 @@ class ParticipationController extends Controller
         if (!$decision['accepted']) {
             $this->database->rollback();
             $message = 'Montant insuffisant : minimum '
-                . Money::formatEurosForDisplay($minimumBidInEuros)
+                . $this->formatEuros($minimumBidInEuros)
                 . '.';
             $this->respondBid(false, $message, $listingId, $summary, $minimumBidInEuros, $amountInEuros);
             return;
@@ -296,7 +299,7 @@ class ParticipationController extends Controller
             $bidCount = null;
 
             if (isset($summary['best_bid_in_euros']) && is_int($summary['best_bid_in_euros'])) {
-                $currentPrice = Money::formatEurosForDisplay($summary['best_bid_in_euros']);
+                $currentPrice = $this->formatEuros($summary['best_bid_in_euros']);
             }
 
             if (isset($summary['bid_count']) && is_numeric($summary['bid_count'])) {
@@ -306,7 +309,7 @@ class ParticipationController extends Controller
             $minimumBidValue = null;
 
             if ($minimumBidInEuros !== null) {
-                $minimumBidValue = Money::eurosToDatabaseValue($minimumBidInEuros);
+                $minimumBidValue = $minimumBidInEuros;
             }
 
             $this->json([
@@ -320,7 +323,8 @@ class ParticipationController extends Controller
             return;
         }
 
-        if (!$success
+        if (
+            !$success
             && $listingId !== null
             && $minimumBidInEuros !== null
             && $attemptedAmountInEuros !== null
@@ -359,4 +363,3 @@ class ParticipationController extends Controller
         return $this->buildRouteUrl('listing_detail', ['id' => $listingId]);
     }
 }
-

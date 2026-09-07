@@ -64,10 +64,9 @@ Les photographies sont contrôlées côté serveur : seuls les formats JPG, PNG 
 
 ## Montants des enchères
 
-Les prix sont volontairement gérés en euros entiers. La classe `Money` valide le montant saisi et le formate pour l’affichage, par exemple `1 250 €`.
+Les prix sont volontairement gérés en euros entiers. Les contrôleurs vérifient que la saisie contient seulement des chiffres, puis PHP les convertit avec `(int)`. La base de données stocke également ces montants dans des colonnes entières.
 
-Ce choix évite les imprécisions liées aux nombres décimaux de type `float`. Les contrôles du montant minimal sont faits côté serveur avant l’enregistrement de l’enchère.
-
+Pour l’affichage, la méthode `formatEuros()` de `Controller` utilise `number_format()`, par exemple pour obtenir `1 250 €`. Ce choix évite les imprécisions liées aux nombres décimaux de type `float`. Les contrôles du montant minimal sont faits côté serveur avant l’enregistrement de l’enchère.
 ## Dates, UTC et Europe/Paris
 
 UTC est un fuseau horaire de référence international. Les dates sont enregistrées en UTC dans la base de données afin d’avoir une seule référence pour tous les calculs.
