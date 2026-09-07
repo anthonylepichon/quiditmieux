@@ -524,7 +524,7 @@ function qdmCreateListingCard(listing) {
     priceBlock.append(priceLabel, price);
     const deadline = document.createElement('time');
     deadline.className = 'auction-card__deadline';
-    deadline.dateTime = String(listing.deadline_utc);
+    deadline.dateTime = String(listing.deadline);
 
     if (listing.sale_state === 'active') {
         deadline.textContent = String(listing.deadline_label);

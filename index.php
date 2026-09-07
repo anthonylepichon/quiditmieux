@@ -9,6 +9,9 @@
 
 use App\core\App;
 
+// L'application traite toutes les dates dans le fuseau horaire français.
+date_default_timezone_set('Europe/Paris');
+
 // L'encodage UTF-8 est défini une seule fois pour toutes les réponses HTML de l'application.
 ini_set('default_charset', 'UTF-8');
 

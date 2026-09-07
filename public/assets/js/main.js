@@ -48,7 +48,7 @@ function qdmUpdateCountdowns() {
     const currentTime = Date.now();
 
     countdowns.forEach(function updateCountdown(countdown) {
-        const deadlineValue = countdown.dataset.deadlineUtc;
+        const deadlineValue = countdown.dataset.deadline;
         const deadlineTime = Date.parse(deadlineValue);
 
         if (Number.isNaN(deadlineTime)) {

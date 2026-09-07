@@ -67,14 +67,11 @@ Les photographies sont contrôlées côté serveur : seuls les formats JPG, PNG 
 Les prix sont volontairement gérés en euros entiers. Les contrôleurs vérifient que la saisie contient seulement des chiffres, puis PHP les convertit avec `(int)`. La base de données stocke également ces montants dans des colonnes entières.
 
 Pour l’affichage, la méthode `formatEuros()` de `Controller` utilise `number_format()`, par exemple pour obtenir `1 250 €`. Ce choix évite les imprécisions liées aux nombres décimaux de type `float`. Les contrôles du montant minimal sont faits côté serveur avant l’enregistrement de l’enchère.
-## Dates, UTC et Europe/Paris
+## Dates et Europe/Paris
 
-UTC est un fuseau horaire de référence international. Les dates sont enregistrées en UTC dans la base de données afin d’avoir une seule référence pour tous les calculs.
+L’application étant destinée à la France, le fuseau `Europe/Paris` est défini une seule fois dans `index.php`. Les dates sont donc saisies, enregistrées, comparées et affichées dans ce même fuseau.
 
-L’utilisateur saisit et lit les dates dans le fuseau `Europe/Paris`. L’application convertit entre l’affichage local et la référence UTC. La classe `Clock` centralise l’heure courante pour éviter que différents fichiers utilisent des sources d’heure différentes.
-
-Le fuseau affiché ne change pas le calcul de l’échéance : il indique seulement comment la date est présentée à l’utilisateur.
-
+`DateTimeImmutable` reste utilisé pour valider et manipuler les dates sans modifier l’objet d’origine. Le compte à rebours reçoit une date ISO avec le décalage Paris : son calcul reste donc exact, y compris lors du passage à l’heure d’été ou d’hiver.
 ## JavaScript et AJAX
 
 JavaScript améliore l’interface, mais les fonctions essentielles restent organisées autour des routes PHP.

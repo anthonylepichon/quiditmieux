@@ -10,7 +10,7 @@ Statut : version révisée validée par le développeur le 26 août 2026 et mise
 
 L’objectif est de réaliser une application Web d’enchères entre particuliers, fonctionnelle dans le périmètre défini, sécurisée et démontrable devant un jury. L’application gère une enchère jusqu’à la désignation de son gagnant, sans prendre en charge la réalisation de la transaction entre les particuliers. Elle repose sur une architecture PHP MVC simple, sans Symfony.
 
-Le fuseau horaire fonctionnel utilisé pour la saisie et l’affichage des dates est `Europe/Paris`. Les dates sont converties et enregistrées en UTC dans la base de données.
+Le fuseau horaire unique utilisé par l’application pour la saisie, le stockage, les calculs et l’affichage des dates est `Europe/Paris`.
 
 ## 2. Résultat attendu
 
@@ -393,7 +393,7 @@ Le projet est fonctionnellement conforme lorsque :
 - chaque opération interdite est refusée côté serveur ;
 - les recherches combinées retournent des résultats cohérents ;
 - les prix courants et états d’adjudication sont calculés correctement ;
-- les échéances stockées en UTC empêchent toute nouvelle enchère dès l’instant de fin ;
+- les échéances stockées au format français de l’application empêchent toute nouvelle enchère dès l’instant de fin ;
 - la visibilité de l’historique respecte les règles définies ;
 - le tableau de bord présente les trois zones sans doublon, les états accessibles et les actualisations prévues uniquement pour les ventes actives ;
 - les catégories externes sont utilisées sans créer de gestion locale et les annonces existantes restent consultables pendant une panne de l’API ;

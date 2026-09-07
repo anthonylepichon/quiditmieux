@@ -4,12 +4,11 @@
  * Description générale : Contrôleur des annonces proposées aux enchères.
  * Rôle : Coordonner les demandes liées aux annonces et choisir leur réponse HTML ou JSON.
  * Tâches : Lire et valider les requêtes, interroger les modèles et préparer l'affichage.
- * Liens avec les autres fichiers : Étend Controller.php et utilise Clock.php, PhotoStorage.php ainsi que les modèles liés aux annonces.
+ * Liens avec les autres fichiers : Étend Controller.php et utilise PhotoStorage.php ainsi que les modèles liés aux annonces.
  */
 
 namespace App\controllers;
 
-use App\core\Clock;
 use App\core\Controller;
 use App\core\Database;
 use App\core\PhotoStorage;
@@ -20,7 +19,6 @@ use App\models\FollowModel;
 use App\models\ListingModel;
 use App\models\PhotoModel;
 use DateTimeImmutable;
-use DateTimeZone;
 
 class ListingController extends Controller
 {
@@ -60,7 +58,7 @@ class ListingController extends Controller
      */
     public function search(): void
     {
-        $currentTimeUtc = Clock::nowUtc();
+        $currentTime = new DateTimeImmutable();
         $categories = (new CategoryModel())->getAllCategories();
         $categoriesAvailable = $categories !== null;
 
@@ -83,7 +81,7 @@ class ListingController extends Controller
                 $criteria,
                 $criteria['page'],
                 self::ITEMS_PER_PAGE,
-                $currentTimeUtc
+                $currentTime
             );
             $success = $searchResult['success'];
 
@@ -91,7 +89,7 @@ class ListingController extends Controller
                 $enrichedListings = $this->enrichListings(
                     $searchResult['listings'],
                     $categories,
-                    $currentTimeUtc
+                    $currentTime
                 );
 
                 if ($enrichedListings === false) {
@@ -153,7 +151,7 @@ class ListingController extends Controller
      */
     public function showDetail(): void
     {
-        $currentTimeUtc = Clock::nowUtc();
+        $currentTime = new DateTimeImmutable();
         $listingId = $this->readPositiveGetIdentifier('id');
 
         if ($listingId === null) {
@@ -214,12 +212,9 @@ class ListingController extends Controller
             }
         }
 
-        $utcTimezone = new DateTimeZone('UTC');
-        $parisTimezone = new DateTimeZone('Europe/Paris');
         $deadline = DateTimeImmutable::createFromFormat(
             'Y-m-d H:i:s',
-            (string) $listing['date_heure_fin'],
-            $utcTimezone
+            (string) $listing['date_heure_fin']
         );
 
         if (!$deadline instanceof DateTimeImmutable) {
@@ -227,7 +222,7 @@ class ListingController extends Controller
             $this->redirect('home');
         }
 
-        $isEnded = $deadline <= $currentTimeUtc;
+        $isEnded = $deadline <= $currentTime;
         $currentAmountInEuros = (int) $listing['prix_depart'];
 
 
@@ -249,7 +244,7 @@ class ListingController extends Controller
                 $this->redirect('home');
             }
 
-            $history = $this->formatBidHistory($historyRows, $parisTimezone);
+            $history = $this->formatBidHistory($historyRows);
         }
 
         $photos = [];
@@ -273,11 +268,11 @@ class ListingController extends Controller
         $canParticipate = false;
 
         if ($viewerId !== null) {
-            $canEdit = $listingModel->canBeModifiedBy($listingId, $viewerId, $currentTimeUtc);
+            $canEdit = $listingModel->canBeModifiedBy($listingId, $viewerId, $currentTime);
             $canParticipate = $listingModel->canReceiveParticipationFrom(
                 $listingId,
                 $viewerId,
-                $currentTimeUtc
+                $currentTime
             );
 
             if ($canEdit === null || $canParticipate === null) {
@@ -302,9 +297,9 @@ class ListingController extends Controller
                 'minimum_bid' => $currentAmountInEuros + 1,
                 'minimum_bid_label' => $this->formatEuros($currentAmountInEuros + 1),
                 'bid_count' => (int) $summary['bid_count'],
-                'deadline_utc' => $deadline->format('Y-m-d\TH:i:s\Z'),
+                'deadline' => $deadline->format(DATE_ATOM),
                 'deadline_label' => $this->formatFrenchDateTime(
-                    $deadline->setTimezone($parisTimezone),
+                    $deadline,
                     true,
                     false
                 ),
@@ -399,7 +394,7 @@ class ListingController extends Controller
             $normalizedData['description'],
             $normalizedData['item_state'],
             $normalizedData['starting_price_in_euros'],
-            $normalizedData['deadline_utc'],
+            $normalizedData['deadline'],
             $normalizedData['category_id']
         );
         $storedFiles = [];
@@ -457,8 +452,8 @@ class ListingController extends Controller
             $this->redirect('dashboard');
         }
 
-        $currentTimeUtc = Clock::nowUtc();
-        $canModify = $listingModel->canBeModifiedBy($listingId, $userId, $currentTimeUtc);
+        $currentTime = new DateTimeImmutable();
+        $canModify = $listingModel->canBeModifiedBy($listingId, $userId, $currentTime);
         $lockedState = $listingModel->getLastManagementRestriction();
 
         if ($canModify === null) {
@@ -579,8 +574,8 @@ class ListingController extends Controller
             return;
         }
 
-        $currentTimeUtc = Clock::nowUtc();
-        $canModify = $listingModel->canBeModifiedBy($listingId, $userId, $currentTimeUtc);
+        $currentTime = new DateTimeImmutable();
+        $canModify = $listingModel->canBeModifiedBy($listingId, $userId, $currentTime);
 
         if ($canModify === null) {
             $this->database->rollback();
@@ -613,7 +608,7 @@ class ListingController extends Controller
             $normalizedData['description'],
             $normalizedData['item_state'],
             $normalizedData['starting_price_in_euros'],
-            $normalizedData['deadline_utc'],
+            $normalizedData['deadline'],
             $normalizedData['category_id']
         );
 
@@ -683,8 +678,8 @@ class ListingController extends Controller
             $this->redirect('listing_detail', ['id' => $listingId]);
         }
 
-        $currentTimeUtc = Clock::nowUtc();
-        $canDelete = $listingModel->canBeDeletedBy($listingId, $userId, $currentTimeUtc);
+        $currentTime = new DateTimeImmutable();
+        $canDelete = $listingModel->canBeDeletedBy($listingId, $userId, $currentTime);
 
         if ($canDelete === null) {
             $this->database->rollback();
@@ -849,7 +844,7 @@ class ListingController extends Controller
             }
         }
 
-        $deadlineUtc = $this->normalizeParisDeadline($values['end_date'], $values['end_time'], $errors);
+        $deadline = $this->normalizeDeadline($values['end_date'], $values['end_time'], $errors);
 
         return [
             'title' => $title,
@@ -857,20 +852,18 @@ class ListingController extends Controller
             'category_id' => $categoryId,
             'item_state' => $values['item_state'],
             'starting_price_in_euros' => $priceInEuros,
-            'deadline_utc' => $deadlineUtc,
+            'deadline' => $deadline,
         ];
     }
 
     /**
-     * Rôle : Convertir une date et une heure de Paris valides vers une date UTC de base de données.
+     * Rôle : Convertir une date et une heure françaises valides vers le format de la base de données.
      * Paramètres : Date, heure et erreurs à compléter.
-     * Retour : Date UTC ou null lorsque la saisie est invalide.
+     * Retour : Date formatée ou null lorsque la saisie est invalide.
      */
-    private function normalizeParisDeadline(string $date, string $time, array &$errors): ?string
+    private function normalizeDeadline(string $date, string $time, array &$errors): ?string
     {
-        $parisTimezone = new DateTimeZone('Europe/Paris');
-        $utcTimezone = new DateTimeZone('UTC');
-        $deadline = DateTimeImmutable::createFromFormat('!Y-m-d H:i', $date . ' ' . $time, $parisTimezone);
+        $deadline = DateTimeImmutable::createFromFormat('!Y-m-d H:i', $date . ' ' . $time);
         $dateErrors = DateTimeImmutable::getLastErrors();
 
         if (
@@ -883,13 +876,13 @@ class ListingController extends Controller
             return null;
         }
 
-        if ($deadline->setTimezone($utcTimezone) <= Clock::nowUtc()) {
+        if ($deadline <= new DateTimeImmutable()) {
             $errors['end_date'] = 'La date doit être future.';
             $errors['end_time'] = 'L’heure doit être future.';
             return null;
         }
 
-        return Clock::formatForDatabase($deadline);
+        return $deadline->format('Y-m-d H:i:s');
     }
 
     /**
@@ -1059,20 +1052,16 @@ class ListingController extends Controller
      */
     private function listingToFormValues(array $listing): array
     {
-        $utcTimezone = new DateTimeZone('UTC');
-        $parisTimezone = new DateTimeZone('Europe/Paris');
         $deadline = DateTimeImmutable::createFromFormat(
             'Y-m-d H:i:s',
-            (string) $listing['date_heure_fin'],
-            $utcTimezone
+            (string) $listing['date_heure_fin']
         );
         $date = '';
         $time = '';
 
         if ($deadline instanceof DateTimeImmutable) {
-            $parisDeadline = $deadline->setTimezone($parisTimezone);
-            $date = $parisDeadline->format('Y-m-d');
-            $time = $parisDeadline->format('H:i');
+            $date = $deadline->format('Y-m-d');
+            $time = $deadline->format('H:i');
         }
 
         $category = (string) $listing['categorie_id'];
@@ -1180,13 +1169,12 @@ class ListingController extends Controller
 
     /**
      * Rôle : Convertir l'historique brut en informations limitées et affichables en heure de Paris.
-     * Paramètres : Lignes d'enchères et fuseau horaire d'affichage.
+     * Paramètres : Lignes d'enchères à formater.
      * Retour : Historique formaté et sûr pour le template.
      */
-    private function formatBidHistory(array $rows, DateTimeZone $parisTimezone): array
+    private function formatBidHistory(array $rows): array
     {
         $history = [];
-        $utcTimezone = new DateTimeZone('UTC');
 
         foreach ($rows as $row) {
             if (!isset($row['pseudo'], $row['montant'], $row['date_heure_enchere'])) {
@@ -1195,8 +1183,7 @@ class ListingController extends Controller
 
             $date = DateTimeImmutable::createFromFormat(
                 'Y-m-d H:i:s',
-                (string) $row['date_heure_enchere'],
-                $utcTimezone
+                (string) $row['date_heure_enchere']
             );
 
             if (!$date instanceof DateTimeImmutable) {
@@ -1211,7 +1198,7 @@ class ListingController extends Controller
                 'bidder' => (string) $row['pseudo'],
                 'amount' => $this->formatEuros($amountInEuros),
                 'date' => $this->formatFrenchDateTime(
-                    $date->setTimezone($parisTimezone),
+                    $date,
                     true,
                     false
                 ),
@@ -1428,13 +1415,13 @@ class ListingController extends Controller
 
     /**
      * Rôle : Ajouter le prix courant, la photographie principale et les informations d'affichage aux annonces.
-     * Paramètres : Annonces brutes, catégories fournies par l'API et instant UTC de référence.
+     * Paramètres : Annonces brutes, catégories fournies par l'API et instant de référence.
      * Retour : Annonces prêtes à afficher ou false en cas d'erreur SQL complémentaire.
      */
     private function enrichListings(
         array $listings,
         array $categories,
-        DateTimeImmutable $currentTimeUtc
+        DateTimeImmutable $currentTime
     ): array|false {
         $listingIds = [];
         $startingPrices = [];
@@ -1459,8 +1446,6 @@ class ListingController extends Controller
         }
 
         $displayListings = [];
-        $utcTimezone = new DateTimeZone('UTC');
-        $parisTimezone = new DateTimeZone('Europe/Paris');
 
         foreach ($listings as $listing) {
             if (!isset(
@@ -1475,8 +1460,7 @@ class ListingController extends Controller
             $identifier = (int) $listing['id'];
             $deadline = DateTimeImmutable::createFromFormat(
                 'Y-m-d H:i:s',
-                (string) $listing['date_heure_fin'],
-                $utcTimezone
+                (string) $listing['date_heure_fin']
             );
 
             if (!$deadline instanceof DateTimeImmutable) {
@@ -1503,7 +1487,7 @@ class ListingController extends Controller
 
             $saleState = 'ended';
 
-            if ($deadline > $currentTimeUtc) {
+            if ($deadline > $currentTime) {
                 $saleState = 'active';
             }
 
@@ -1514,9 +1498,9 @@ class ListingController extends Controller
                 'item_state' => (string) $listing['etat_objet'],
                 'current_price' => $currentAmountInEuros,
                 'current_price_label' => $this->formatEuros($currentAmountInEuros),
-                'deadline_utc' => $deadline->format('Y-m-d\TH:i:s\Z'),
+                'deadline' => $deadline->format(DATE_ATOM),
                 'deadline_label' => $this->formatFrenchDateTime(
-                    $deadline->setTimezone($parisTimezone),
+                    $deadline,
                     false,
                     true
                 ),
