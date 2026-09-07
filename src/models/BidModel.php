@@ -10,7 +10,6 @@
 namespace App\models;
 
 use App\core\Clock;
-use App\core\Money;
 use App\core\Model;
 use DateTimeImmutable;
 
@@ -53,7 +52,7 @@ class BidModel extends Model
             return null;
         }
 
-        return Money::databaseValueToEuros((string) $row['current_amount']);
+        return (int) $row['current_amount'];
     }
 
     /**
@@ -106,11 +105,9 @@ class BidModel extends Model
                 return false;
             }
 
-            $startingAmountInEuros = Money::databaseValueToEuros((string) $startingPrices[$identifier]);
+            $startingAmountInEuros = (int) $startingPrices[$identifier];
 
-            if ($startingAmountInEuros === null) {
-                return false;
-            }
+
 
             $currentAmountsInEuros[$identifier] = $startingAmountInEuros;
         }
@@ -144,11 +141,9 @@ class BidModel extends Model
             }
 
             $identifier = (int) $row['annonce_id'];
-            $bestBidInEuros = Money::databaseValueToEuros((string) $row['best_bid']);
+            $bestBidInEuros = (int) $row['best_bid'];
 
-            if ($bestBidInEuros === null) {
-                return false;
-            }
+
 
             $currentAmountsInEuros[$identifier] = $bestBidInEuros;
         }
@@ -191,11 +186,9 @@ class BidModel extends Model
         }
 
         if (isset($summary['best_bid'])) {
-            $bestBidInEuros = Money::databaseValueToEuros((string) $summary['best_bid']);
+            $bestBidInEuros = (int) $summary['best_bid'];
 
-            if ($bestBidInEuros === null) {
-                return false;
-            }
+
         }
 
         if (isset($summary['best_bidder_id'])) {
@@ -245,7 +238,7 @@ class BidModel extends Model
         return $this->create([
             'utilisateur_id' => $userId,
             'annonce_id' => $listingId,
-            'montant' => Money::eurosToDatabaseValue($amountInEuros),
+            'montant' => $amountInEuros,
             'date_heure_enchere' => Clock::formatForDatabase($placedAtUtc),
         ]);
     }

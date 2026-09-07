@@ -10,7 +10,6 @@
 namespace App\models;
 
 use App\core\Clock;
-use App\core\Money;
 use App\core\Model;
 use DateTimeImmutable;
 
@@ -57,7 +56,7 @@ class ListingModel extends Model
             'titre' => $title,
             'description' => $description,
             'etat_objet' => $itemState,
-            'prix_depart' => Money::eurosToDatabaseValue($startingPriceInEuros),
+            'prix_depart' => $startingPriceInEuros,
             'date_heure_fin' => $deadlineUtc,
             'categorie_id' => $categoryId,
         ]);
@@ -93,7 +92,7 @@ class ListingModel extends Model
             'titre' => $title,
             'description' => $description,
             'etat_objet' => $itemState,
-            'prix_depart' => Money::eurosToDatabaseValue($startingPriceInEuros),
+            'prix_depart' => $startingPriceInEuros,
             'date_heure_fin' => $deadlineUtc,
             'categorie_id' => $categoryId,
         ]);
@@ -460,23 +459,19 @@ class ListingModel extends Model
             && $criteria['maximum_price_in_euros'] !== null
         ) {
             $whereParts[] = $currentPriceSql . ' BETWEEN :minimum_price AND :maximum_price';
-            $parameters['minimum_price'] = Money::eurosToDatabaseValue(
-                $criteria['minimum_price_in_euros']
-            );
-            $parameters['maximum_price'] = Money::eurosToDatabaseValue(
-                $criteria['maximum_price_in_euros']
-            );
+            $parameters['minimum_price'] = $criteria['minimum_price_in_euros'];
+            $parameters['maximum_price'] = $criteria['maximum_price_in_euros'];
             return;
         }
 
         if ($criteria['minimum_price_in_euros'] !== null) {
             $whereParts[] = $currentPriceSql . ' >= :minimum_price';
-            $parameters['minimum_price'] = Money::eurosToDatabaseValue($criteria['minimum_price_in_euros']);
+            $parameters['minimum_price'] = $criteria['minimum_price_in_euros'];
         }
 
         if ($criteria['maximum_price_in_euros'] !== null) {
             $whereParts[] = $currentPriceSql . ' <= :maximum_price';
-            $parameters['maximum_price'] = Money::eurosToDatabaseValue($criteria['maximum_price_in_euros']);
+            $parameters['maximum_price'] = $criteria['maximum_price_in_euros'];
         }
     }
 

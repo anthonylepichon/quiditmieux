@@ -12,7 +12,6 @@ namespace App\controllers;
 use App\core\Clock;
 use App\core\Controller;
 use App\core\Database;
-use App\core\Money;
 use App\core\PhotoStorage;
 use App\core\Session;
 use App\models\BidModel;
@@ -229,12 +228,9 @@ class ListingController extends Controller
         }
 
         $isEnded = $deadline <= $currentTimeUtc;
-        $currentAmountInEuros = Money::databaseValueToEuros((string) $listing['prix_depart']);
+        $currentAmountInEuros = (int) $listing['prix_depart'];
 
-        if ($currentAmountInEuros === null) {
-            $this->session->enregistrerMessageTemporaire('notice', 'Cette annonce ne peut pas être affichée.');
-            $this->redirect('home');
-        }
+
 
         if ($summary['best_bid_in_euros'] !== null) {
             $currentAmountInEuros = $summary['best_bid_in_euros'];
@@ -302,9 +298,9 @@ class ListingController extends Controller
                 'category' => $categoryLabel,
                 'seller' => (string) $listing['seller_pseudo'],
                 'seller_id' => (int) $listing['utilisateur_id'],
-                'current_price_label' => Money::formatEurosForDisplay($currentAmountInEuros),
-                'minimum_bid' => Money::eurosToDatabaseValue($currentAmountInEuros + 1),
-                'minimum_bid_label' => Money::formatEurosForDisplay($currentAmountInEuros + 1),
+                'current_price_label' => $this->formatEuros($currentAmountInEuros),
+                'minimum_bid' => $currentAmountInEuros + 1,
+                'minimum_bid_label' => $this->formatEuros($currentAmountInEuros + 1),
                 'bid_count' => (int) $summary['bid_count'],
                 'deadline_utc' => $deadline->format('Y-m-d\TH:i:s\Z'),
                 'deadline_label' => $this->formatFrenchDateTime(
@@ -786,8 +782,13 @@ class ListingController extends Controller
     private function emptyListingFormValues(): array
     {
         return [
-            'title' => '', 'category' => '', 'description' => '', 'item_state' => '',
-            'starting_price' => '', 'end_date' => '', 'end_time' => '',
+            'title' => '',
+            'category' => '',
+            'description' => '',
+            'item_state' => '',
+            'starting_price' => '',
+            'end_date' => '',
+            'end_time' => '',
         ];
     }
 
@@ -820,7 +821,8 @@ class ListingController extends Controller
             $errors['description'] = 'La description doit contenir entre 10 et 5 000 caractères.';
         }
 
-        if (preg_match('/^[1-9][0-9]*$/D', $values['category']) !== 1
+        if (
+            preg_match('/^[1-9][0-9]*$/D', $values['category']) !== 1
             || !isset($categories[$values['category']])
         ) {
             $errors['category'] = 'Choisissez une catégorie proposée dans la liste.';
@@ -871,7 +873,8 @@ class ListingController extends Controller
         $deadline = DateTimeImmutable::createFromFormat('!Y-m-d H:i', $date . ' ' . $time, $parisTimezone);
         $dateErrors = DateTimeImmutable::getLastErrors();
 
-        if (!$deadline instanceof DateTimeImmutable
+        if (
+            !$deadline instanceof DateTimeImmutable
             || ($dateErrors !== false && ($dateErrors['warning_count'] > 0 || $dateErrors['error_count'] > 0))
             || $deadline->format('Y-m-d H:i') !== $date . ' ' . $time
         ) {
@@ -908,7 +911,8 @@ class ListingController extends Controller
 
         $fileData = $_FILES['photos'];
 
-        if (!is_array($fileData)
+        if (
+            !is_array($fileData)
             || !isset($fileData['name'], $fileData['tmp_name'], $fileData['error'], $fileData['size'])
             || !is_array($fileData['name'])
             || !is_array($fileData['tmp_name'])
@@ -928,7 +932,8 @@ class ListingController extends Controller
                 continue;
             }
 
-            if ($uploadError !== UPLOAD_ERR_OK
+            if (
+                $uploadError !== UPLOAD_ERR_OK
                 || !isset($fileData['tmp_name'][$index], $fileData['size'][$index])
                 || !is_string($fileData['tmp_name'][$index])
                 || !is_numeric($fileData['size'][$index])
@@ -945,7 +950,8 @@ class ListingController extends Controller
 
             $mimeType = $fileInfo->file($fileData['tmp_name'][$index]);
 
-            if (!is_string($mimeType)
+            if (
+                !is_string($mimeType)
                 || !isset($allowedMimeTypes[$mimeType])
                 || getimagesize($fileData['tmp_name'][$index]) === false
             ) {
@@ -976,8 +982,7 @@ class ListingController extends Controller
         array $photos,
         array &$storedFiles,
         int $startingOrder = 1
-    ): bool
-    {
+    ): bool {
         if ($photos === []) {
             return true;
         }
@@ -1071,12 +1076,7 @@ class ListingController extends Controller
         }
 
         $category = (string) $listing['categorie_id'];
-        $startingPriceInEuros = Money::databaseValueToEuros((string) $listing['prix_depart']);
-        $startingPrice = '';
-
-        if ($startingPriceInEuros !== null) {
-            $startingPrice = Money::eurosToDatabaseValue($startingPriceInEuros);
-        }
+        $startingPrice = (int) $listing['prix_depart'];
 
         return [
             'id' => (int) $listing['id'],
@@ -1120,7 +1120,8 @@ class ListingController extends Controller
 
         $data = json_decode($encodedData, true);
 
-        if (!is_array($data)
+        if (
+            !is_array($data)
             || !isset($data['listing_id'], $data['minimum_in_euros'], $data['amount_in_euros'])
             || (int) $data['listing_id'] !== $listingId
             || !is_int($data['minimum_in_euros'])
@@ -1130,10 +1131,10 @@ class ListingController extends Controller
         }
 
         return [
-            'minimum' => Money::eurosToDatabaseValue($data['minimum_in_euros']),
-            'minimum_label' => Money::formatEurosForDisplay($data['minimum_in_euros']),
-            'amount' => Money::eurosToDatabaseValue($data['amount_in_euros']),
-            'amount_label' => Money::formatEurosForDisplay($data['amount_in_euros']),
+            'minimum' => $data['minimum_in_euros'],
+            'minimum_label' => $this->formatEuros($data['minimum_in_euros']),
+            'amount' => $data['amount_in_euros'],
+            'amount_label' => $this->formatEuros($data['amount_in_euros']),
         ];
     }
 
@@ -1202,15 +1203,13 @@ class ListingController extends Controller
                 continue;
             }
 
-            $amountInEuros = Money::databaseValueToEuros((string) $row['montant']);
+            $amountInEuros = (int) $row['montant'];
 
-            if ($amountInEuros === null) {
-                continue;
-            }
+
 
             $history[] = [
                 'bidder' => (string) $row['pseudo'],
-                'amount' => Money::formatEurosForDisplay($amountInEuros),
+                'amount' => $this->formatEuros($amountInEuros),
                 'date' => $this->formatFrenchDateTime(
                     $date->setTimezone($parisTimezone),
                     true,
@@ -1281,7 +1280,8 @@ class ListingController extends Controller
         $categoryId = null;
 
         if ($categoriesAvailable && $categoryInput !== '') {
-            if (preg_match('/^[1-9][0-9]*$/D', $categoryInput) !== 1
+            if (
+                preg_match('/^[1-9][0-9]*$/D', $categoryInput) !== 1
                 || !isset($categories[$categoryInput])
             ) {
                 $errors['category'] = 'Choisissez une catégorie proposée dans la liste.';
@@ -1314,14 +1314,15 @@ class ListingController extends Controller
         );
 
         if ($minimumPriceInEuros !== null) {
-            $minimumPriceInput = Money::eurosToDatabaseValue($minimumPriceInEuros);
+            $minimumPriceInput = $minimumPriceInEuros;
         }
 
         if ($maximumPriceInEuros !== null) {
-            $maximumPriceInput = Money::eurosToDatabaseValue($maximumPriceInEuros);
+            $maximumPriceInput = $maximumPriceInEuros;
         }
 
-        if ($minimumPriceInEuros !== null
+        if (
+            $minimumPriceInEuros !== null
             && $maximumPriceInEuros !== null
             && $minimumPriceInEuros > $maximumPriceInEuros
         ) {
@@ -1415,9 +1416,9 @@ class ListingController extends Controller
             return null;
         }
 
-        $priceInEuros = Money::userInputToEuros($value);
+        $priceInEuros = (int) $value;
 
-        if ($priceInEuros === null || $priceInEuros <= 0) {
+        if ($priceInEuros <= 0 || $priceInEuros > 99_999) {
             $errors[$field] = $label . ' doit être strictement positif et rester dans la limite autorisée.';
             return null;
         }
@@ -1434,8 +1435,7 @@ class ListingController extends Controller
         array $listings,
         array $categories,
         DateTimeImmutable $currentTimeUtc
-    ): array|false
-    {
+    ): array|false {
         $listingIds = [];
         $startingPrices = [];
 
@@ -1512,8 +1512,8 @@ class ListingController extends Controller
                 'title' => (string) $listing['titre'],
                 'category' => $categoryLabel,
                 'item_state' => (string) $listing['etat_objet'],
-                'current_price' => Money::eurosToDatabaseValue($currentAmountInEuros),
-                'current_price_label' => Money::formatEurosForDisplay($currentAmountInEuros),
+                'current_price' => $currentAmountInEuros,
+                'current_price_label' => $this->formatEuros($currentAmountInEuros),
                 'deadline_utc' => $deadline->format('Y-m-d\TH:i:s\Z'),
                 'deadline_label' => $this->formatFrenchDateTime(
                     $deadline->setTimezone($parisTimezone),
@@ -1697,4 +1697,3 @@ class ListingController extends Controller
         ];
     }
 }
-

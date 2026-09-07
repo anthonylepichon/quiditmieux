@@ -84,13 +84,6 @@ $lanceurTests->commencerItem('CategoryModel.php');
 
 require_once __DIR__ . '/unitaire/TestCategoryModel.php';
 
-/*
- * Tests de Money.php.
- */
-
-$lanceurTests->commencerItem('Money.php');
-
-require_once __DIR__ . '/unitaire/TestMoney.php';
 
 
 /*

@@ -21,7 +21,7 @@
  * - Utilise ListingModel situé dans src/models/ListingModel.php.
  * - Utilise Model situé dans src/core/Model.php.
  * - Utilise Database situé dans src/core/Database.php.
- * - Utilise Clock et Money.
+ * - Utilise Clock.
  * - Utilise le lanceur de tests défini dans tests/LanceurTest.php.
  * - Est exécuté depuis tests/Lancer.php.
  */
@@ -29,7 +29,6 @@
 require_once __DIR__ . '/../../src/core/Database.php';
 require_once __DIR__ . '/../../src/core/Model.php';
 require_once __DIR__ . '/../../src/core/Clock.php';
-require_once __DIR__ . '/../../src/core/Money.php';
 require_once __DIR__ . '/../../src/models/ListingModel.php';
 
 use App\core\Database;

@@ -15,7 +15,7 @@ final class Money
     // CONSTANTES
     // ====================
 
-    private const MAXIMUM_EUROS = 99_999_999;
+    private const MAXIMUM_EUROS = 99_999;
 
     // ====================
     // MÉTHODES
