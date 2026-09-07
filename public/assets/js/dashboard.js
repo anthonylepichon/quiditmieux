@@ -134,7 +134,7 @@ function qdmShowRefreshError() {
         hour: '2-digit',
         minute: '2-digit',
     }).format(qdmDashboardLastUpdate);
-    qdmDashboardStatus.textContent = 'Dernières données reçues à ' + parisTime + ' — Europe/Paris';
+    qdmDashboardStatus.textContent = 'Dernières données reçues à ' + parisTime;
 }
 
 /** Rôle : Construire une ligne d'annonce. Paramètres : Données JSON de l'annonce et clé de zone. Retour : Article DOM. */
@@ -151,7 +151,7 @@ function qdmBuildDashboardCard(listing, zoneKey) {
     body.appendChild(qdmCreateElement('h3', '', listing.title));
 
     let deadlinePrefix = 'Terminée le ';
-    let deadlineSuffix = ' — Europe/Paris';
+    let deadlineSuffix = '';
     let deadlineLabel = listing.deadline;
     let refreshLabel = '';
     let statusLabel = 'Vente terminée';
@@ -165,7 +165,7 @@ function qdmBuildDashboardCard(listing, zoneKey) {
     }
 
     if (zoneKey === 'sales' && !listing.is_active) {
-        deadlineSuffix = ' · Europe/Paris';
+        deadlineSuffix = '';
         deadlineLabel = listing.deadline_date;
         statusSymbol = '✓';
         detailLinkLabel = 'Voir →';

@@ -101,7 +101,7 @@ if (!$listing['is_ended']) {
     } elseif ($viewer['is_best_bidder']) {
         $summaryMessage = 'Vous êtes actuellement le mieux-disant. Vous pouvez enchérir de nouveau si nécessaire.';
         $historyTitle = 'Historique détaillé des enchères';
-        $historySubtitle = 'Pseudo, montant, date et heure — Europe/Paris.';
+        $historySubtitle = 'Pseudo, montant, date et heure.';
     } elseif ($viewer['has_bid']) {
         $summaryMessage = 'Votre meilleure offre n’est plus en tête. Le minimum actuel est indiqué dans le formulaire.';
         $historyTitle = 'Historique détaillé des enchères';
@@ -169,7 +169,7 @@ if ($listing['is_ended']) {
         <header class="listing-detail__heading">
             <p class="eyebrow"><?= htmlspecialchars($listing['category'], ENT_QUOTES, 'UTF-8') ?> · <?= $saleStatusLabel ?></p>
             <h1 id="listing-title"><?= htmlspecialchars($listing['title'], ENT_QUOTES, 'UTF-8') ?></h1>
-            <p>Vendu par <?= htmlspecialchars($listing['seller'], ENT_QUOTES, 'UTF-8') ?> · <?= htmlspecialchars($listing['item_state'], ENT_QUOTES, 'UTF-8') ?> · <?= $bidCountLabel ?> · Échéance : <?= htmlspecialchars($listing['deadline_label'], ENT_QUOTES, 'UTF-8') ?> — Europe/Paris</p>
+            <p>Vendu par <?= htmlspecialchars($listing['seller'], ENT_QUOTES, 'UTF-8') ?> · <?= htmlspecialchars($listing['item_state'], ENT_QUOTES, 'UTF-8') ?> · <?= $bidCountLabel ?> · Échéance : <?= htmlspecialchars($listing['deadline_label'], ENT_QUOTES, 'UTF-8') ?></p>
         </header>
 
         <section class="listing-detail__hero" aria-labelledby="listing-title">
@@ -215,7 +215,7 @@ if ($listing['is_ended']) {
                 <?php if ($listing['is_ended']): ?>
                     <div class="listing-summary__final-result">
                         <strong><?= htmlspecialchars($finalResultTitle, ENT_QUOTES, 'UTF-8') ?></strong>
-                        <p>Vente terminée le <?= htmlspecialchars($listing['deadline_label'], ENT_QUOTES, 'UTF-8') ?> — Europe/Paris</p>
+                        <p>Vente terminée le <?= htmlspecialchars($listing['deadline_label'], ENT_QUOTES, 'UTF-8') ?></p>
                     </div>
                 <?php else: ?>
                     <div class="hero-countdown listing-summary__countdown" data-countdown data-deadline="<?= htmlspecialchars($listing['deadline'], ENT_QUOTES, 'UTF-8') ?>">
