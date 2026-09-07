@@ -11,7 +11,7 @@ namespace App\controllers;
 
 use App\core\Controller;
 use App\core\Database;
-use App\core\PhotoStorage;
+use App\services\PhotoStorage;
 use App\core\Session;
 use App\models\CategoryModel;
 use App\models\ListingModel;

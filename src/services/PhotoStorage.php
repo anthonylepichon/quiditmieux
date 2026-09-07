@@ -7,7 +7,7 @@
  * Liens avec les autres fichiers : Est utilisé par ListingController.php pour séparer les fichiers physiques des données de PhotoModel.php.
  */
 
-namespace App\core;
+namespace App\services;
 
 class PhotoStorage
 {
