@@ -133,3 +133,4 @@ Elle permet de représenter une date et une heure, par exemple l’instant actue
 Elle est dite « immutable » car un objet date déjà créé ne change pas. Par exemple, `modify('+1 day')` renvoie un nouvel objet pour le lendemain et conserve l’objet initial. Cela évite de modifier une date par erreur pendant un traitement.
 
 Dans ce projet, elle sert à valider les dates de fin, comparer une échéance avec l’heure actuelle et préparer l’affichage des dates. Le fuseau `Europe/Paris` est défini une seule fois dans `index.php`.
+Ce réglage est utile car PHP utiliserait sinon le fuseau défini dans la configuration du serveur. Il garantit que les dates de fin, les contrôles des ventes terminées, les enchères et les affichages utilisent tous l’heure française. C’est une ligne simple placée au point d’entrée afin d’avoir une seule référence de date pour toute l’application.
