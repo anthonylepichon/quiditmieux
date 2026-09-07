@@ -123,6 +123,7 @@ Le projet ne gère pas le paiement, la livraison, la messagerie, la modération,
 ## Formulation de conclusion possible
 
 > J’ai construit une application d’enchères en PHP avec une architecture MVC simple. Les contrôleurs coordonnent les demandes, les modèles regroupent l’accès aux données et les règles métier, et les vues affichent les informations. J’ai utilisé l’héritage pour partager les traitements communs, PDO et les requêtes préparées pour la base de données, et JavaScript pour améliorer certaines interactions sans remplacer le fonctionnement serveur. Les règles importantes, notamment les enchères, les droits du vendeur et les photographies, sont contrôlées côté serveur.
+
 ## `DateTimeImmutable`
 
 `DateTimeImmutable` est une classe native de PHP : elle est fournie par le langage et ne demande ni fichier à créer, ni chargement par Composer.
