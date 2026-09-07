@@ -34,6 +34,8 @@ La programmation orientée objet consiste à regrouper les données et les trait
 - `Model` est la classe parent des modèles SQL. Elle centralise PDO et des opérations communes de création, modification et suppression.
 - `ListingModel`, `BidModel`, `PhotoModel` et `UserModel` sont des modèles enfants spécialisés dans leurs propres données.
 
+Une classe abstraite est une classe de base qui ne peut pas être utilisée directement avec `new`. Elle sert à partager des attributs et des méthodes avec des classes enfants plus spécialisées. Dans ce projet, `Model` et `Controller` sont abstraites : on crée un `ListingModel` ou un `ListingController`, mais jamais directement un objet `Model` ou `Controller`.
+
 L’héritage évite de recopier les mêmes méthodes dans chaque modèle ou chaque contrôleur. `ListingModel` hérite de `Model`, mais possède aussi ses propres méthodes métier, par exemple la vérification qu’une annonce peut être modifiée ou qu’elle peut recevoir une enchère.
 
 `CategoryModel` n’hérite pas de `Model`, car il ne communique pas avec une table MySQL : il récupère les catégories depuis une API externe. L’héritage est donc utilisé seulement lorsque les responsabilités sont réellement communes.
