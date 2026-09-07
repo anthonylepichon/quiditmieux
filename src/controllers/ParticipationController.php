@@ -4,12 +4,11 @@
  * Description générale : Contrôleur des participations d'un utilisateur aux ventes.
  * Rôle : Coordonner le suivi volontaire et le dépôt transactionnel des enchères.
  * Tâches : Contrôler la requête, appeler les modèles et choisir une réponse HTML ou JSON.
- * Liens avec les autres fichiers : Étend Controller.php et utilise Clock.php, ListingModel.php, FollowModel.php et BidModel.php.
+ * Liens avec les autres fichiers : Étend Controller.php et utilise ListingModel.php, FollowModel.php et BidModel.php.
  */
 
 namespace App\controllers;
 
-use App\core\Clock;
 use App\core\Controller;
 use App\models\BidModel;
 use App\models\FollowModel;
@@ -54,12 +53,12 @@ class ParticipationController extends Controller
             return;
         }
 
-        $currentTimeUtc = Clock::nowUtc();
+        $currentTime = new \DateTimeImmutable();
         $listingModel = new ListingModel($this->database);
         $canParticipate = $listingModel->canReceiveParticipationFrom(
             $listingId,
             $userId,
-            $currentTimeUtc
+            $currentTime
         );
 
         if ($canParticipate === null) {
@@ -110,7 +109,7 @@ class ParticipationController extends Controller
             return;
         }
 
-        if (!$bidModel->placeBid($userId, $listingId, $amountInEuros, $currentTimeUtc)) {
+        if (!$bidModel->placeBid($userId, $listingId, $amountInEuros, $currentTime)) {
             $this->database->rollback();
             $this->respondBid(false, 'Enchère refusée', $listingId);
             return;
@@ -192,12 +191,12 @@ class ParticipationController extends Controller
             return;
         }
 
-        $currentTimeUtc = Clock::nowUtc();
+        $currentTime = new \DateTimeImmutable();
         $listingModel = new ListingModel($this->database);
         $canParticipate = $listingModel->canReceiveParticipationFrom(
             $listingId,
             $userId,
-            $currentTimeUtc
+            $currentTime
         );
 
         if ($canParticipate === null) {

@@ -218,7 +218,7 @@ if ($listing['is_ended']) {
                         <p>Vente terminée le <?= htmlspecialchars($listing['deadline_label'], ENT_QUOTES, 'UTF-8') ?> — Europe/Paris</p>
                     </div>
                 <?php else: ?>
-                    <div class="hero-countdown listing-summary__countdown" data-countdown data-deadline-utc="<?= htmlspecialchars($listing['deadline_utc'], ENT_QUOTES, 'UTF-8') ?>">
+                    <div class="hero-countdown listing-summary__countdown" data-countdown data-deadline="<?= htmlspecialchars($listing['deadline'], ENT_QUOTES, 'UTF-8') ?>">
                         <p>Cette vente se termine dans</p>
                         <div class="hero-countdown__values" data-countdown-values><span>--<small>JOURS</small></span><span>--<small>HEURES</small></span><span>--<small>MINUTES</small></span><span>--<small>SECONDES</small></span></div>
                     </div>

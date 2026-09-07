@@ -4,12 +4,11 @@
  * Description générale : Modèle des catégories fournies par l'API externe de l'application.
  * Rôle : Interroger l'API et fournir aux contrôleurs des catégories validées.
  * Tâches : Charger, valider et mettre en cache les catégories puis retrouver un libellé par identifiant.
- * Liens avec les autres fichiers : Est utilisé par les contrôleurs, s'appuie sur Clock.php et n'étend pas le modèle SQL générique.
+ * Liens avec les autres fichiers : Est utilisé par les contrôleurs, n'étend pas le modèle SQL générique.
  */
 
 namespace App\models;
 
-use App\core\Clock;
 
 class CategoryModel
 {
@@ -176,7 +175,7 @@ class CategoryModel
      */
     private function cacheIsFresh(int $savedAt): bool
     {
-        return $savedAt >= Clock::unixTimestamp() - self::CACHE_LIFETIME_SECONDS;
+        return $savedAt >= time() - self::CACHE_LIFETIME_SECONDS;
     }
 
     /**
@@ -194,7 +193,7 @@ class CategoryModel
         }
 
         $encodedData = json_encode([
-            'saved_at' => Clock::unixTimestamp(),
+            'saved_at' => time(),
             'categories' => $categories,
         ], JSON_UNESCAPED_UNICODE);
 

@@ -4,12 +4,11 @@
  * Description générale : Contrôleur de l'espace personnel de l'utilisateur connecté.
  * Rôle : Afficher le tableau de bord et coordonner la modification sécurisée du compte.
  * Tâches : Protéger les routes privées, préparer les cartes, appeler les modèles et limiter les réponses JSON.
- * Liens avec les autres fichiers : Étend Controller.php et utilise Clock.php, PhotoStorage.php ainsi que les modèles de l'espace personnel.
+ * Liens avec les autres fichiers : Étend Controller.php et utilise PhotoStorage.php ainsi que les modèles de l'espace personnel.
  */
 
 namespace App\controllers;
 
-use App\core\Clock;
 use App\core\Controller;
 use App\core\Database;
 use App\core\PhotoStorage;
@@ -19,7 +18,6 @@ use App\models\ListingModel;
 use App\models\PhotoModel;
 use App\models\UserModel;
 use DateTimeImmutable;
-use DateTimeZone;
 
 class UserController extends Controller
 {
@@ -222,9 +220,9 @@ class UserController extends Controller
             return;
         }
 
-        $currentTimeUtc = Clock::nowUtc();
+        $currentTime = new DateTimeImmutable();
         $model = new ListingModel($this->database);
-        $rows = $model->getDashboardSales($userId, $currentTimeUtc);
+        $rows = $model->getDashboardSales($userId, $currentTime);
 
         if ($rows === false) {
             $this->respondDashboardUnavailable();
@@ -232,7 +230,7 @@ class UserController extends Controller
         }
 
         $categories = $this->getDashboardCategories();
-        $sales = $this->formatListings($rows, $categories, $currentTimeUtc);
+        $sales = $this->formatListings($rows, $categories, $currentTime);
 
         if ($sales === false) {
             $this->respondDashboardUnavailable();
@@ -255,9 +253,9 @@ class UserController extends Controller
             return;
         }
 
-        $currentTimeUtc = Clock::nowUtc();
+        $currentTime = new DateTimeImmutable();
         $model = new ListingModel($this->database);
-        $rows = $model->getDashboardParticipations($userId, $currentTimeUtc);
+        $rows = $model->getDashboardParticipations($userId, $currentTime);
 
         if ($rows === false) {
             $this->respondDashboardUnavailable();
@@ -265,7 +263,7 @@ class UserController extends Controller
         }
 
         $categories = $this->getDashboardCategories();
-        $listings = $this->formatListings($rows, $categories, $currentTimeUtc);
+        $listings = $this->formatListings($rows, $categories, $currentTime);
 
         if ($listings === false) {
             $this->respondDashboardUnavailable();
@@ -286,10 +284,10 @@ class UserController extends Controller
      */
     private function buildDashboard(int $userId): array
     {
-        $currentTimeUtc = Clock::nowUtc();
+        $currentTime = new DateTimeImmutable();
         $model = new ListingModel($this->database);
-        $participationRows = $model->getDashboardParticipations($userId, $currentTimeUtc);
-        $salesRows = $model->getDashboardSales($userId, $currentTimeUtc);
+        $participationRows = $model->getDashboardParticipations($userId, $currentTime);
+        $salesRows = $model->getDashboardSales($userId, $currentTime);
 
         if ($participationRows === false || $salesRows === false) {
             return $this->failedDashboard();
@@ -299,9 +297,9 @@ class UserController extends Controller
         $participationListings = $this->formatListings(
             $participationRows,
             $categories,
-            $currentTimeUtc
+            $currentTime
         );
-        $sales = $this->formatListings($salesRows, $categories, $currentTimeUtc);
+        $sales = $this->formatListings($salesRows, $categories, $currentTime);
 
         if ($participationListings === false || $sales === false) {
             return $this->failedDashboard();
@@ -363,13 +361,13 @@ class UserController extends Controller
 
     /**
      * Rôle : Enrichir les lignes de la base avec leurs photos et libellés d'affichage.
-     * Paramètres : Lignes du tableau de bord, catégories de l'API et instant UTC de référence.
+     * Paramètres : Lignes du tableau de bord, catégories de l'API et instant de référence.
      * Retour : Cartes limitées aux données utiles ou false en cas d'erreur SQL.
      */
     private function formatListings(
         array $rows,
         array $categories,
-        DateTimeImmutable $currentTimeUtc
+        DateTimeImmutable $currentTime
     ): array|false
     {
         $ids = [];
@@ -385,8 +383,6 @@ class UserController extends Controller
             return false;
         }
 
-        $utc = new DateTimeZone('UTC');
-        $paris = new DateTimeZone('Europe/Paris');
         $listings = [];
 
         foreach ($rows as $row) {
@@ -399,7 +395,7 @@ class UserController extends Controller
             )) {
                 continue;
             }
-            $deadline = DateTimeImmutable::createFromFormat('Y-m-d H:i:s', (string) $row['date_heure_fin'], $utc);
+            $deadline = DateTimeImmutable::createFromFormat('Y-m-d H:i:s', (string) $row['date_heure_fin']);
             if (!$deadline instanceof DateTimeImmutable) {
                 continue;
             }
@@ -442,14 +438,14 @@ class UserController extends Controller
                 'bid_count' => $this->readBidCount($row),
                 'user_best_bid' => $userBestBid,
                 'winner_id' => $this->readWinnerId($row),
-                'is_active' => $deadline > $currentTimeUtc,
+                'is_active' => $deadline > $currentTime,
                 'deadline' => $this->formatFrenchDateTime(
-                    $deadline->setTimezone($paris),
+                    $deadline,
                     false,
                     false
                 ),
                 'deadline_date' => $this->formatFrenchDate(
-                    $deadline->setTimezone($paris),
+                    $deadline,
                     false
                 ),
                 'photo_url' => $this->buildPhotoUrl($photos, $id),

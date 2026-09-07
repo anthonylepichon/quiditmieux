@@ -347,10 +347,10 @@ for ($pageNumber = 1; $pageNumber <= (int) $pagination['total_pages']; $pageNumb
                                     <?php if ($listing['sale_state'] === 'active'): ?>
                                         <time
                                             class="auction-card__deadline"
-                                            datetime="<?= htmlspecialchars((string) $listing['deadline_utc'], ENT_QUOTES, 'UTF-8') ?>"
+                                            datetime="<?= htmlspecialchars((string) $listing['deadline'], ENT_QUOTES, 'UTF-8') ?>"
                                         ><?= htmlspecialchars((string) $listing['deadline_label'], ENT_QUOTES, 'UTF-8') ?></time>
                                     <?php else: ?>
-                                        <time class="auction-card__deadline" datetime="<?= htmlspecialchars((string) $listing['deadline_utc'], ENT_QUOTES, 'UTF-8') ?>">Vente terminée</time>
+                                        <time class="auction-card__deadline" datetime="<?= htmlspecialchars((string) $listing['deadline'], ENT_QUOTES, 'UTF-8') ?>">Vente terminée</time>
                                     <?php endif; ?>
                                 </div>
                                 <a class="auction-card__link" href="<?= htmlspecialchars((string) $listing['detail_url'], ENT_QUOTES, 'UTF-8') ?>">Voir l’annonce<span class="visually-hidden"> : <?= htmlspecialchars((string) $listing['title'], ENT_QUOTES, 'UTF-8') ?></span></a>
