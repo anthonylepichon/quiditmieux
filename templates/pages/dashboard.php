@@ -98,7 +98,7 @@ if ($data['wins'] !== []) {
                         <?php foreach ($data[$zone['key']] as $listing): ?>
                             <?php
                             $deadlinePrefix = 'Terminée le ';
-                            $deadlineSuffix = ' — Europe/Paris';
+                            $deadlineSuffix = '';
                             $deadlineLabel = $listing['deadline'];
                             $refreshLabel = '';
                             $statusLabel = 'Vente terminée';
@@ -111,7 +111,7 @@ if ($data['wins'] !== []) {
                             }
 
                             if ($zone['key'] === 'sales' && !$listing['is_active']) {
-                                $deadlineSuffix = ' · Europe/Paris';
+                                $deadlineSuffix = '';
                                 $deadlineLabel = $listing['deadline_date'];
                                 $statusSymbol = '✓';
                                 $detailLinkLabel = 'Voir →';

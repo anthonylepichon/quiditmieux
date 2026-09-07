@@ -392,7 +392,7 @@ function qdmUpdateBidDisplay(form, data) {
     }
 
     if (historySubtitle instanceof HTMLElement) {
-        historySubtitle.textContent = 'Pseudo, montant, date et heure — Europe/Paris.';
+        historySubtitle.textContent = 'Pseudo, montant, date et heure.';
     }
 
     if (lockedHistory instanceof HTMLElement) {
