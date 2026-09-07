@@ -123,3 +123,12 @@ Le projet ne gère pas le paiement, la livraison, la messagerie, la modération,
 ## Formulation de conclusion possible
 
 > J’ai construit une application d’enchères en PHP avec une architecture MVC simple. Les contrôleurs coordonnent les demandes, les modèles regroupent l’accès aux données et les règles métier, et les vues affichent les informations. J’ai utilisé l’héritage pour partager les traitements communs, PDO et les requêtes préparées pour la base de données, et JavaScript pour améliorer certaines interactions sans remplacer le fonctionnement serveur. Les règles importantes, notamment les enchères, les droits du vendeur et les photographies, sont contrôlées côté serveur.
+## `DateTimeImmutable`
+
+`DateTimeImmutable` est une classe native de PHP : elle est fournie par le langage et ne demande ni fichier à créer, ni chargement par Composer.
+
+Elle permet de représenter une date et une heure, par exemple l’instant actuel avec `new DateTimeImmutable()` ou une date issue de la base avec `DateTimeImmutable::createFromFormat()`.
+
+Elle est dite « immutable » car un objet date déjà créé ne change pas. Par exemple, `modify('+1 day')` renvoie un nouvel objet pour le lendemain et conserve l’objet initial. Cela évite de modifier une date par erreur pendant un traitement.
+
+Dans ce projet, elle sert à valider les dates de fin, comparer une échéance avec l’heure actuelle et préparer l’affichage des dates. Le fuseau `Europe/Paris` est défini une seule fois dans `index.php`.
