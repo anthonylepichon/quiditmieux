@@ -22,9 +22,9 @@ class App
     // ====================
 
     /**
-     * Rôle : Conserver le chemin absolu de la racine du projet.
-     * Paramètres : Chemin absolu de la racine du projet.
-     * Retour : Aucun.
+     * Rôle : Préparer l’objet principal de l’application en mémorisant le chemin de la racine du projet. Ce chemin permet ensuite de retrouver les fichiers de configuration nécessaires au démarrage.
+     * Paramètres : $projectRoot contient le chemin absolu du dossier principal du projet, transmis par index.php.
+     * Retour : Aucun. Le constructeur enregistre le chemin reçu dans l’attribut $projectRoot.
      */
     public function __construct(string $projectRoot)
     {
@@ -32,9 +32,9 @@ class App
     }
 
     /**
-     * Rôle : Démarrer les services nécessaires puis transmettre la demande au routeur.
-     * Paramètres : Aucun.
-     * Retour : Aucun.
+     * Rôle : Coordonner le démarrage de l’application. La méthode démarre la session, prépare la connexion à la base de données, charge les routes, puis confie la demande HTTP au routeur.
+     * Paramètres : Aucun. La méthode utilise la configuration du projet ainsi que les informations de la requête reçue par le serveur.
+     * Retour : Aucun. Le traitement s’arrête si la base ou les routes sont indisponibles ; sinon le routeur appelle le contrôleur correspondant.
      */
     public function run(): void
     {
@@ -59,9 +59,9 @@ class App
     }
 
     /**
-     * Rôle : Créer le gestionnaire de base de données à partir de la configuration privée.
-     * Paramètres : Aucun.
-     * Retour : Objet Database ou null lorsque la configuration ou la connexion est indisponible.
+     * Rôle : Préparer l’accès à MySQL. La méthode charge la configuration privée, crée l’objet Database et vérifie que la connexion PDO est disponible.
+     * Paramètres : Aucun. Le chemin du fichier de configuration est construit à partir de l’attribut $projectRoot.
+     * Retour : Un objet Database prêt à être utilisé, ou null si le fichier, sa configuration ou la connexion est indisponible.
      */
     private function createDatabase(): ?Database
     {
@@ -90,9 +90,9 @@ class App
     }
 
     /**
-     * Rôle : Charger la liste des routes configurées pour l'application.
-     * Paramètres : Aucun.
-     * Retour : Tableau des routes ou null lorsque la configuration est indisponible.
+     * Rôle : Charger la table de navigation de l’application depuis src/config/routes.php et vérifier que le fichier retourne bien un tableau.
+     * Paramètres : Aucun. Le chemin de routes.php est construit à partir de l’attribut $projectRoot.
+     * Retour : Le tableau des routes à transmettre au routeur, ou null si le fichier est absent ou invalide.
      */
     private function loadRoutes(): ?array
     {
@@ -114,9 +114,9 @@ class App
     }
 
     /**
-     * Rôle : Obtenir le nom de la route demandée ou utiliser la route d'accueil par défaut.
-     * Paramètres : Aucun.
-     * Retour : Nom de la route à traiter.
+     * Rôle : Déterminer quelle route a été demandée dans l’adresse de la page. Si aucune valeur de route exploitable n’est fournie, la page d’accueil est choisie.
+     * Paramètres : Aucun. La méthode lit directement la valeur route présente dans le tableau $_GET.
+     * Retour : Le nom de la route à transmettre au routeur, par exemple home ou listing_detail.
      */
     private function getRequestedRoute(): string
     {
@@ -128,9 +128,9 @@ class App
     }
 
     /**
-     * Rôle : Obtenir la méthode HTTP de la demande courante.
-     * Paramètres : Aucun.
-     * Retour : Méthode HTTP en lettres majuscules.
+     * Rôle : Identifier la méthode HTTP utilisée pour la demande courante afin que le routeur puisse vérifier si elle est autorisée pour la route.
+     * Paramètres : Aucun. La méthode lit REQUEST_METHOD dans le tableau $_SERVER.
+     * Retour : Le nom de la méthode HTTP en majuscules, par exemple GET ou POST ; GET est utilisé si l’information est absente.
      */
     private function getRequestMethod(): string
     {
