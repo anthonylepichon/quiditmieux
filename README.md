@@ -20,7 +20,7 @@ Le dépôt GitHub du projet est disponible à l’adresse suivante : [anthonylep
 
 ## Technologies utilisées
 
-- PHP 8.3 ou version ultérieure ;
+- PHP 8.1 ou version ultérieure ;
 - MySQL ou MariaDB ;
 - PDO et requêtes préparées ;
 - Composer pour l’autoload PSR-4 ;
