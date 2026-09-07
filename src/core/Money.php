@@ -38,17 +38,17 @@ final class Money
     }
 
     /**
-     * Rôle : Convertir une valeur entière issue de PDO en euros, avec compatibilité temporaire pour une terminaison `.00`.
-     * Paramètres : Montant entier ou ancienne valeur décimale sans centime.
+     * Rôle : Convertir une valeur entière issue de PDO en euros.
+     * Paramètres : Montant entier provenant de la base de données.
      * Retour : Montant en euros ou null lorsque la valeur est inexploitable.
      */
     public static function databaseValueToEuros(string $amount): ?int
     {
-        if (preg_match('/^([0-9]+)(?:\.0{1,2})?$/D', $amount, $matches) !== 1) {
+        if (preg_match('/^[0-9]+$/D', $amount) !== 1) {
             return null;
         }
 
-        return self::normalizedDigitsToEuros($matches[1]);
+        return self::normalizedDigitsToEuros($amount);
     }
 
     /**
