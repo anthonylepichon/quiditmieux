@@ -30,6 +30,7 @@
  * session PHP sans erreur d'en-têtes déjà envoyés.
  */
 
+// NATIF PHP : ob_start() démarre la mise en mémoire de la sortie PHP ; il capture ici le HTML produit avant de l’insérer dans le layout.
 ob_start();
 
 
@@ -38,6 +39,7 @@ ob_start();
  * et comptabiliser les résultats des tests.
  */
 
+// NATIF PHP : __DIR__ contient le chemin absolu du dossier du fichier courant ; elle permet ici de construire un chemin indépendant du poste utilisé.
 require_once __DIR__ . '/LanceurTest.php';
 
 
@@ -52,6 +54,7 @@ $lanceurTests = new LanceurTest();
  * Affichage du titre général.
  */
 
+// NATIF PHP : PHP_EOL contient le retour à la ligne du système ; elle produit ici une sortie de test lisible sur chaque environnement.
 echo "========================================" . PHP_EOL;
 echo "          LANCEMENT DES TESTS" . PHP_EOL;
 echo "========================================" . PHP_EOL;
@@ -133,4 +136,5 @@ $lanceurTests->afficherResume();
  * puis désactive la mise en mémoire tampon.
  */
 
+// NATIF PHP : ob_end_flush() envoie puis ferme la mémoire de sortie ; il restitue ici le résultat complet du lanceur de tests.
 ob_end_flush();

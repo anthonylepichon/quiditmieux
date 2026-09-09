@@ -3,8 +3,8 @@
 /**
  * Description générale : Configuration des routes de l'application QUIDITMIEUX.
  * Rôle : Fournir à la classe App les routes que Router doit enregistrer.
- * Tâches : Associer chaque nom de route à sa méthode HTTP, son contrôleur et son action.
- * Liens avec les autres fichiers : Est chargé par App.php puis transmis à Router.php pour orienter les demandes.
+ * Tâches : Associer chaque nom de route à son contrôleur, sa méthode PHP et sa méthode HTTP.
+ * Liens avec les autres fichiers : Est chargé par App.php, qui enregistre chaque définition dans Router.php.
  */
 
 use App\controllers\AuthController;
@@ -15,108 +15,108 @@ use App\controllers\UserController;
 
 return [
     'home' => [
-        'method' => 'GET',
         'controller' => ListingController::class,
-        'action' => 'search',
+        'method' => 'search',
+        'http_method' => 'GET',
     ],
     'privacy' => [
-        'method' => 'GET',
         'controller' => LegalController::class,
-        'action' => 'showPrivacyPolicy',
+        'method' => 'showPrivacyPolicy',
+        'http_method' => 'GET',
     ],
     'listing_detail' => [
-        'method' => 'GET',
         'controller' => ListingController::class,
-        'action' => 'showDetail',
+        'method' => 'showDetail',
+        'http_method' => 'GET',
     ],
     'listing_create_form' => [
-        'method' => 'GET',
         'controller' => ListingController::class,
-        'action' => 'showCreateForm',
+        'method' => 'showCreateForm',
+        'http_method' => 'GET',
     ],
     'listing_create' => [
-        'method' => 'POST',
         'controller' => ListingController::class,
-        'action' => 'create',
+        'method' => 'create',
+        'http_method' => 'POST',
     ],
     'listing_edit_form' => [
-        'method' => 'GET',
         'controller' => ListingController::class,
-        'action' => 'showEditForm',
+        'method' => 'showEditForm',
+        'http_method' => 'GET',
     ],
     'listing_update' => [
-        'method' => 'POST',
         'controller' => ListingController::class,
-        'action' => 'update',
+        'method' => 'update',
+        'http_method' => 'POST',
     ],
     'listing_delete' => [
-        'method' => 'POST',
         'controller' => ListingController::class,
-        'action' => 'delete',
+        'method' => 'delete',
+        'http_method' => 'POST',
     ],
     'register_form' => [
-        'method' => 'GET',
         'controller' => AuthController::class,
-        'action' => 'showRegisterForm',
+        'method' => 'showRegisterForm',
+        'http_method' => 'GET',
     ],
     'register' => [
-        'method' => 'POST',
         'controller' => AuthController::class,
-        'action' => 'register',
+        'method' => 'register',
+        'http_method' => 'POST',
     ],
     'login_form' => [
-        'method' => 'GET',
         'controller' => AuthController::class,
-        'action' => 'showLoginForm',
+        'method' => 'showLoginForm',
+        'http_method' => 'GET',
     ],
     'login' => [
-        'method' => 'POST',
         'controller' => AuthController::class,
-        'action' => 'login',
+        'method' => 'login',
+        'http_method' => 'POST',
     ],
     'logout' => [
-        'method' => 'POST',
         'controller' => AuthController::class,
-        'action' => 'logout',
+        'method' => 'logout',
+        'http_method' => 'POST',
     ],
     'follow_listing' => [
-        'method' => 'POST',
         'controller' => ParticipationController::class,
-        'action' => 'follow',
+        'method' => 'follow',
+        'http_method' => 'POST',
     ],
     'unfollow_listing' => [
-        'method' => 'POST',
         'controller' => ParticipationController::class,
-        'action' => 'unfollow',
+        'method' => 'unfollow',
+        'http_method' => 'POST',
     ],
     'place_bid' => [
-        'method' => 'POST',
         'controller' => ParticipationController::class,
-        'action' => 'placeBid',
+        'method' => 'placeBid',
+        'http_method' => 'POST',
     ],
     'dashboard' => [
-        'method' => 'GET',
         'controller' => UserController::class,
-        'action' => 'showDashboard',
+        'method' => 'showDashboard',
+        'http_method' => 'GET',
     ],
     'dashboard_sales' => [
-        'method' => 'GET',
         'controller' => UserController::class,
-        'action' => 'refreshSales',
+        'method' => 'refreshSales',
+        'http_method' => 'GET',
     ],
     'dashboard_participations' => [
-        'method' => 'GET',
         'controller' => UserController::class,
-        'action' => 'refreshParticipations',
+        'method' => 'refreshParticipations',
+        'http_method' => 'GET',
     ],
     'account_form' => [
-        'method' => 'GET',
         'controller' => UserController::class,
-        'action' => 'showAccountForm',
+        'method' => 'showAccountForm',
+        'http_method' => 'GET',
     ],
     'account_update' => [
-        'method' => 'POST',
         'controller' => UserController::class,
-        'action' => 'updateAccount',
+        'method' => 'updateAccount',
+        'http_method' => 'POST',
     ],
 ];

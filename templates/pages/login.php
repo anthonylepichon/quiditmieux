@@ -12,6 +12,7 @@
 $values = $data['values'];
 $errors = $data['errors'];
 $successMessage = $data['success_message'];
+$alert = $data['alert'];
 $csrfToken = $data['csrf_token'];
 $hasErrors = $errors !== [];
 $isConnected = $successMessage !== null;
@@ -30,47 +31,41 @@ if ($successMessage !== null) {
 }
 ?>
 <main class="auth-page auth-page--login container">
-        <section class="auth-card auth-card--login glass-panel" aria-labelledby="login-title">
-            <div class="auth-card__form-panel auth-card__form-panel--login">
-                <div class="section-heading">
-                    <p class="eyebrow">HEUREUX DE VOUS REVOIR</p>
-                    <h1 id="login-title"><?php if ($successMessage !== null): ?>Bienvenue !<?php else: ?>Se connecter<?php endif; ?></h1>
-                </div>
-            <?php if ($hasErrors): ?>
-                <div class="alert alert--error alert--illustrated auth-card__introduction" role="alert">
-                    <strong>Identifiants invalides</strong>
-                    <span>Vérifiez vos informations puis essayez de nouveau.</span>
-                </div>
-            <?php elseif ($successMessage !== null): ?>
-                <div class="alert alert--success alert--illustrated auth-card__introduction" role="status">
-                    <strong>Connexion réussie</strong>
-                    <span>Redirection en cours…</span>
-                </div>
-            <?php else: ?>
-                <div class="alert alert--info auth-card__introduction" role="note">
-                    <strong>Connexion sécurisée</strong>
-                    <span>Utilisez votre pseudo ou votre adresse électronique.</span>
-                </div>
-            <?php endif; ?>
+    <section class="auth-card auth-card--login glass-panel" aria-labelledby="login-title">
+        <div class="auth-card__form-panel auth-card__form-panel--login">
+            <div class="section-heading">
+                <p class="eyebrow">HEUREUX DE VOUS REVOIR</p>
+                <h1 id="login-title"><?= htmlspecialchars($alert['heading'], ENT_QUOTES, 'UTF-8') ?></h1>
+            </div>
+            <?php
+            // Fragment alert.php : message de connexion déjà préparé par AuthController.
+            $alertClasses = 'auth-card__introduction';
+            require __DIR__ . '/../fragments/alert.php';
+            ?>
+
             <?php if ($successMessage === null): ?>
-            <form action="index.php?route=login" method="post" novalidate>
-                <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
-                <input type="hidden" name="destination" value="<?= htmlspecialchars((string) ($values['destination'] ?? 'dashboard'), ENT_QUOTES, 'UTF-8') ?>">
-                <div class="form-field">
-                    <label class="form-field__label" for="login">Pseudo ou adresse électronique</label>
-                    <input class="form-control" id="login" name="login" type="text" required autocomplete="username" placeholder="camille ou camille@exemple.fr" value="<?= htmlspecialchars((string) ($values['login'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" aria-describedby="login-error" <?= $invalidAttribute ?>>
-                    <span class="form-field__error" id="login-error"><?php if ($hasErrors): ?>Identifiants invalides.<?php endif; ?></span>
-                </div>
-                <div class="form-field">
-                    <label class="form-field__label" for="password">Mot de passe</label>
-                    <input class="form-control" id="password" name="password" type="password" required autocomplete="current-password" placeholder="••••••••" aria-describedby="password-error" <?= $invalidAttribute ?>>
-                    <span class="form-field__error" id="password-error"><?php if ($hasErrors): ?>Identifiants invalides.<?php endif; ?></span>
-                </div>
-                <div class="auth-card__actions">
-                    <button class="button button--primary" type="submit">Se connecter</button>
-                    <a href="index.php?route=register_form">Pas encore de compte ?  Créer un compte →</a>
-                </div>
-            </form>
+                <form action="index.php?route=login" method="post" novalidate>
+                    <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
+                    <input type="hidden" name="destination" value="<?= htmlspecialchars((string) ($values['destination'] ?? 'dashboard'), ENT_QUOTES, 'UTF-8') ?>">
+                    <div class="form-field">
+                        <label class="form-field__label" for="login">Pseudo ou adresse électronique</label>
+                        <input class="form-control" id="login" name="login" type="text" required autocomplete="username" placeholder="camille ou camille@exemple.fr" value="<?= htmlspecialchars((string) ($values['login'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" aria-describedby="login-error" <?= $invalidAttribute ?>>
+                        <span class="form-field__error" id="login-error">
+                            <?= htmlspecialchars($alert['field_error'], ENT_QUOTES, 'UTF-8') ?>
+                        </span>
+                    </div>
+                    <div class="form-field">
+                        <label class="form-field__label" for="password">Mot de passe</label>
+                        <input class="form-control" id="password" name="password" type="password" required autocomplete="current-password" placeholder="••••••••" aria-describedby="password-error" <?= $invalidAttribute ?>>
+                        <span class="form-field__error" id="password-error">
+                            <?= htmlspecialchars($alert['field_error'], ENT_QUOTES, 'UTF-8') ?>
+                        </span>
+                    </div>
+                    <div class="auth-card__actions">
+                        <button class="button button--primary" type="submit">Se connecter</button>
+                        <a href="index.php?route=register_form">Pas encore de compte ?  Créer un compte →</a>
+                    </div>
+                </form>
             <?php else: ?>
                 <div class="auth-confirmation auth-confirmation--login" role="status" aria-labelledby="login-confirmation-title" data-login-redirect-url="index.php?route=<?= htmlspecialchars((string) ($values['destination'] ?? 'dashboard'), ENT_QUOTES, 'UTF-8') ?>">
                     <h2 id="login-confirmation-title">Vous êtes connecté.</h2>
@@ -78,13 +73,13 @@ if ($successMessage !== null) {
                     <p class="auth-confirmation__note">Redirection en cours…</p>
                 </div>
             <?php endif; ?>
+        </div>
+        <aside class="auth-card__illustration auth-card__illustration--login" aria-label="Présentation des enchères">
+            <img class="auth-card__character" src="public/assets/images/illustrations/character-planet.png" alt="" width="300" height="492">
+            <div class="auth-card__illustration-copy">
+                <h2>Entrez dans la vente.</h2>
+                <p>Suivez les objets qui vous intéressent et participez aux enchères en cours.</p>
             </div>
-            <aside class="auth-card__illustration auth-card__illustration--login" aria-label="Présentation des enchères">
-                <img class="auth-card__character" src="public/assets/images/illustrations/character-planet.png" alt="" width="300" height="492">
-                <div class="auth-card__illustration-copy">
-                    <h2>Entrez dans la vente.</h2>
-                    <p>Suivez les objets qui vous intéressent et participez aux enchères en cours.</p>
-                </div>
-            </aside>
-        </section>
+        </aside>
+    </section>
 </main>

@@ -42,7 +42,7 @@ class App
         // Crée le gestionnaire qui conservera les informations de session pendant la navigation.
         $session = new Session();
         // Démarre une nouvelle session PHP ou reprend la session existante avant de traiter la demande.
-        $session->demarrerSession();
+        $session->startSession();
 
         // Charge la configuration privée puis prépare la connexion PDO destinée aux modèles.
         $database = $this->createDatabase();

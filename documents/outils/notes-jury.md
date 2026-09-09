@@ -26,6 +26,470 @@ Exemple : pour déposer une enchère, le contrôleur reçoit le formulaire. Il v
 
 Le routeur lit les routes définies dans `src/config/routes.php`. Il vérifie notamment la méthode HTTP, puis appelle le contrôleur et la méthode correspondants. Ainsi, `index.php` ne choisit pas lui-même quelle page doit être exécutée.
 
+## Différence entre GET et POST
+
+GET et POST sont deux méthodes HTTP utilisées par le navigateur pour envoyer une demande au serveur. La différence essentielle concerne le but de la demande :
+
+- `GET` sert à consulter ou rechercher une information sans modifier les données ;
+- `POST` sert à envoyer des données pour créer, modifier, supprimer ou déclencher une action.
+
+### Quand utiliser GET ?
+
+GET est utilisé pour afficher une page ou récupérer des informations. Les paramètres figurent généralement dans l’adresse.
+
+Exemple pour consulter une annonce :
+
+```text
+index.php?route=listing_detail&id=12
+```
+
+PHP peut récupérer son identifiant avec :
+
+```php
+$listingId = $_GET['id'] ?? null;
+```
+
+Dans QUIDITMIEUX, GET est notamment adapté pour :
+
+- afficher la page d’accueil ;
+- consulter une annonce ;
+- rechercher des annonces ;
+- afficher le tableau de bord ;
+- afficher un formulaire sans encore enregistrer ses données.
+
+Une recherche utilise normalement GET, car son adresse peut être conservée, partagée ou actualisée sans modifier la base de données.
+
+### Quand utiliser POST ?
+
+POST est utilisé lorsqu’une demande doit modifier les données ou déclencher une action. Les valeurs sont envoyées dans le corps de la requête et ne figurent généralement pas dans l’adresse.
+
+Exemple pour transmettre un formulaire de connexion :
+
+```html
+<form method="POST" action="index.php?route=login">
+    <input type="email" name="email">
+    <input type="password" name="password">
+    <button type="submit">Se connecter</button>
+</form>
+```
+
+PHP récupère ces valeurs avec :
+
+```php
+$email = $_POST['email'] ?? '';
+$password = $_POST['password'] ?? '';
+```
+
+Dans QUIDITMIEUX, POST est notamment adapté pour :
+
+- créer un compte ou se connecter ;
+- publier ou modifier une annonce ;
+- supprimer une photographie ou une annonce ;
+- déposer une enchère ;
+- suivre ou ne plus suivre une annonce ;
+- se déconnecter.
+
+### Une même fonctionnalité peut utiliser GET et POST
+
+Pour créer une annonce, GET affiche le formulaire et POST enregistre les données saisies :
+
+```text
+GET  index.php?route=listing_create → afficher le formulaire
+POST index.php?route=listing_create → contrôler et enregistrer l’annonce
+```
+
+Le routeur utilise donc le nom de la route et la méthode HTTP pour choisir le traitement autorisé.
+
+### Différence à retenir
+
+| Question | GET | POST |
+|---|---|---|
+| Quel est son rôle principal ? | Consulter une ressource | Demander une modification |
+| Les paramètres sont-ils généralement visibles dans l’adresse ? | Oui | Non |
+| La demande peut-elle être partagée ou enregistrée comme favori ? | Oui | Non |
+| Une actualisation doit-elle modifier les données ? | Non | Potentiellement oui |
+| Exemple dans le projet | Consulter une annonce | Déposer une enchère |
+
+Une suppression ne doit pas être déclenchée par une simple adresse GET. Elle doit utiliser un formulaire POST, avec les vérifications côté serveur et un jeton CSRF.
+
+Enfin, POST ne rend pas automatiquement une demande sécurisée. Les données reçues avec `$_GET` et `$_POST` viennent toutes de l’utilisateur. Le serveur doit donc toujours les contrôler. Le site publié doit également utiliser HTTPS pour protéger les données pendant leur transport.
+
+La règle simple à présenter au jury est :
+
+> **GET = je consulte. POST = je demande une modification.**
+
+## isset(), strtoupper() et REQUEST_METHOD
+
+Ces trois éléments sont utilisés par `App.php` pour identifier correctement la route et la méthode HTTP demandées.
+
+### À quoi sert isset() ?
+
+`isset()` est une fonction native de PHP. Elle vérifie si une variable ou une entrée de tableau existe et si sa valeur est différente de `null`.
+
+Elle retourne un booléen :
+
+- `true` si la valeur existe et ne vaut pas `null` ;
+- `false` si la valeur est absente ou vaut `null`.
+
+Dans la méthode qui recherche la route :
+
+```php
+if (isset($_GET['route']) && is_string($_GET['route']) && $_GET['route'] !== '') {
+    return $_GET['route'];
+}
+
+return 'home';
+```
+
+les trois contrôles signifient :
+
+1. `isset($_GET['route'])` vérifie que le paramètre `route` a été transmis dans l’adresse ;
+2. `is_string($_GET['route'])` vérifie que sa valeur est une chaîne de caractères ;
+3. `$_GET['route'] !== ''` vérifie que cette chaîne n’est pas vide.
+
+Le symbole `&&` signifie « ET ». Les trois conditions doivent donc être vraies pour utiliser la route reçue.
+
+PHP vérifie les conditions de gauche à droite. Si `isset()` retourne `false`, PHP arrête la vérification du `&&`. Il ne tente donc pas de lire une entrée `route` inexistante, ce qui évite un avertissement `Undefined array key`.
+
+Une valeur absente et une chaîne vide sont deux cas différents :
+
+| Contenu de `$_GET` | Résultat de `isset()` | Résultat final |
+|---|---|---|
+| aucune clé `route` | `false` | la route `home` est utilisée |
+| `'route' => null` | `false` | la route `home` est utilisée |
+| `'route' => ''` | `true`, mais le texte est vide | la route `home` est utilisée |
+| `'route' => 'listing_detail'` | `true` | `listing_detail` est utilisée |
+
+La règle simple à retenir est :
+
+> **`isset()` vérifie qu’une valeur existe et qu’elle n’est pas égale à `null`.**
+
+### Qu’est-ce que $_SERVER ?
+
+`$_SERVER` est une variable superglobale native de PHP. Il s’agit d’un tableau associatif créé automatiquement avant l’exécution de l’application.
+
+Il contient notamment des informations concernant :
+
+- la demande HTTP reçue ;
+- le serveur Web ;
+- le fichier PHP exécuté ;
+- certaines données transmises par le navigateur.
+
+Une variable superglobale est accessible dans toutes les fonctions et méthodes sans avoir besoin de la transmettre comme paramètre ou d’utiliser le mot-clé `global`.
+
+Le cheminement est le suivant :
+
+```text
+Navigateur
+    ↓ envoie une requête HTTP
+Serveur Web, par exemple Apache
+    ↓ transmet les informations à PHP
+PHP
+    ↓ construit le tableau $_SERVER
+Application
+```
+
+Les informations sont rangées sous différentes clés :
+
+```php
+$_SERVER['REQUEST_METHOD'];
+$_SERVER['HTTPS'];
+$_SERVER['REQUEST_URI'];
+$_SERVER['SERVER_NAME'];
+```
+
+Toutes les clés ne sont pas obligatoirement présentes. Leur disponibilité dépend notamment du serveur, de sa configuration et de la manière dont PHP est exécuté. Il faut donc vérifier une clé avec `isset()` avant de l’utiliser.
+
+### À quoi correspond REQUEST_METHOD ?
+
+`REQUEST_METHOD` est une clé du tableau `$_SERVER` :
+
+```php
+$_SERVER['REQUEST_METHOD']
+```
+
+Elle indique la méthode HTTP employée par le navigateur :
+
+- `GET` pour consulter généralement une page ou rechercher des informations ;
+- `POST` pour demander généralement une création, une modification, une suppression ou une autre action.
+
+Pour une consultation :
+
+```text
+GET /index.php?route=listing_detail&id=12
+```
+
+PHP fournit généralement :
+
+```php
+$_SERVER['REQUEST_METHOD'] === 'GET';
+```
+
+Pour un formulaire :
+
+```html
+<form method="POST" action="index.php?route=login">
+```
+
+PHP fournit généralement :
+
+```php
+$_SERVER['REQUEST_METHOD'] === 'POST';
+```
+
+Dans `App.php` :
+
+```php
+private function getRequestMethod(): string
+{
+    if (isset($_SERVER['REQUEST_METHOD']) && is_string($_SERVER['REQUEST_METHOD'])) {
+        return strtoupper($_SERVER['REQUEST_METHOD']);
+    }
+
+    return 'GET';
+}
+```
+
+Le traitement se déroule ainsi :
+
+1. `isset()` vérifie que le serveur a fourni la clé ;
+2. `is_string()` vérifie que sa valeur est du texte ;
+3. `strtoupper()` la normalise en majuscules ;
+4. la méthode retourne par exemple `GET` ou `POST` ;
+5. si l’information est absente ou invalide, `GET` est utilisé par défaut.
+
+### Quelques clés courantes de $_SERVER
+
+| Clé | Information généralement fournie |
+|---|---|
+| `REQUEST_METHOD` | Méthode HTTP utilisée, par exemple `GET` ou `POST` |
+| `REQUEST_URI` | Partie de l’adresse demandée après le domaine |
+| `SERVER_NAME` | Nom du serveur, par exemple `localhost` |
+| `SERVER_PORT` | Port utilisé, généralement `80` ou `443` |
+| `REMOTE_ADDR` | Adresse IP avec laquelle le serveur voit le client |
+| `HTTP_USER_AGENT` | Description déclarée par le navigateur |
+| `SCRIPT_FILENAME` | Chemin du fichier PHP exécuté |
+| `HTTPS` | Information indiquant si HTTPS est actif |
+
+### Différence entre $_SERVER, $_GET et $_POST
+
+| Tableau | Question | Exemple |
+|---|---|---|
+| `$_SERVER` | Comment la demande a-t-elle été envoyée ? | `REQUEST_METHOD` contient `POST` |
+| `$_GET` | Quels paramètres figurent dans l’adresse ? | `route` contient `login` |
+| `$_POST` | Quelles données le formulaire a-t-il envoyées ? | `email` contient l’adresse saisie |
+| `$_FILES` | Quels fichiers ont été téléversés ? | informations sur une photographie |
+| `$_SESSION` | Quelles données restent disponibles entre les pages ? | identifiant de l’utilisateur connecté |
+
+Pour `index.php?route=login` appelé par un formulaire POST, PHP peut fournir :
+
+```php
+$_SERVER['REQUEST_METHOD'] = 'POST';
+$_GET['route'] = 'login';
+$_POST['email'] = 'anthony@example.com';
+```
+
+Ainsi, `$_SERVER` indique comment la demande est envoyée, `$_GET` indique le traitement demandé et `$_POST` contient les champs du formulaire.
+
+### Fiabilité des informations
+
+Certaines valeurs, comme `REQUEST_METHOD`, sont établies par le serveur dans le contexte de la requête. D’autres reprennent des informations déclarées par le navigateur et peuvent être modifiées par l’utilisateur :
+
+```php
+$_SERVER['HTTP_USER_AGENT'];
+$_SERVER['HTTP_REFERER'];
+$_SERVER['HTTP_HOST'];
+```
+
+Elles ne doivent pas être considérées seules comme des preuves pour une décision de sécurité.
+
+Lorsque PHP est lancé depuis le terminal avec `php tests/Lancer.php`, il ne reçoit pas une requête Web classique. Des clés comme `REQUEST_METHOD` ou `HTTPS` peuvent alors être absentes, ce qui justifie également leur vérification avec `isset()`.
+
+La règle simple à retenir est :
+
+> **`$_SERVER` est un tableau automatiquement créé par PHP qui contient les informations techniques concernant le serveur et la demande en cours.**
+
+Dans QUIDITMIEUX, `$_SERVER['REQUEST_METHOD']` indique si l’application a été appelée avec GET ou POST. Les autres clés présentées dans ce chapitre sont des exemples généraux fournis par PHP, mais elles ne sont pas toutes utilisées par le projet.
+
+### À quoi sert strtoupper() ?
+
+`strtoupper()` est une fonction native de PHP qui retourne une chaîne de caractères écrite en majuscules.
+
+```php
+strtoupper('get');   // Retourne GET
+strtoupper('post');  // Retourne POST
+```
+
+Elle ne modifie pas directement la variable reçue : elle retourne une nouvelle chaîne.
+
+Dans `App.php` :
+
+```php
+if (isset($_SERVER['REQUEST_METHOD']) && is_string($_SERVER['REQUEST_METHOD'])) {
+    return strtoupper($_SERVER['REQUEST_METHOD']);
+}
+
+return 'GET';
+```
+
+le traitement est le suivant :
+
+1. `isset()` vérifie que le serveur a fourni `REQUEST_METHOD` ;
+2. `is_string()` vérifie que cette information est du texte ;
+3. `strtoupper()` garantit une valeur en majuscules, par exemple `GET` ou `POST` ;
+4. `return` renvoie cette valeur au routeur ;
+5. si la valeur est absente ou invalide, la méthode utilise `GET` par défaut.
+
+La mise en majuscules facilite la comparaison avec les méthodes enregistrées dans les routes :
+
+```php
+'post' === 'POST';              // false
+strtoupper('post') === 'POST';  // true
+```
+
+La règle simple à retenir est :
+
+> **`REQUEST_METHOD` indique comment la demande HTTP a été envoyée ; `strtoupper()` transforme son nom en majuscules avant sa comparaison par le routeur.**
+
+## Le constructeur __construct() et le mot-clé $this
+
+### À quoi sert __construct() ?
+
+`__construct()` est une méthode spéciale native de PHP appelée le constructeur. Elle est exécutée automatiquement lorsqu’un objet est créé avec `new`.
+
+Dans `index.php`, la création de la classe principale ressemble à ceci :
+
+```php
+$app = new App(__DIR__);
+```
+
+Cette instruction provoque automatiquement l’appel du constructeur de `App` :
+
+```php
+public function __construct(string $projectRoot)
+{
+    $this->projectRoot = $projectRoot;
+}
+```
+
+Le déroulement est le suivant :
+
+1. `new App(__DIR__)` demande à PHP de créer un nouvel objet `App` ;
+2. PHP appelle automatiquement `App::__construct()` ;
+3. la valeur de `__DIR__`, qui représente le dossier de `index.php`, est reçue dans le paramètre `$projectRoot` ;
+4. le constructeur enregistre ce chemin dans l’objet ;
+5. les autres méthodes de `App` peuvent ensuite le réutiliser.
+
+Une classe peut fonctionner sans constructeur. Il devient utile lorsqu’un objet doit recevoir ou préparer des informations dès sa création.
+
+Un constructeur ne retourne pas lui-même l’objet avec `return`. C’est l’instruction `new App(...)` qui crée l’objet et le place ici dans la variable `$app`.
+
+### À quoi sert $this ?
+
+Dans une méthode non statique, `$this` désigne l’objet actuellement utilisé. On peut le lire comme « cet objet ».
+
+La flèche `->` permet ensuite d’accéder à un attribut ou à une méthode de cet objet :
+
+```php
+$this->projectRoot;   // Accède à un attribut de l’objet.
+$this->loadRoutes();  // Appelle une méthode de l’objet.
+```
+
+Dans le constructeur :
+
+```php
+$this->projectRoot = $projectRoot;
+```
+
+les deux écritures ont des rôles différents :
+
+- `$projectRoot` est le paramètre temporaire reçu par le constructeur ;
+- `$this->projectRoot` est l’attribut conservé dans l’objet `App`.
+
+Cette ligne signifie donc :
+
+> « Enregistre la valeur reçue dans l’attribut `projectRoot` de cet objet. »
+
+### Explication du chemin de configuration
+
+La méthode qui prépare la base de données contient cette instruction :
+
+```php
+$databaseConfigPath = $this->projectRoot . '/private/database-secret.php';
+```
+
+Elle se décompose ainsi :
+
+- `$this->projectRoot` récupère la racine du projet conservée dans l’objet ;
+- le point `.` concatène, donc assemble, deux chaînes de caractères ;
+- `'/private/database-secret.php'` ajoute le chemin du fichier privé ;
+- le résultat complet est placé dans la variable locale `$databaseConfigPath`.
+
+Si `$this->projectRoot` contient `C:\laragon\www\quiditmieux`, le résultat est approximativement :
+
+```text
+C:\laragon\www\quiditmieux/private/database-secret.php
+```
+
+`$databaseConfigPath` est une variable locale : elle sert uniquement pendant l’exécution de la méthode. À l’inverse, `$this->projectRoot` est un attribut : sa valeur reste disponible dans les différentes méthodes tant que l’objet `App` existe.
+
+La règle simple à retenir est :
+
+> **`__construct()` prépare un objet au moment de sa création ; `$this` permet ensuite d’accéder aux attributs et aux méthodes de cet objet.**
+
+## Comprendre le symbole ! et la fonction is_file()
+
+Dans cette condition, le symbole utilisé est un point d’exclamation `!`, et non un point d’interrogation `?` :
+
+```php
+if (!is_file($databaseConfigPath)) {
+    echo 'La configuration de la base de données est indisponible.';
+    return null;
+}
+```
+
+La fonction native `is_file()` vérifie si le chemin reçu correspond à un fichier existant :
+
+- elle retourne `true` si le fichier existe et si le chemin désigne bien un fichier ;
+- elle retourne `false` si le fichier n’existe pas ou si le chemin désigne autre chose, par exemple un dossier.
+
+Le symbole `!` signifie « non ». Il inverse le résultat booléen placé après lui :
+
+| Résultat de `is_file()` | Résultat après `!` | Signification |
+|---|---|---|
+| `true` | `false` | Le fichier existe : le bloc `if` n’est pas exécuté. |
+| `false` | `true` | Le fichier est absent ou invalide : le bloc `if` est exécuté. |
+
+La condition se lit donc ainsi :
+
+> « Si le chemin ne correspond pas à un fichier existant, afficher le message puis arrêter cette méthode. »
+
+`return null;` termine immédiatement la méthode et indique qu’aucun objet `Database` utilisable ne peut être retourné.
+
+Sans le symbole `!`, la condition aurait le sens opposé :
+
+```php
+if (is_file($databaseConfigPath)) {
+    // Ce bloc est exécuté lorsque le fichier existe.
+}
+```
+
+La règle simple à retenir est :
+
+> **`!` signifie « non » et inverse une condition.**
+
+Exemples du même principe :
+
+```php
+if (!is_array($databaseConfig)) {
+    // La configuration n’est pas un tableau.
+}
+
+if (!$database->isConnected()) {
+    // La base de données n’est pas connectée.
+}
+```
+
 ## POO et héritage
 
 La programmation orientée objet consiste à regrouper les données et les traitements qui ont le même rôle dans des classes.

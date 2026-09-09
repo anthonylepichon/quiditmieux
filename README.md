@@ -36,12 +36,13 @@ Le point d’entrée unique [index.php](index.php) démarre l’application. La 
     ├── config/          Configuration des routes
     ├── controllers/     Coordination des demandes HTTP
     ├── core/            Socle de l’application
-    └── models/          Accès aux données et règles métier
+    ├── models/          Accès aux données et règles métier
+    └── services/        Services techniques, dont le stockage des photographies
 
     templates/
     ├── layout/          Structure HTML, header et footer communs
     ├── pages/           Pages complètes
-    └── partials/        Fragments réutilisables
+    └── fragments/       Fragments réutilisables
 
     resources/scss/      Sources SCSS
     public/assets/       CSS, JavaScript, polices et illustrations
@@ -49,7 +50,7 @@ Le point d’entrée unique [index.php](index.php) démarre l’application. La 
     tests/               Tests unitaires et d’intégration
     documents/           Cahier des charges, conceptualisation et supports
 
-Les contrôleurs héritent de Controller, qui fournit les opérations communes de rendu, de redirection, de validation et de réponse JSON. Les modèles SQL héritent de Model. CategoryModel reste indépendant, car les catégories viennent d’une API externe et non d’une table MySQL.
+Les contrôleurs héritent de Controller, qui fournit les opérations communes de rendu, de redirection, de validation et de réponse JSON. Les modèles SQL héritent de Model. CategoryModel reste indépendant, car les catégories viennent d’une API externe et non d’une table MySQL. Le service PhotoStorage centralise le stockage et la suppression des fichiers photographiques.
 
 ## Installation locale
 

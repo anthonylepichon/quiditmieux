@@ -11,10 +11,14 @@
 ?>
 <!doctype html>
 <html lang="fr">
-<?php require __DIR__ . '/head.php'; ?>
-<body>
-    <?php require __DIR__ . '/header.php'; ?>
-    <?= $content ?>
-    <?php require __DIR__ . '/footer.php'; ?>
-</body>
+    <?php // Fragment head.php : métadonnées, feuilles de style et scripts propres à la page. ?>
+    <?php require __DIR__ . '/head.php'; ?>
+    <body>
+        <?php // Fragment header.php : identité du site, navigation et actions liées à la session. ?>
+        <?php require __DIR__ . '/header.php'; ?>
+        <?php // Contenu de la page : il peut assembler ses propres fragments de présentation. ?>
+        <?= $content ?>
+        <?php // Fragment footer.php : pied de page commun et liens institutionnels. ?>
+        <?php require __DIR__ . '/footer.php'; ?>
+    </body>
 </html>

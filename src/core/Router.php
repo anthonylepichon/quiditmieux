@@ -6,6 +6,9 @@
  * Tâches : Enregistrer les routes, contrôler la méthode HTTP et appeler le traitement correspondant.
  * Liens avec les autres fichiers : Est utilisé par App.php, reçoit les routes de routes.php et lance les contrôleurs enfants.
  */
+// Son rôle est d’enregistrer les routes disponibles, de vérifier leur méthode HTTP
+// et d’orienter chaque demande vers le contrôleur et la méthode correspondant à la route demandée.
+// Il est nécessaire pour centraliser la navigation de l’application et éviter que le fichier index.php choisisse lui-même le traitement à exécuter.
 
 namespace App\core;
 
@@ -20,12 +23,12 @@ class Router
     private array $routes = [];
 
     // ====================
-    // MÉTHODES
+    // METHODES
     // ====================
 
     /**
-     * Rôle : Conserver les gestionnaires de base de données et de session à transmettre au contrôleur sélectionné.
-     * Paramètres : Gestionnaires de la base de données et de la session créés pour la requête courante.
+     * Rôle : Conserver les services communs de la requête.
+     * Paramètres : Gestionnaires Database et Session initialisés par App.
      * Retour : Aucun.
      */
     public function __construct(Database $database, Session $session)
@@ -35,8 +38,8 @@ class Router
     }
 
     /**
-     * Rôle : Enregistrer les routes disponibles dans l'application.
-     * Paramètres : Tableau associatif des définitions de routes.
+     * Rôle : Enregistrer les routes disponibles.
+     * Paramètres : Tableau associatif des définitions de route.
      * Retour : Aucun.
      */
     public function registerRoutes(array $routes): void
@@ -44,57 +47,84 @@ class Router
         $this->routes = $routes;
     }
 
-    /**
-     * Rôle : Vérifier la demande puis appeler le contrôleur et la méthode associés à la route.
-     * Paramètres : Nom de la route demandée et méthode HTTP reçue.
-     * Retour : Aucun.
-     */
-    public function dispatch(string $requestedRoute, string $requestMethod): void
+    // Rôle : rechercher la route demandée, identifier le contrôleur et la méthode qui lui correspondent, puis exécuter cette méthode.
+    // Paramètres : Aucun paramètre dans la signature. Le nom de la route est récupéré dans l’adresse avec $_GET['route']. En son absence, la route home est utilisée.
+    // Retour : Aucun. La méthode exécute directement l’action du contrôleur, produit une réponse HTTP 404 si la route est absente
+    // ou une réponse HTTP 405 si la méthode GET ou POST reçue n’est pas autorisée.
+    public function dispatch(string $routeName, string $requestMethod): void
     {
-        if (!isset($this->routes[$requestedRoute]) || !is_array($this->routes[$requestedRoute])) {
-            echo 'La page demandée est indisponible.';
+        // La route provient d'App, qui a déjà refusé les structures inattendues de la requête.
+        // Seules les routes enregistrées dans routes.php peuvent être exécutées.
+        // La page des recettes constitue la page d’accueil de l’application.
+        // La route home est utilisée lorsqu’aucune route n’est indiquée.
+        // (SECURITE: "Seules les routes de la liste déclarée peuvent être exécutées, ce qui empêche de choisir librement une classe ou une méthode dans l'adresse.")
+        // Le traitement doit s’arrêter si la route demandée n’a pas été enregistrée.
+        if (!isset($this->routes[$routeName])) {
+            $this->notFound('Route introuvable : ' . $routeName);
             return;
         }
 
-        $routeDefinition = $this->routes[$requestedRoute];
+        // (SECURITE: "La méthode HTTP doit correspondre à la route afin qu'une action POST qui modifie des données ne puisse pas être déclenchée par une simple adresse GET.")
+        // La méthode HTTP reçue doit correspondre à celle autorisée dans la configuration de la route.
+        if (!isset($this->routes[$routeName]['http_method'], $this->routes[$routeName]['controller'], $this->routes[$routeName]['method'])) {
+            $this->notFound('Route invalide.');
+            return;
+        }
+        // La définition de route est complète : on peut comparer le verbe HTTP demandé avec celui autorisé.
+        $allowedHttpMethod = $this->routes[$routeName]['http_method'];
 
-        if (!isset(
-            $routeDefinition['method'],
-            $routeDefinition['controller'],
-            $routeDefinition['action']
-        )) {
-            echo 'La page demandée est indisponible.';
+        if ($requestMethod !== $allowedHttpMethod) {
+            $this->methodNotAllowed($allowedHttpMethod);
             return;
         }
 
-        if (!is_string($routeDefinition['method'])
-            || !is_string($routeDefinition['controller'])
-            || !is_string($routeDefinition['action'])
-        ) {
-            echo 'La page demandée est indisponible.';
+        // Chaque route enregistrée indique le contrôleur à utiliser et la méthode de ce contrôleur qui doit être exécutée.
+        // La classe et l'action viennent exclusivement de routes.php, jamais de l'adresse saisie par le visiteur.
+        $controllerName = $this->routes[$routeName]['controller'];
+        $methodName = $this->routes[$routeName]['method'];
+
+        // Le contrôleur doit exister avant de pouvoir créer un objet à partir de son nom.
+        if (!class_exists($controllerName)) {
+            $this->notFound('Contrôleur introuvable : ' . $controllerName);
             return;
         }
 
-        if (strtoupper($requestMethod) !== strtoupper($routeDefinition['method'])) {
-            echo 'Cette action ne peut pas être exécutée de cette manière.';
+        // Le nom de la classe étant contenu dans une variable, PHP crée dynamiquement un objet correspondant au contrôleur associé à la route.
+        if (!is_subclass_of($controllerName, Controller::class)) {
+            $this->notFound('Contrôleur invalide.');
+            return;
+        }
+        // Le contrôleur sélectionné reçoit les mêmes services communs que tous les autres contrôleurs de la demande.
+        $controller = new $controllerName($this->database, $this->session);
+
+        // La méthode indiquée par la route doit exister dans le contrôleur créé.
+        if (!method_exists($controller, $methodName)) {
+            $this->notFound('Méthode introuvable : ' . $methodName);
             return;
         }
 
-        $controllerClass = $routeDefinition['controller'];
-        $action = $routeDefinition['action'];
-
-        if (!class_exists($controllerClass) || !is_subclass_of($controllerClass, Controller::class)) {
-            echo 'La page demandée est indisponible.';
-            return;
-        }
-
-        $controller = new $controllerClass($this->database, $this->session);
-
-        if (!method_exists($controller, $action) || !is_callable([$controller, $action])) {
-            echo 'La page demandée est indisponible.';
-            return;
-        }
-
-        $controller->$action();
+        // Le nom de la méthode étant contenu dans une variable, PHP exécute dynamiquement l’action associée à la route.
+        $controller->$methodName();
     }
+
+    // Rôle : produire une réponse HTTP 404 accompagnée d’un message d’erreur sécurisé.
+    // Paramètres : $message représente le message décrivant l’erreur rencontrée.
+    // Retour : Aucun.
+    private function notFound(string $message): void
+    {
+        http_response_code(404);
+        // (SECURITE: "Le message variable est échappé avant affichage afin qu'il ne puisse pas injecter du HTML ou du JavaScript.")
+        echo htmlspecialchars($message, ENT_QUOTES, 'UTF-8');
+    }
+
+    // Rôle : refuser une demande envoyée avec une méthode HTTP différente de celle prévue pour la route.
+    // Paramètres : $allowedHttpMethod représente la méthode GET ou POST acceptée par la route.
+    // Retour : Aucun. La méthode produit une réponse HTTP 405 et indique la méthode autorisée.
+    private function methodNotAllowed(string $allowedHttpMethod): void
+    {
+        http_response_code(405);
+        header('Allow: ' . $allowedHttpMethod);
+        echo 'Méthode HTTP non autorisée pour cette route.';
+    }
+
 }

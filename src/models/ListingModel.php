@@ -10,6 +10,7 @@
 namespace App\models;
 
 use App\core\Model;
+// NATIF PHP : DateTimeImmutable est la classe native de gestion des dates sans modification de l’objet original ; elle fiabilise ici les comparaisons et les formats.
 use DateTimeImmutable;
 
 class ListingModel extends Model
@@ -18,6 +19,7 @@ class ListingModel extends Model
     // ATTRIBUTS
     // ====================
 
+    // Métadonnées utilisées par le modèle parent pour les colonnes autorisées de l'annonce.
     protected string $tableName = 'ANNONCE';
     protected string $primaryKeyName = 'id';
     protected array $writableFields = [
@@ -50,6 +52,7 @@ class ListingModel extends Model
         string $deadline,
         int $categoryId
     ): ?int {
+        // Le modèle parent reçoit uniquement les données déjà validées par le contrôleur.
         $created = $this->create([
             'utilisateur_id' => $userId,
             'titre' => $title,
@@ -61,11 +64,14 @@ class ListingModel extends Model
         ]);
 
         if (!$created) {
+            // Aucune lecture de l'identifiant n'est tentée si l'insertion a échoué.
             return null;
         }
 
+        // L'identifiant généré est conservé par le modèle parent après l'insertion.
         $listingId = $this->getValue($this->primaryKeyName);
 
+        // NATIF PHP : is_int() vérifie qu’une valeur est un entier ; il évite ici d’utiliser un autre type dans un traitement numérique.
         if (!is_int($listingId)) {
             return null;
         }
@@ -87,6 +93,7 @@ class ListingModel extends Model
         string $deadline,
         int $categoryId
     ): bool {
+        // Seuls les champs modifiables de l'annonce sont transmis à la mise à jour.
         return $this->update($listingId, [
             'titre' => $title,
             'description' => $description,
@@ -104,6 +111,7 @@ class ListingModel extends Model
      */
     public function deleteListing(int $listingId): bool
     {
+        // L'autorisation de suppression est vérifiée avant l'appel de cette méthode.
         return $this->delete($listingId);
     }
 
@@ -114,19 +122,23 @@ class ListingModel extends Model
      */
     public function isOwnedBy(int $listingId, int $userId): ?bool
     {
+        // La requête lit uniquement le propriétaire nécessaire à la comparaison.
         $listing = $this->database->fetchOne(
             'SELECT utilisateur_id FROM `ANNONCE` WHERE id = :listing_id LIMIT 1',
             ['listing_id' => $listingId]
         );
 
         if ($listing === false) {
+            // Une erreur de lecture reste distincte d'une annonce absente.
             return null;
         }
 
+        // NATIF PHP : isset() vérifie qu’une variable ou une entrée de tableau existe et ne vaut pas null ; il évite ici de lire une valeur absente.
         if ($listing === null || !isset($listing['utilisateur_id'])) {
             return false;
         }
 
+        // La comparaison indique si l'utilisateur demandé est le propriétaire de l'annonce.
         return (int) $listing['utilisateur_id'] === $userId;
     }
 
@@ -141,6 +153,7 @@ class ListingModel extends Model
         DateTimeImmutable $currentTime
     ): ?bool
     {
+        // Les règles de modification et de suppression sont volontairement communes.
         return $this->canBeManagedBy($listingId, $userId, $currentTime);
     }
 
@@ -155,6 +168,7 @@ class ListingModel extends Model
         DateTimeImmutable $currentTime
     ): ?bool
     {
+        // Les règles de modification et de suppression sont volontairement communes.
         return $this->canBeManagedBy($listingId, $userId, $currentTime);
     }
 
@@ -165,6 +179,7 @@ class ListingModel extends Model
      */
     public function getLastManagementRestriction(): string
     {
+        // Le contrôleur peut afficher un message adapté à la dernière règle refusée.
         return $this->lastManagementRestriction;
     }
 
@@ -179,7 +194,10 @@ class ListingModel extends Model
         DateTimeImmutable $currentTime
     ): ?bool
     {
+        // Le motif par défaut couvre une éventuelle erreur pendant la vérification.
         $this->lastParticipationRestriction = 'error';
+
+        // FOR UPDATE protège la vérification lorsqu'elle précède une participation.
         $listing = $this->database->fetchOne(
             'SELECT utilisateur_id, date_heure_fin FROM `ANNONCE`'
             . ' WHERE id = :listing_id LIMIT 1 FOR UPDATE',
@@ -187,26 +205,31 @@ class ListingModel extends Model
         );
 
         if ($listing === false) {
+            // L'appelant peut distinguer une erreur technique d'un refus métier.
             return null;
         }
 
         if ($listing === null
             || !isset($listing['utilisateur_id'], $listing['date_heure_fin'])
         ) {
+            // L'annonce demandée est absente ou incomplète.
             $this->lastParticipationRestriction = 'missing';
             return false;
         }
 
         if ((int) $listing['utilisateur_id'] === $userId) {
+            // Un vendeur ne peut pas participer à sa propre annonce.
             $this->lastParticipationRestriction = 'owner';
             return false;
         }
 
         if ((string) $listing['date_heure_fin'] <= $currentTime->format('Y-m-d H:i:s')) {
+            // Une vente échue n'accepte plus de suivi ni d'enchère.
             $this->lastParticipationRestriction = 'ended';
             return false;
         }
 
+        // Aucune restriction ne s'oppose à la participation demandée.
         $this->lastParticipationRestriction = '';
         return true;
     }
@@ -218,6 +241,7 @@ class ListingModel extends Model
      */
     public function getLastParticipationRestriction(): string
     {
+        // Le contrôleur récupère le motif associé au dernier refus de participation.
         return $this->lastParticipationRestriction;
     }
 
@@ -233,6 +257,7 @@ class ListingModel extends Model
         DateTimeImmutable $currentTime
     ): array
     {
+        // Les conditions et paramètres sont construits progressivement selon les critères reçus.
         $whereParts = [];
         $parameters = [];
         $currentTimeForDatabase = $currentTime->format('Y-m-d H:i:s');
@@ -240,6 +265,7 @@ class ListingModel extends Model
             . ' FROM `ENCHERE` price_bid'
             . ' WHERE price_bid.annonce_id = listing.id), listing.prix_depart)';
 
+        // Chaque méthode ajoute seulement le filtre qui lui correspond.
         $this->addTextCriteria($criteria, $whereParts, $parameters);
         $this->addCategoryCriteria($criteria, $whereParts, $parameters);
         $this->addItemStateCriteria($criteria, $whereParts, $parameters);
@@ -254,22 +280,30 @@ class ListingModel extends Model
         $whereSql = '';
 
         if ($whereParts !== []) {
+            // NATIF PHP : implode() assemble les éléments d’un tableau dans une chaîne ; il construit ici une liste ou une partie de requête.
             $whereSql = ' WHERE ' . implode(' AND ', $whereParts);
         }
 
+        // Le comptage précède la requête des annonces pour calculer la pagination.
         $countSql = 'SELECT COUNT(*) AS total FROM `ANNONCE` listing' . $whereSql;
         $countRow = $this->database->fetchOne($countSql, $parameters);
 
         if ($countRow === false
             || $countRow === null
             || !isset($countRow['total'])
+            // NATIF PHP : is_numeric() vérifie qu’une valeur représente un nombre ; il protège ici la conversion ou le calcul qui suit.
             || !is_numeric($countRow['total'])
         ) {
+            // Un résultat de comptage inexploitable produit une réponse d'échec uniforme.
             return $this->failedSearchResult($itemsPerPage);
         }
 
+        // Le total détermine la page réellement accessible et son décalage SQL.
         $totalItems = (int) $countRow['total'];
+        // NATIF PHP : max() retourne la plus grande valeur ; il empêche ici le calcul de descendre sous la limite minimale.
+        // NATIF PHP : ceil() arrondit un nombre au-dessus ; il calcule ici un nombre entier de pages.
         $totalPages = max(1, (int) ceil($totalItems / $itemsPerPage));
+        // NATIF PHP : min() retourne la plus petite valeur ; il empêche ici le calcul de dépasser la limite maximale.
         $currentPage = min(max(1, $requestedPage), $totalPages);
         $offset = ($currentPage - 1) * $itemsPerPage;
         $listParameters = $parameters;
@@ -278,6 +312,7 @@ class ListingModel extends Model
             $listParameters,
             $currentTimeForDatabase
         );
+        // La requête finale reprend les mêmes filtres et ajoute l'ordre puis la pagination.
         $listSql = 'SELECT listing.id, listing.titre, listing.description,'
             . ' listing.etat_objet, listing.prix_depart, listing.date_heure_fin,'
             . ' listing.categorie_id'
@@ -288,13 +323,16 @@ class ListingModel extends Model
         $listings = $this->database->fetchAll($listSql, $listParameters);
 
         if ($listings === false) {
+            // Une erreur de lecture est renvoyée au contrôleur dans un format prévisible.
             return $this->failedSearchResult($itemsPerPage);
         }
 
         if ($totalItems > 0 && $listings === []) {
+            // Une liste vide malgré un total positif signale une réponse incohérente.
             return $this->failedSearchResult($itemsPerPage);
         }
 
+        // Le résultat rassemble les annonces et les informations de pagination.
         return [
             'success' => true,
             'listings' => $listings,
@@ -312,12 +350,14 @@ class ListingModel extends Model
      */
     public function getDetail(int $listingId): array|false|null
     {
+        // Le détail associe l'annonce au pseudo public de son vendeur.
         $sql = 'SELECT listing.id, listing.utilisateur_id, listing.titre, listing.description,'
             . ' listing.etat_objet, listing.prix_depart, listing.date_heure_fin,'
             . ' listing.categorie_id, seller.pseudo AS seller_pseudo'
             . ' FROM `ANNONCE` listing'
             . ' INNER JOIN `UTILISATEUR` seller ON seller.id = listing.utilisateur_id'
             . ' WHERE listing.id = :listing_id LIMIT 1';
+        // Une seule annonce est attendue pour l'identifiant demandé.
         return $this->database->fetchOne($sql, ['listing_id' => $listingId]);
     }
 
@@ -328,6 +368,7 @@ class ListingModel extends Model
      */
     public function getDashboardSales(int $userId, DateTimeImmutable $currentTime): array|false
     {
+        // Les enchères sont agrégées afin d'afficher leur nombre et la meilleure offre.
         $sql = 'SELECT listing.id, listing.titre, listing.etat_objet, listing.prix_depart,'
             . ' listing.date_heure_fin, listing.categorie_id,'
             . ' COUNT(bid.id) AS bid_count, MAX(bid.montant) AS best_bid'
@@ -338,6 +379,7 @@ class ListingModel extends Model
             . ' listing.date_heure_fin, listing.categorie_id'
             . ' ORDER BY CASE WHEN listing.date_heure_fin > :current_time_order THEN 0 ELSE 1 END,'
             . ' listing.date_heure_fin ASC, listing.id ASC';
+        // L'instant de référence place les ventes actives avant les ventes terminées.
         return $this->database->fetchAll($sql, [
             'user_id' => $userId,
             'current_time_order' => $currentTime->format('Y-m-d H:i:s'),
@@ -351,6 +393,7 @@ class ListingModel extends Model
      */
     public function getDashboardParticipations(int $userId, DateTimeImmutable $currentTime): array|false
     {
+        // Cette sous-requête identifie le gagnant d'une vente terminée.
         $winnerSql = '(SELECT winning_bid.utilisateur_id FROM `ENCHERE` winning_bid'
             . ' WHERE winning_bid.annonce_id = listing.id'
             . ' ORDER BY winning_bid.montant DESC, winning_bid.date_heure_enchere ASC,'
@@ -379,6 +422,7 @@ class ListingModel extends Model
             . ' AND participation.user_best_bid IS NOT NULL))'
             . ' ORDER BY CASE WHEN participation.date_heure_fin > :current_time_order THEN 0 ELSE 1 END,'
             . ' participation.date_heure_fin ASC, participation.id ASC';
+        // Le même instant est envoyé à chaque comparaison de date de la requête.
         $currentTimeForDatabase = $currentTime->format('Y-m-d H:i:s');
         return $this->database->fetchAll($sql, [
             'bid_user_id' => $userId,
@@ -397,15 +441,18 @@ class ListingModel extends Model
      */
     private function addTextCriteria(array $criteria, array &$whereParts, array &$parameters): void
     {
+        // NATIF PHP : is_array() vérifie qu’une valeur est un tableau ; il évite ici de parcourir ou transmettre un type inattendu.
         if (!isset($criteria['words']) || !is_array($criteria['words'])) {
             return;
         }
 
         foreach ($criteria['words'] as $index => $word) {
+            // NATIF PHP : is_string() vérifie qu’une valeur est une chaîne de caractères ; il évite ici de traiter un type inattendu comme du texte.
             if (!is_string($word) || $word === '') {
                 continue;
             }
 
+            // Chaque mot possède son propre paramètre pour conserver une requête préparée.
             $parameterName = 'word_' . $index;
             $whereParts[] = 'LOCATE(:' . $parameterName
                 . ", CONCAT(listing.titre, ' ', listing.description)) > 0";
@@ -421,9 +468,11 @@ class ListingModel extends Model
     private function addCategoryCriteria(array $criteria, array &$whereParts, array &$parameters): void
     {
         if ($criteria['category_id'] === null) {
+            // L'absence de catégorie ne doit pas restreindre la recherche.
             return;
         }
 
+        // Le filtre et sa valeur préparée sont ajoutés ensemble.
         $whereParts[] = 'listing.categorie_id = :category_id';
         $parameters['category_id'] = $criteria['category_id'];
     }
@@ -436,9 +485,11 @@ class ListingModel extends Model
     private function addItemStateCriteria(array $criteria, array &$whereParts, array &$parameters): void
     {
         if ($criteria['item_state'] === null) {
+            // L'absence d'état ne doit pas restreindre la recherche.
             return;
         }
 
+        // Le filtre et sa valeur préparée sont ajoutés ensemble.
         $whereParts[] = 'listing.etat_objet = :item_state';
         $parameters['item_state'] = $criteria['item_state'];
     }
@@ -457,6 +508,7 @@ class ListingModel extends Model
         if ($criteria['minimum_price_in_euros'] !== null
             && $criteria['maximum_price_in_euros'] !== null
         ) {
+            // Les deux bornes forment une plage de prix inclusive.
             $whereParts[] = $currentPriceSql . ' BETWEEN :minimum_price AND :maximum_price';
             $parameters['minimum_price'] = $criteria['minimum_price_in_euros'];
             $parameters['maximum_price'] = $criteria['maximum_price_in_euros'];
@@ -464,11 +516,13 @@ class ListingModel extends Model
         }
 
         if ($criteria['minimum_price_in_euros'] !== null) {
+            // Une borne basse seule fixe le prix minimal accepté.
             $whereParts[] = $currentPriceSql . ' >= :minimum_price';
             $parameters['minimum_price'] = $criteria['minimum_price_in_euros'];
         }
 
         if ($criteria['maximum_price_in_euros'] !== null) {
+            // Une borne haute seule fixe le prix maximal accepté.
             $whereParts[] = $currentPriceSql . ' <= :maximum_price';
             $parameters['maximum_price'] = $criteria['maximum_price_in_euros'];
         }
@@ -487,9 +541,11 @@ class ListingModel extends Model
     ): void
     {
         if ($criteria['sale_state'] === 'active') {
+            // Une vente active se termine après l'instant de référence.
             $whereParts[] = 'listing.date_heure_fin > :current_time_filter';
             $parameters['current_time_filter'] = $currentTime;
         } elseif ($criteria['sale_state'] === 'ended') {
+            // Une vente terminée se termine à cet instant ou avant.
             $whereParts[] = 'listing.date_heure_fin <= :current_time_filter';
             $parameters['current_time_filter'] = $currentTime;
         }
@@ -507,13 +563,16 @@ class ListingModel extends Model
     ): string
     {
         if ($saleState === 'active') {
+            // Les ventes actives les plus proches de leur fin sont affichées d'abord.
             return ' ORDER BY listing.date_heure_fin ASC, listing.id ASC';
         }
 
         if ($saleState === 'ended') {
+            // Les ventes terminées les plus récentes sont affichées d'abord.
             return ' ORDER BY listing.date_heure_fin DESC, listing.id DESC';
         }
 
+        // Sans filtre d'état, les ventes actives précèdent les ventes terminées.
         $parameters['current_time_order_state'] = $currentTime;
         $parameters['current_time_order_active'] = $currentTime;
         $parameters['current_time_order_ended'] = $currentTime;
@@ -537,7 +596,10 @@ class ListingModel extends Model
         DateTimeImmutable $currentTime
     ): ?bool
     {
+        // Le motif par défaut couvre une éventuelle erreur pendant la vérification.
         $this->lastManagementRestriction = 'error';
+
+        // La lecture rassemble le propriétaire, l'échéance et la présence d'enchères.
         $listing = $this->database->fetchOne(
             'SELECT listing.utilisateur_id, listing.date_heure_fin,'
             . ' EXISTS(SELECT 1 FROM `ENCHERE` bid WHERE bid.annonce_id = listing.id) AS has_bid'
@@ -546,31 +608,37 @@ class ListingModel extends Model
         );
 
         if ($listing === false) {
+            // L'appelant peut distinguer une erreur technique d'un refus métier.
             return null;
         }
 
         if ($listing === null
             || !isset($listing['utilisateur_id'], $listing['date_heure_fin'], $listing['has_bid'])
         ) {
+            // L'annonce demandée est absente ou ses données sont incomplètes.
             $this->lastManagementRestriction = 'missing';
             return false;
         }
 
         if ((int) $listing['utilisateur_id'] !== $userId) {
+            // Seul le vendeur peut gérer son annonce.
             $this->lastManagementRestriction = 'owner';
             return false;
         }
 
         if ((string) $listing['date_heure_fin'] <= $currentTime->format('Y-m-d H:i:s')) {
+            // Une annonce échue ne peut plus être modifiée ni supprimée.
             $this->lastManagementRestriction = 'ended';
             return false;
         }
 
         if ((bool) $listing['has_bid']) {
+            // Une première enchère fige l'annonce pour préserver les participants.
             $this->lastManagementRestriction = 'bid';
             return false;
         }
 
+        // Toutes les règles sont respectées : l'action de gestion est autorisée.
         $this->lastManagementRestriction = '';
         return true;
     }
@@ -582,6 +650,7 @@ class ListingModel extends Model
      */
     private function failedSearchResult(int $itemsPerPage): array
     {
+        // La structure reste identique à une recherche réussie pour simplifier le contrôleur.
         return [
             'success' => false,
             'listings' => [],

@@ -17,6 +17,7 @@ class UserModel extends Model
     // ATTRIBUTS
     // ====================
 
+    // Métadonnées utilisées par le modèle parent pour les colonnes modifiables du compte.
     protected string $tableName = 'UTILISATEUR';
     protected string $primaryKeyName = 'id';
     protected array $writableFields = ['pseudo', 'email', 'password_hash'];
@@ -32,6 +33,7 @@ class UserModel extends Model
      */
     public function getAccount(int $userId): array|false|null
     {
+        // Seules les informations nécessaires au formulaire sont sélectionnées.
         return $this->database->fetchOne(
             'SELECT id, pseudo, email FROM `UTILISATEUR` WHERE id = :user_id LIMIT 1',
             ['user_id' => $userId]
@@ -45,12 +47,15 @@ class UserModel extends Model
      */
     public function createAccount(string $pseudo, string $email, string $password): bool
     {
+        // Le mot de passe est transformé en empreinte avant toute écriture en base.
         $passwordHash = $this->hashPassword($password);
 
         if ($passwordHash === null) {
+            // La création s'arrête si l'empreinte ne peut pas être produite.
             return false;
         }
 
+        // Le modèle parent enregistre uniquement les champs autorisés du nouveau compte.
         return $this->create([
             'pseudo' => $pseudo,
             'email' => $email,
@@ -65,19 +70,27 @@ class UserModel extends Model
      */
     public function authenticate(string $login, string $password): array|false|null
     {
+        // L'identifiant est recherché comme adresse électronique uniquement s'il contient @.
+        // NATIF PHP : str_contains() vérifie si un texte contient une chaîne ; il contrôle ici la présence du caractère recherché.
         $account = $this->findByLogin($login, str_contains($login, '@'));
 
         if ($account === false || $account === null) {
+            // Une erreur SQL ou un compte absent est transmis sans révéler de détail sensible.
             return $account;
         }
 
+        // NATIF PHP : isset() vérifie qu’une variable ou une entrée de tableau existe et ne vaut pas null ; il évite ici de lire une valeur absente.
         if (!isset($account['password_hash'])
+            // NATIF PHP : is_string() vérifie qu’une valeur est une chaîne de caractères ; il évite ici de traiter un type inattendu comme du texte.
             || !is_string($account['password_hash'])
+            // NATIF PHP : password_verify() compare un mot de passe avec son empreinte sécurisée ; il authentifie ici l’utilisateur sans stocker son mot de passe en clair.
             || !password_verify($password, $account['password_hash'])
         ) {
+            // Le même résultat est renvoyé pour toute information de connexion incorrecte.
             return null;
         }
 
+        // L'empreinte ne doit jamais quitter le modèle utilisateur.
         unset($account['password_hash']);
 
         return $account;
@@ -90,12 +103,14 @@ class UserModel extends Model
      */
     public function verifyPassword(int $userId, string $password): ?bool
     {
+        // Seule l'empreinte est nécessaire pour vérifier le mot de passe actuel.
         $account = $this->database->fetchOne(
             'SELECT password_hash FROM `UTILISATEUR` WHERE id = :user_id LIMIT 1',
             ['user_id' => $userId]
         );
 
         if ($account === false) {
+            // Une erreur de lecture reste distincte d'un mot de passe invalide.
             return null;
         }
 
@@ -103,9 +118,11 @@ class UserModel extends Model
             || !isset($account['password_hash'])
             || !is_string($account['password_hash'])
         ) {
+            // Un compte absent ou incomplet ne peut pas être authentifié.
             return false;
         }
 
+        // La comparaison sécurisée est effectuée sans exposer l'empreinte au contrôleur.
         return password_verify($password, $account['password_hash']);
     }
 
@@ -116,18 +133,22 @@ class UserModel extends Model
      */
     public function updateAccount(int $userId, string $pseudo, string $email, ?string $newPassword = null): ?bool
     {
+        // Les coordonnées du compte sont toujours incluses dans la mise à jour.
         $data = ['pseudo' => $pseudo, 'email' => $email];
 
         if ($newPassword !== null) {
+            // Un nouveau mot de passe est enregistré uniquement sous forme d'empreinte.
             $passwordHash = $this->hashPassword($newPassword);
 
             if ($passwordHash === null) {
+                // La mise à jour est annulée si l'empreinte ne peut pas être produite.
                 return null;
             }
 
             $data['password_hash'] = $passwordHash;
         }
 
+        // Le modèle parent limite la mise à jour aux champs autorisés.
         return $this->update($userId, $data);
     }
 
@@ -138,6 +159,7 @@ class UserModel extends Model
      */
     public function pseudoExists(string $pseudo, ?int $excludedUserId = null): ?bool
     {
+        // La vérification commune reçoit la colonne explicitement autorisée.
         return $this->normalizedValueExists('pseudo', $pseudo, $excludedUserId);
     }
 
@@ -148,6 +170,7 @@ class UserModel extends Model
      */
     public function emailExists(string $email, ?int $excludedUserId = null): ?bool
     {
+        // La vérification commune reçoit la colonne explicitement autorisée.
         return $this->normalizedValueExists('email', $email, $excludedUserId);
     }
 
@@ -159,25 +182,31 @@ class UserModel extends Model
     private function normalizedValueExists(string $column, string $value, ?int $excludedUserId): ?bool
     {
         if ($column !== 'pseudo' && $column !== 'email') {
+            // La colonne est imposée pour empêcher toute construction SQL inattendue.
             return false;
         }
 
+        // La valeur recherchée est toujours transmise comme paramètre préparé.
         $sql = 'SELECT 1 AS found FROM UTILISATEUR WHERE ' . $column . ' = :value';
         $parameters = ['value' => $value];
 
         if ($excludedUserId !== null) {
+            // Lors d'une modification, le compte actuel ne doit pas être comparé à lui-même.
             $sql .= ' AND id <> :excluded_user_id';
             $parameters['excluded_user_id'] = $excludedUserId;
         }
 
+        // Une seule correspondance suffit pour connaître la disponibilité.
         $sql .= ' LIMIT 1';
 
         $account = $this->database->fetchOne($sql, $parameters);
 
         if ($account === false) {
+            // L'appelant peut distinguer une erreur SQL d'une valeur disponible.
             return null;
         }
 
+        // Une ligne trouvée signifie que le pseudo ou l'adresse est déjà utilisé.
         return $account !== null;
     }
 
@@ -188,12 +217,16 @@ class UserModel extends Model
      */
     private function hashPassword(string $password): ?string
     {
+        // NATIF PHP : password_hash() crée une empreinte sécurisée du mot de passe ; il évite ici l’enregistrement du mot de passe en clair.
+        // NATIF PHP : PASSWORD_DEFAULT sélectionne l’algorithme de hachage recommandé par PHP ; elle sécurise ici le mot de passe tout en permettant une évolution future.
         $passwordHash = password_hash($password, PASSWORD_DEFAULT);
 
         if (!is_string($passwordHash)) {
+            // Un résultat inattendu ne doit jamais être enregistré comme mot de passe.
             return null;
         }
 
+        // Seule l'empreinte sécurisée est renvoyée au reste du modèle.
         return $passwordHash;
     }
 
@@ -204,12 +237,15 @@ class UserModel extends Model
      */
     private function findByLogin(string $login, bool $isEmail): array|false|null
     {
+        // Le pseudo est la recherche par défaut.
         $column = 'pseudo';
 
         if ($isEmail) {
+            // Une adresse électronique est recherchée dans la colonne correspondante.
             $column = 'email';
         }
 
+        // L'empreinte reste disponible ici uniquement pour la vérification du mot de passe.
         return $this->database->fetchOne(
             'SELECT id, pseudo, email, password_hash FROM UTILISATEUR '
             . 'WHERE ' . $column . ' = :login LIMIT 1',

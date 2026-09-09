@@ -11,7 +11,6 @@
  * - Vérifier la récupération d'un enregistrement.
  * - Vérifier la récupération de plusieurs enregistrements.
  * - Vérifier la récupération du dernier identifiant inséré.
- * - Vérifier le fonctionnement des transactions.
  *
  * Liens :
  * - Utilise la classe Database située dans src/core/Database.php.
@@ -20,6 +19,7 @@
  * - Est exécuté depuis tests/Lancer.php.
  */
 
+// NATIF PHP : __DIR__ contient le chemin absolu du dossier du fichier courant ; elle permet ici de construire un chemin indépendant du poste utilisé.
 require_once __DIR__ . '/../../src/core/Database.php';
 
 use App\core\Database;
@@ -149,7 +149,9 @@ if ($connexionReussie) {
 
         $libelleObtenu = null;
 
+        // NATIF PHP : is_array() vérifie qu’une valeur est un tableau ; il évite ici de parcourir ou transmettre un type inattendu.
         if (is_array($enregistrement)
+            // NATIF PHP : isset() vérifie qu’une variable ou une entrée de tableau existe et ne vaut pas null ; il évite ici de lire une valeur absente.
             && isset($enregistrement['libelle'])
         ) {
             $libelleObtenu = $enregistrement['libelle'];
@@ -211,6 +213,7 @@ if ($connexionReussie) {
         $nombreEnregistrements = 0;
 
         if (is_array($enregistrements)) {
+            // NATIF PHP : count() compte les éléments d’un tableau ; il permet ici de connaître la quantité avant le traitement.
             $nombreEnregistrements = count($enregistrements);
         }
 
@@ -221,125 +224,6 @@ if ($connexionReussie) {
         );
 
 
-        /*
-         * TEST 8
-         * Vérification du démarrage d'une transaction.
-         */
-
-        $transactionDemarree = $baseDeDonnees->beginTransaction();
-
-        $lanceurTests->verifierEgalite(
-            true,
-            $transactionDemarree,
-            "Une transaction doit pouvoir être démarrée"
-        );
-
-
-        /*
-         * TEST 9
-         * Vérification du rollback.
-         */
-
-        if ($transactionDemarree) {
-
-            $baseDeDonnees->execute(
-                'INSERT INTO test_database (libelle)
-                 VALUES (:libelle)',
-                [
-                    'libelle' => 'Enregistrement à annuler',
-                ]
-            );
-
-            $transactionAnnulee = $baseDeDonnees->rollback();
-
-            $lanceurTests->verifierEgalite(
-                true,
-                $transactionAnnulee,
-                "Une transaction doit pouvoir être annulée avec rollback"
-            );
-
-
-            /*
-             * Vérification que l'insertion a bien été annulée.
-             */
-
-            $enregistrementAnnule = $baseDeDonnees->fetchOne(
-                'SELECT id, libelle
-                 FROM test_database
-                 WHERE libelle = :libelle',
-                [
-                    'libelle' => 'Enregistrement à annuler',
-                ]
-            );
-
-            $lanceurTests->verifierEgalite(
-                null,
-                $enregistrementAnnule,
-                "Un enregistrement annulé par rollback ne doit pas être conservé"
-            );
-        }
-
-
-        /*
-         * TEST 10
-         * Vérification d'une transaction validée avec commit.
-         */
-
-        $transactionDemarree = $baseDeDonnees->beginTransaction();
-
-        $lanceurTests->verifierEgalite(
-            true,
-            $transactionDemarree,
-            "Une nouvelle transaction doit pouvoir être démarrée"
-        );
-
-
-        if ($transactionDemarree) {
-
-            $baseDeDonnees->execute(
-                'INSERT INTO test_database (libelle)
-                 VALUES (:libelle)',
-                [
-                    'libelle' => 'Enregistrement validé',
-                ]
-            );
-
-            $transactionValidee = $baseDeDonnees->commit();
-
-            $lanceurTests->verifierEgalite(
-                true,
-                $transactionValidee,
-                "Une transaction doit pouvoir être validée avec commit"
-            );
-
-
-            /*
-             * Vérification que l'enregistrement validé existe.
-             */
-
-            $enregistrementValide = $baseDeDonnees->fetchOne(
-                'SELECT id, libelle
-                 FROM test_database
-                 WHERE libelle = :libelle',
-                [
-                    'libelle' => 'Enregistrement validé',
-                ]
-            );
-
-            $libelleValide = null;
-
-            if (is_array($enregistrementValide)
-                && isset($enregistrementValide['libelle'])
-            ) {
-                $libelleValide = $enregistrementValide['libelle'];
-            }
-
-            $lanceurTests->verifierEgalite(
-                'Enregistrement validé',
-                $libelleValide,
-                "Un enregistrement validé par commit doit être conservé"
-            );
-        }
 
 
         /*

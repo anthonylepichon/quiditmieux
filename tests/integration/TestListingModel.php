@@ -25,6 +25,7 @@
  * - Est exécuté depuis tests/Lancer.php.
  */
 
+// NATIF PHP : __DIR__ contient le chemin absolu du dossier du fichier courant ; elle permet ici de construire un chemin indépendant du poste utilisé.
 require_once __DIR__ . '/../../src/core/Database.php';
 require_once __DIR__ . '/../../src/core/Model.php';
 require_once __DIR__ . '/../../src/models/ListingModel.php';
@@ -32,6 +33,7 @@ require_once __DIR__ . '/../../src/models/ListingModel.php';
 use App\core\Database;
 use App\models\ListingModel;
 
+// NATIF PHP : date_default_timezone_set() définit le fuseau horaire utilisé par les fonctions de date ; il garantit ici des calculs cohérents avec le contexte français.
 date_default_timezone_set('Europe/Paris');
 
 
@@ -86,7 +88,9 @@ if ($connexionReussie) {
         'SELECT id FROM `UTILISATEUR` ORDER BY id ASC LIMIT 1'
     );
 
+    // NATIF PHP : is_array() vérifie qu’une valeur est un tableau ; il évite ici de parcourir ou transmettre un type inattendu.
     $utilisateurDisponible = is_array($utilisateur)
+        // NATIF PHP : isset() vérifie qu’une variable ou une entrée de tableau existe et ne vaut pas null ; il évite ici de lire une valeur absente.
         && isset($utilisateur['id']);
 
     $lanceurTests->verifierEgalite(
@@ -112,6 +116,7 @@ if ($connexionReussie) {
          * Date actuelle et date de fin future.
          */
 
+        // NATIF PHP : DateTimeImmutable est la classe native de gestion des dates sans modification de l’objet original ; elle fiabilise ici les comparaisons et les formats.
         $dateActuelle = new DateTimeImmutable();
 
         $dateFin = $dateActuelle->modify('+2 days');
@@ -134,28 +139,10 @@ if ($connexionReussie) {
          * l'annonce de test avec une annonce existante.
          */
 
+        // NATIF PHP : uniqid() génère un identifiant basé sur l’heure courante ; il rend ici la donnée de test distincte des données existantes.
         $titreTest = 'TEST_AUTOMATISE_' . uniqid();
 
-
-        /*
-         * Démarrage d'une transaction.
-         *
-         * Toutes les modifications réalisées pendant ce fichier
-         * seront annulées à la fin du test.
-         */
-
-        $transactionDemarree = $baseDeDonnees->beginTransaction();
-
-        $lanceurTests->verifierEgalite(
-            true,
-            $transactionDemarree,
-            "Une transaction doit pouvoir être démarrée pour tester ListingModel"
-        );
-
-
-        if ($transactionDemarree) {
-
-            /*
+/*
              * TEST 2
              * Création d'une annonce.
              */
@@ -170,6 +157,7 @@ if ($connexionReussie) {
                 $identifiantCategorie
             );
 
+            // NATIF PHP : is_int() vérifie qu’une valeur est un entier ; il évite ici d’utiliser un autre type dans un traitement numérique.
             $annonceCreee = is_int($identifiantAnnonce)
                 && $identifiantAnnonce > 0;
 
@@ -463,14 +451,5 @@ if ($connexionReussie) {
                     "Une annonce supprimée ne doit plus être récupérable"
                 );
             }
-
-
-            /*
-             * Annulation de toutes les modifications réalisées
-             * pendant les tests.
-             */
-
-            $baseDeDonnees->rollback();
-        }
     }
 }

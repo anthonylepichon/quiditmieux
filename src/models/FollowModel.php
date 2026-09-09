@@ -13,6 +13,7 @@ use App\core\Model;
 
 class FollowModel extends Model
 {
+    // Métadonnées utilisées par le modèle parent pour gérer les suivis autorisés.
     protected string $tableName = 'ASSOC_UTILISATEUR_ANNONCE';
     protected string $primaryKeyName = 'id';
     protected array $writableFields = ['utilisateur_id', 'annonce_id'];
@@ -24,17 +25,22 @@ class FollowModel extends Model
      */
     public function isFollowing(int $userId, int $listingId): ?bool
     {
+        // La requête vérifie seulement l'existence d'une association de suivi.
         $sql = 'SELECT 1 AS found FROM `ASSOC_UTILISATEUR_ANNONCE`'
             . ' WHERE utilisateur_id = :user_id AND annonce_id = :listing_id LIMIT 1';
+
+        // Les identifiants sont transmis séparément à la requête préparée.
         $follow = $this->database->fetchOne($sql, [
             'user_id' => $userId,
             'listing_id' => $listingId,
         ]);
 
         if ($follow === false) {
+            // Une erreur SQL est distinguée de l'absence normale de suivi.
             return null;
         }
 
+        // Une ligne trouvée confirme que l'utilisateur suit l'annonce.
         return $follow !== null;
     }
 
@@ -45,16 +51,20 @@ class FollowModel extends Model
      */
     public function follow(int $userId, int $listingId): bool
     {
+        // L'état actuel évite de créer deux fois le même suivi.
         $isFollowing = $this->isFollowing($userId, $listingId);
 
         if ($isFollowing === null) {
+            // L'opération s'arrête si la lecture de l'état a échoué.
             return false;
         }
 
         if ($isFollowing) {
+            // Le suivi existe déjà : le résultat attendu est donc déjà atteint.
             return true;
         }
 
+        // Le modèle parent crée l'association avec les deux identifiants autorisés.
         return $this->create(['utilisateur_id' => $userId, 'annonce_id' => $listingId]);
     }
 
@@ -65,6 +75,7 @@ class FollowModel extends Model
      */
     public function unfollow(int $userId, int $listingId): bool
     {
+        // Seule l'association correspondant à l'utilisateur et à l'annonce est supprimée.
         return $this->database->execute(
             'DELETE FROM `ASSOC_UTILISATEUR_ANNONCE`'
             . ' WHERE utilisateur_id = :user_id AND annonce_id = :listing_id',
