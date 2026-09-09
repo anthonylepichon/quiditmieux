@@ -10,6 +10,7 @@
 namespace App\models;
 
 use App\core\Model;
+// NATIF PHP : DateTimeImmutable est la classe native de gestion des dates sans modification de l’objet original ; elle fiabilise ici les comparaisons et les formats.
 use DateTimeImmutable;
 
 class BidModel extends Model
@@ -38,6 +39,7 @@ class BidModel extends Model
      */
     public function getCurrentAmountInEuros(int $listingId): ?int
     {
+        // COALESCE conserve le prix de départ lorsqu'aucune enchère n'a encore été enregistrée.
         $row = $this->database->fetchOne(
             'SELECT COALESCE(MAX(bid.montant), listing.prix_depart) AS current_amount'
             . ' FROM `ANNONCE` listing'
@@ -47,10 +49,12 @@ class BidModel extends Model
             ['listing_id' => $listingId]
         );
 
+        // NATIF PHP : isset() vérifie qu’une variable ou une entrée de tableau existe et ne vaut pas null ; il évite ici de lire une valeur absente.
         if ($row === false || $row === null || !isset($row['current_amount'])) {
             return null;
         }
 
+        // Le montant reste un entier en euros afin que les comparaisons métier ne dépendent pas du format d'affichage.
         return (int) $row['current_amount'];
     }
 
@@ -61,6 +65,7 @@ class BidModel extends Model
      */
     public function getMinimumAmountInEuros(int $listingId): ?int
     {
+        // Le minimum attendu correspond toujours au prix courant augmenté d'un euro.
         $currentAmount = $this->getCurrentAmountInEuros($listingId);
 
         if ($currentAmount === null) {
@@ -77,6 +82,7 @@ class BidModel extends Model
      */
     public function evaluateBidAmountInEuros(int $listingId, int $amountInEuros): ?array
     {
+        // Le minimum est calculé par le modèle afin que la même règle s'applique à toutes les actions.
         $minimumAmount = $this->getMinimumAmountInEuros($listingId);
 
         if ($minimumAmount === null) {
@@ -96,6 +102,7 @@ class BidModel extends Model
      */
     public function getCurrentAmountsInEuros(array $listingIds, array $startingPrices): array|false
     {
+        // Les identifiants sont normalisés avant de construire la liste de paramètres SQL.
         $identifiers = $this->normalizePositiveIdentifiers($listingIds);
         $currentAmountsInEuros = [];
 
@@ -118,6 +125,7 @@ class BidModel extends Model
         $parameters = [];
         $placeholders = [];
 
+        // Chaque identifiant reçoit son propre paramètre préparé ; aucune valeur n'est concaténée dans la requête.
         foreach ($identifiers as $index => $identifier) {
             $parameterName = 'listing_' . $index;
             $placeholders[] = ':' . $parameterName;
@@ -126,6 +134,7 @@ class BidModel extends Model
 
         $sql = 'SELECT annonce_id, MAX(montant) AS best_bid'
             . ' FROM `ENCHERE`'
+            // NATIF PHP : implode() assemble les éléments d’un tableau dans une chaîne ; il construit ici une liste ou une partie de requête.
             . ' WHERE annonce_id IN (' . implode(', ', $placeholders) . ')'
             . ' GROUP BY annonce_id';
         $rows = $this->database->fetchAll($sql, $parameters);
@@ -134,6 +143,7 @@ class BidModel extends Model
             return false;
         }
 
+        // Les meilleurs montants trouvés remplacent le prix de départ préparé pour chaque annonce concernée.
         foreach ($rows as $row) {
             if (!isset($row['annonce_id'], $row['best_bid'])) {
                 return false;
@@ -157,6 +167,7 @@ class BidModel extends Model
      */
     public function getSummary(int $listingId): array|false
     {
+        // La requête regroupe le nombre d'enchères, le meilleur montant et son auteur dans une seule lecture.
         $sql = 'SELECT COUNT(*) AS bid_count, MAX(summary_bid.montant) AS best_bid,'
             . ' (SELECT winning_bid.utilisateur_id FROM `ENCHERE` winning_bid'
             . ' WHERE winning_bid.annonce_id = :winner_listing_id'
@@ -223,7 +234,7 @@ class BidModel extends Model
     }
 
     /**
-     * Rôle : Enregistrer une enchère validée par le modèle dans la transaction en cours.
+     * Rôle : Enregistrer une enchère validée par le modèle.
      * Paramètres : Identifiants, montant proposé en euros et instant de référence.
      * Retour : true lorsque l'enchère est enregistrée, sinon false.
      */

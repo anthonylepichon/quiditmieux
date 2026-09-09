@@ -2,7 +2,7 @@
 
 /**
  * Description générale : Contrôleur des participations d'un utilisateur aux ventes.
- * Rôle : Coordonner le suivi volontaire et le dépôt transactionnel des enchères.
+ * Rôle : Coordonner le suivi volontaire et le dépôt des enchères.
  * Tâches : Contrôler la requête, appeler les modèles et choisir une réponse HTML ou JSON.
  * Liens avec les autres fichiers : Étend Controller.php et utilise ListingModel.php, FollowModel.php et BidModel.php.
  */
@@ -23,15 +23,18 @@ class ParticipationController extends Controller
      */
     public function placeBid(): void
     {
-        $userId = $this->session->obtenirIdentifiantUtilisateurConnecte();
+        // L'identité provient exclusivement de la session et l'annonce du formulaire POST contrôlé.
+        $userId = $this->session->getConnectedUserId();
         $listingId = $this->readPositivePostIdentifier('id');
         $amountText = $this->readPostString('amount');
 
+        // Une enchère ne peut être déposée sans authentification.
         if ($userId === null) {
             $this->respondBid(false, 'Connectez-vous pour suivre cette annonce ou enchérir.', $listingId);
             return;
         }
 
+        // Le jeton CSRF empêche qu'un autre site déclenche une enchère au nom de l'utilisateur.
         if ($listingId === null || !$this->isSubmittedCsrfTokenValid()) {
             $this->respondBid(false, 'Enchère refusée', $listingId);
             return;
@@ -39,6 +42,7 @@ class ParticipationController extends Controller
 
         $amountInEuros = null;
 
+        // NATIF PHP : preg_match() vérifie un texte avec une expression régulière ; il contrôle ici que la valeur respecte le format attendu.
         if (preg_match('/^[0-9]+$/D', $amountText) === 1) {
             $amountInEuros = (int) $amountText;
         }
@@ -48,11 +52,7 @@ class ParticipationController extends Controller
             return;
         }
 
-        if (!$this->database->beginTransaction()) {
-            $this->respondBid(false, 'Enchère refusée', $listingId);
-            return;
-        }
-
+        // NATIF PHP : DateTimeImmutable est la classe native de gestion des dates sans modification de l’objet original ; elle fiabilise ici les comparaisons et les formats.
         $currentTime = new \DateTimeImmutable();
         $listingModel = new ListingModel($this->database);
         $canParticipate = $listingModel->canReceiveParticipationFrom(
@@ -62,7 +62,6 @@ class ParticipationController extends Controller
         );
 
         if ($canParticipate === null) {
-            $this->database->rollback();
             $this->respondBid(false, 'Enchère refusée', $listingId);
             return;
         }
@@ -70,8 +69,6 @@ class ParticipationController extends Controller
         $restriction = $listingModel->getLastParticipationRestriction();
 
         if (!$canParticipate) {
-            $this->database->rollback();
-
             if ($restriction === 'ended') {
                 $this->respondBid(false, 'Vente terminée', $listingId);
             } else {
@@ -85,7 +82,6 @@ class ParticipationController extends Controller
         $summary = $bidModel->getSummary($listingId);
 
         if ($summary === false) {
-            $this->database->rollback();
             $this->respondBid(false, 'Enchère refusée', $listingId);
             return;
         }
@@ -93,7 +89,6 @@ class ParticipationController extends Controller
         $decision = $bidModel->evaluateBidAmountInEuros($listingId, $amountInEuros);
 
         if ($decision === null) {
-            $this->database->rollback();
             $this->respondBid(false, 'Enchère refusée', $listingId);
             return;
         }
@@ -101,7 +96,6 @@ class ParticipationController extends Controller
         $minimumBidInEuros = $decision['minimum_amount_in_euros'];
 
         if (!$decision['accepted']) {
-            $this->database->rollback();
             $message = 'Montant insuffisant : minimum '
                 . $this->formatEuros($minimumBidInEuros)
                 . '.';
@@ -110,7 +104,6 @@ class ParticipationController extends Controller
         }
 
         if (!$bidModel->placeBid($userId, $listingId, $amountInEuros, $currentTime)) {
-            $this->database->rollback();
             $this->respondBid(false, 'Enchère refusée', $listingId);
             return;
         }
@@ -118,7 +111,6 @@ class ParticipationController extends Controller
         $updatedSummary = $bidModel->getSummary($listingId);
 
         if ($updatedSummary === false) {
-            $this->database->rollback();
             $this->respondBid(false, 'Enchère refusée', $listingId);
             return;
         }
@@ -126,13 +118,6 @@ class ParticipationController extends Controller
         $nextMinimumInEuros = $bidModel->getMinimumAmountInEuros($listingId);
 
         if ($nextMinimumInEuros === null) {
-            $this->database->rollback();
-            $this->respondBid(false, 'Enchère refusée', $listingId);
-            return;
-        }
-
-        if (!$this->database->commit()) {
-            $this->database->rollback();
             $this->respondBid(false, 'Enchère refusée', $listingId);
             return;
         }
@@ -153,6 +138,7 @@ class ParticipationController extends Controller
      */
     public function follow(): void
     {
+        // La logique commune évite de dupliquer les protections entre ajout et retrait du suivi.
         $this->changeFollowState(true);
     }
 
@@ -163,6 +149,7 @@ class ParticipationController extends Controller
      */
     public function unfollow(): void
     {
+        // La logique commune évite de dupliquer les protections entre ajout et retrait du suivi.
         $this->changeFollowState(false);
     }
 
@@ -173,7 +160,8 @@ class ParticipationController extends Controller
      */
     private function changeFollowState(bool $shouldFollow): void
     {
-        $userId = $this->session->obtenirIdentifiantUtilisateurConnecte();
+        // L'identité provient de la session et l'annonce du formulaire POST contrôlé.
+        $userId = $this->session->getConnectedUserId();
         $listingId = $this->readPositivePostIdentifier('id');
 
         if ($userId === null) {
@@ -182,11 +170,6 @@ class ParticipationController extends Controller
         }
 
         if ($listingId === null || !$this->isSubmittedCsrfTokenValid()) {
-            $this->respond(false, 'Le suivi ne peut pas être actualisé pour le moment.', $listingId, false);
-            return;
-        }
-
-        if (!$this->database->beginTransaction()) {
             $this->respond(false, 'Le suivi ne peut pas être actualisé pour le moment.', $listingId, false);
             return;
         }
@@ -200,7 +183,6 @@ class ParticipationController extends Controller
         );
 
         if ($canParticipate === null) {
-            $this->database->rollback();
             $this->respond(false, 'Le suivi ne peut pas être actualisé pour le moment.', $listingId, false);
             return;
         }
@@ -208,8 +190,6 @@ class ParticipationController extends Controller
         $restriction = $listingModel->getLastParticipationRestriction();
 
         if (!$canParticipate) {
-            $this->database->rollback();
-
             if ($restriction === 'ended') {
                 $this->respond(false, 'Vente terminée', $listingId, false);
             } else {
@@ -219,10 +199,12 @@ class ParticipationController extends Controller
             return;
         }
 
+        // Le modèle de suivi réalise uniquement l'ajout ou le retrait de la relation en base.
         $followModel = new FollowModel($this->database);
         $changed = false;
         $message = 'Vous ne suivez pas encore cette annonce. Suivez-la pour la retrouver dans votre tableau de bord.';
 
+        // L'action demandée détermine l'opération de persistance et le message de retour.
         if ($shouldFollow) {
             $changed = $followModel->follow($userId, $listingId);
             $message = 'Vous pouvez continuer à suivre l’annonce et enchérir.';
@@ -231,13 +213,6 @@ class ParticipationController extends Controller
         }
 
         if (!$changed) {
-            $this->database->rollback();
-            $this->respond(false, 'Le suivi ne peut pas être actualisé pour le moment.', $listingId, !$shouldFollow);
-            return;
-        }
-
-        if (!$this->database->commit()) {
-            $this->database->rollback();
             $this->respond(false, 'Le suivi ne peut pas être actualisé pour le moment.', $listingId, !$shouldFollow);
             return;
         }
@@ -252,6 +227,7 @@ class ParticipationController extends Controller
      */
     private function respond(bool $success, string $message, ?int $listingId, bool $isFollowing): void
     {
+        // Le JavaScript reçoit une structure JSON ; un formulaire classique suit le parcours POST-Redirect-GET.
         if ($this->isJsonRequest()) {
             $stateKey = 'not_following';
 
@@ -269,8 +245,9 @@ class ParticipationController extends Controller
             return;
         }
 
+        // Les messages d'échec sont conservés une seule fois dans la session pour la page suivante.
         if (!$success && $message !== '') {
-            $this->session->enregistrerMessageTemporaire('notice', $message);
+            $this->session->setFlashMessage('notice', $message);
         }
 
         if ($listingId !== null) {
@@ -293,14 +270,18 @@ class ParticipationController extends Controller
         ?int $minimumBidInEuros = null,
         ?int $attemptedAmountInEuros = null
     ): void {
+        // Le format JSON fournit les informations nécessaires à la mise à jour immédiate de l'interface.
         if ($this->isJsonRequest()) {
             $currentPrice = null;
             $bidCount = null;
 
+            // NATIF PHP : is_int() vérifie qu’une valeur est un entier ; il évite ici d’utiliser un autre type dans un traitement numérique.
+            // NATIF PHP : isset() vérifie qu’une variable ou une entrée de tableau existe et ne vaut pas null ; il évite ici de lire une valeur absente.
             if (isset($summary['best_bid_in_euros']) && is_int($summary['best_bid_in_euros'])) {
                 $currentPrice = $this->formatEuros($summary['best_bid_in_euros']);
             }
 
+            // NATIF PHP : is_numeric() vérifie qu’une valeur représente un nombre ; il protège ici la conversion ou le calcul qui suit.
             if (isset($summary['bid_count']) && is_numeric($summary['bid_count'])) {
                 $bidCount = (int) $summary['bid_count'];
             }
@@ -322,23 +303,26 @@ class ParticipationController extends Controller
             return;
         }
 
+        // Une enchère refusée conserve le minimum et le montant saisi pour les afficher après la redirection.
         if (
             !$success
             && $listingId !== null
             && $minimumBidInEuros !== null
             && $attemptedAmountInEuros !== null
         ) {
+            // NATIF PHP : json_encode() convertit une donnée PHP en JSON ; il prépare ici une réponse destinée au JavaScript ou un contenu à enregistrer.
             $rejectionData = json_encode([
                 'listing_id' => $listingId,
                 'minimum_in_euros' => $minimumBidInEuros,
                 'amount_in_euros' => $attemptedAmountInEuros,
             ]);
 
+            // NATIF PHP : is_string() vérifie qu’une valeur est une chaîne de caractères ; il évite ici de traiter un type inattendu comme du texte.
             if (is_string($rejectionData)) {
-                $this->session->enregistrerMessageTemporaire('bid_rejection', $rejectionData);
+                $this->session->setFlashMessage('bid_rejection', $rejectionData);
             }
         } elseif (!$success && $message !== '') {
-            $this->session->enregistrerMessageTemporaire('notice', $message);
+            $this->session->setFlashMessage('notice', $message);
         }
 
         if ($listingId !== null) {
@@ -355,6 +339,7 @@ class ParticipationController extends Controller
      */
     private function detailUrl(?int $listingId): string
     {
+        // Sans identifiant d'annonce exploitable, la seule destination sûre est l'accueil.
         if ($listingId === null) {
             return $this->buildRouteUrl('home');
         }

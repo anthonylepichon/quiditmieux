@@ -9,6 +9,7 @@
 
 namespace App\core;
 
+// Cette classe charge les routes, puis demande au routeur d’appeler le bon contrôleur.
 class App
 {
     // ====================
@@ -18,7 +19,7 @@ class App
     private string $projectRoot;
 
     // ====================
-    // MÉTHODES
+    // METHODES
     // ====================
 
     /**
@@ -38,106 +39,54 @@ class App
      */
     public function run(): void
     {
+        // La session est créée une seule fois pour toute la demande HTTP.
+        // Elle sera transmise aux contrôleurs par le routeur.
         $session = new Session();
-        $session->demarrerSession();
+        $session->startSession();
 
-        $database = $this->createDatabase();
-
-        if ($database === null) {
-            return;
-        }
-
-        $routes = $this->loadRoutes();
-
-        if ($routes === null) {
-            return;
-        }
-
-        $router = new Router($database, $session);
-        $router->registerRoutes($routes);
-        $router->dispatch($this->getRequestedRoute(), $this->getRequestMethod());
-    }
-
-    /**
-     * Rôle : Créer le gestionnaire de base de données à partir de la configuration privée.
-     * Paramètres : Aucun.
-     * Retour : Objet Database ou null lorsque la configuration ou la connexion est indisponible.
-     */
-    private function createDatabase(): ?Database
-    {
+        // La configuration de connexion reste privée : elle ne doit jamais être placée dans le dépôt Git.
         $databaseConfigPath = $this->projectRoot . '/private/database-secret.php';
 
         if (!is_file($databaseConfigPath)) {
             echo 'La configuration de la base de données est indisponible.';
-            return null;
+            return;
         }
 
+        // Le fichier privé retourne uniquement les paramètres nécessaires à PDO.
         $databaseConfig = require $databaseConfigPath;
-
         if (!is_array($databaseConfig)) {
             echo 'La configuration de la base de données est indisponible.';
-            return null;
+            return;
         }
 
+        // La connexion est créée une seule fois puis partagée avec tous les modèles de la demande.
         $database = new Database($databaseConfig);
-
         if (!$database->isConnected()) {
             echo 'La connexion à la base de données est momentanément indisponible.';
-            return null;
+            return;
         }
 
-        return $database;
-    }
-
-    /**
-     * Rôle : Charger la liste des routes configurées pour l'application.
-     * Paramètres : Aucun.
-     * Retour : Tableau des routes ou null lorsque la configuration est indisponible.
-     */
-    private function loadRoutes(): ?array
-    {
-        $routesConfigPath = $this->projectRoot . '/src/config/routes.php';
-
-        if (!is_file($routesConfigPath)) {
-            echo 'La navigation de l’application est indisponible.';
-            return null;
-        }
-
-        $routes = require $routesConfigPath;
-
+        // Les routes sont centralisées dans leur fichier de configuration, sans logique métier ici.
+        $routes = require $this->projectRoot . '/src/config/routes.php';
         if (!is_array($routes)) {
             echo 'La navigation de l’application est indisponible.';
-            return null;
+            return;
         }
 
-        return $routes;
-    }
-
-    /**
-     * Rôle : Obtenir le nom de la route demandée ou utiliser la route d'accueil par défaut.
-     * Paramètres : Aucun.
-     * Retour : Nom de la route à traiter.
-     */
-    private function getRequestedRoute(): string
-    {
+        // La route d'accueil est utilisée lorsqu'aucune route textuelle n'est demandée.
+        $route = 'home';
         if (isset($_GET['route']) && is_string($_GET['route']) && $_GET['route'] !== '') {
-            return $_GET['route'];
+            $route = $_GET['route'];
         }
-
-        return 'home';
-    }
-
-    /**
-     * Rôle : Obtenir la méthode HTTP de la demande courante.
-     * Paramètres : Aucun.
-     * Retour : Méthode HTTP en lettres majuscules.
-     */
-    private function getRequestMethod(): string
-    {
+        // La méthode HTTP est transmise au routeur afin qu'il refuse les actions appelées avec le mauvais verbe.
+        $method = 'GET';
         if (isset($_SERVER['REQUEST_METHOD']) && is_string($_SERVER['REQUEST_METHOD'])) {
-            return strtoupper($_SERVER['REQUEST_METHOD']);
+            $method = strtoupper($_SERVER['REQUEST_METHOD']);
         }
 
-        return 'GET';
+        // Le routeur reçoit les services communs et choisit ensuite le seul contrôleur autorisé par la configuration.
+        $router = new Router($database, $session);
+        $router->registerRoutes($routes);
+        $router->dispatch($route, $method);
     }
 }

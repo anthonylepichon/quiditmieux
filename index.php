@@ -1,27 +1,23 @@
 <?php
 
-/**
- * Description générale : Point d'entrée unique de l'application.
- * Rôle : Charger les ressources indispensables puis lancer la classe principale de l'application.
- * Tâches : Définir l'encodage HTML, charger l'autoload puis démarrer App.
- * Liens avec les autres fichiers : Utilise l'autoload et App.php.
- */
+// Ce fichier contient le point d’entrée unique de l’application QuiDitMieux.
+// Son rôle est de configurer et de démarrer l’application avant de transmettre la demande au composant chargé de son traitement.
+// Il est nécessaire pour centraliser le démarrage de l’application et éviter de répéter cette préparation dans chaque contrôleur.
 
+// Permet d’utiliser le nom court App pour désigner la classe principale.
 use App\core\App;
 
-// L'application traite toutes les dates dans le fuseau horaire français.
-date_default_timezone_set('Europe/Paris');
-
-// L'encodage UTF-8 est défini une seule fois pour toutes les réponses HTML de l'application.
+// On force l'encodage UTF-8 pour les textes français affichés par l'application.
 ini_set('default_charset', 'UTF-8');
-
 if (!headers_sent()) {
     header('Content-Type: text/html; charset=UTF-8');
 }
 
-// L'autoload rend disponibles les classes du projet à partir de leur namespace.
+// L’autoloader Composer permet de charger automatiquement les classes utilisées.
 require_once __DIR__ . '/vendor/autoload.php';
 
-// La classe principale reçoit la racine du projet afin de retrouver les configurations nécessaires.
-$application = new App(__DIR__);
-$application->run();
+// L'objet principal reçoit la racine du projet afin de localiser les configurations privées.
+$app = new App(__DIR__);
+
+// Le démarrage centralisé prépare les services communs puis délègue la demande au routeur.
+$app->run();

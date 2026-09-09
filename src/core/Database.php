@@ -9,7 +9,9 @@
 
 namespace App\core;
 
+// NATIF PHP : PDO est la classe native qui représente une connexion à la base de données ; elle permet ici d'exécuter des requêtes préparées.
 use PDO;
+// NATIF PHP : PDOException est l’exception native produite par PDO ; elle permet ici de détecter un échec de connexion ou de requête SQL.
 use PDOException;
 
 class Database
@@ -18,7 +20,8 @@ class Database
     // ATTRIBUTS
     // ====================
 
-    private ?PDO $connection = null;
+    // La connexion est nulle tant que PDO n'a pas réussi à joindre la base de données.
+    private ?PDO $bdd = null;
 
     // ====================
     // MÉTHODES
@@ -31,28 +34,30 @@ class Database
      */
     public function __construct(array $databaseConfig)
     {
-        if (!$this->configurationIsValid($databaseConfig)) {
-            return;
-        }
-
+        // Le DSN rassemble les paramètres techniques sans afficher ni enregistrer le mot de passe.
         $dsn = 'mysql:host=' . $databaseConfig['host']
             . ';port=' . $databaseConfig['port']
             . ';dbname=' . $databaseConfig['database']
             . ';charset=' . $databaseConfig['charset'];
 
+        // PDO peut échouer si le serveur, les identifiants ou la base sont indisponibles.
         try {
-            $this->connection = new PDO(
+            $this->bdd = new PDO(
                 $dsn,
                 $databaseConfig['username'],
                 $databaseConfig['password'],
                 [
+                    // NATIF PHP : PDO::ATTR_ERRMODE désigne le réglage de gestion des erreurs ; il permet ici de définir le comportement de PDO face à une erreur SQL.
+                    // NATIF PHP : PDO::ERRMODE_EXCEPTION demande à PDO de lancer une exception ; elle permet ici au bloc catch de traiter un échec de connexion.
                     PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                    // NATIF PHP : PDO::ATTR_DEFAULT_FETCH_MODE désigne le format de récupération par défaut ; il évite ici de le répéter dans chaque requête.
+                    // NATIF PHP : PDO::FETCH_ASSOC retourne les lignes avec les noms de colonnes comme clés ; elle rend ici les résultats plus faciles à exploiter.
                     PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-                    PDO::ATTR_EMULATE_PREPARES => false,
                 ]
             );
         } catch (PDOException) {
-            $this->connection = null;
+            // Aucun détail technique n'est envoyé au visiteur : App décide du message générique à afficher.
+            $this->bdd = null;
         }
     }
 
@@ -63,7 +68,8 @@ class Database
      */
     public function isConnected(): bool
     {
-        return $this->connection instanceof PDO;
+        // instanceof confirme que l'objet conservé est bien une connexion PDO utilisable.
+        return $this->bdd instanceof PDO;
     }
 
     /**
@@ -73,14 +79,18 @@ class Database
      */
     public function execute(string $sql, array $parameters = []): bool
     {
-        if ($this->connection === null) {
+        // Sans connexion active, aucune requête ne doit être tentée.
+        if ($this->bdd === null) {
             return false;
         }
 
+        // La requête est préparée avant de recevoir ses valeurs afin de les séparer du code SQL.
         try {
-            $statement = $this->connection->prepare($sql);
+            $statement = $this->bdd->prepare($sql);
+            // Les paramètres proviennent des modèles et sont liés par PDO lors de l'exécution.
             return $statement->execute($parameters);
         } catch (PDOException) {
+            // L'échec est signalé au modèle par false, sans exposer le message PDO.
             return false;
         }
     }
@@ -92,24 +102,23 @@ class Database
      */
     public function fetchOne(string $sql, array $parameters = []): array|false|null
     {
-        if ($this->connection === null) {
+        // Sans connexion active, aucune lecture ne doit être tentée.
+        if ($this->bdd === null) {
             return false;
         }
 
+        // La préparation et l'exécution restent centralisées ici pour tous les modèles.
         try {
-            $statement = $this->connection->prepare($sql);
+            $statement = $this->bdd->prepare($sql);
             $statement->execute($parameters);
             $record = $statement->fetch();
         } catch (PDOException) {
             return false;
         }
 
+        // fetch() retourne false lorsqu'aucune ligne ne correspond ; l'application utilise null pour cet état normal.
         if ($record === false) {
             return null;
-        }
-
-        if (!is_array($record)) {
-            return false;
         }
 
         return $record;
@@ -122,12 +131,14 @@ class Database
      */
     public function fetchAll(string $sql, array $parameters = []): array|false
     {
-        if ($this->connection === null) {
+        // Sans connexion active, aucune lecture ne doit être tentée.
+        if ($this->bdd === null) {
             return false;
         }
 
+        // La requête est préparée et exécutée avant de récupérer toutes les lignes associatives.
         try {
-            $statement = $this->connection->prepare($sql);
+            $statement = $this->bdd->prepare($sql);
             $statement->execute($parameters);
             return $statement->fetchAll();
         } catch (PDOException) {
@@ -138,118 +149,20 @@ class Database
     /**
      * Rôle : Récupérer l'identifiant entier généré par la dernière insertion.
      * Paramètres : Aucun.
-     * Retour : Identifiant généré, null s'il n'est pas disponible ou false en cas d'erreur PDO.
+     * Retour : Identifiant généré ou false en cas d'erreur PDO.
      */
-    public function getLastInsertId(): int|false|null
+    public function getLastInsertId(): int|false
     {
-        if ($this->connection === null) {
+        // L'identifiant n'existe que lorsqu'une connexion PDO a exécuté une insertion.
+        if ($this->bdd === null) {
             return false;
         }
 
+        // PDO fournit le dernier identifiant généré par la connexion courante.
         try {
-            $lastInsertId = $this->connection->lastInsertId();
+            return (int) $this->bdd->lastInsertId();
         } catch (PDOException) {
             return false;
         }
-
-        if ($lastInsertId === false) {
-            return false;
-        }
-
-        if ($lastInsertId === '0') {
-            return null;
-        }
-
-        return (int) $lastInsertId;
-    }
-
-    /**
-     * Rôle : Démarrer une transaction lorsqu'aucune transaction n'est déjà active.
-     * Paramètres : Aucun.
-     * Retour : true si la transaction est active, sinon false.
-     */
-    public function beginTransaction(): bool
-    {
-        if ($this->connection === null || $this->connection->inTransaction()) {
-            return false;
-        }
-
-        try {
-            return $this->connection->beginTransaction();
-        } catch (PDOException) {
-            return false;
-        }
-    }
-
-    /**
-     * Rôle : Valider la transaction active.
-     * Paramètres : Aucun.
-     * Retour : true si la validation réussit, sinon false.
-     */
-    public function commit(): bool
-    {
-        if ($this->connection === null || !$this->connection->inTransaction()) {
-            return false;
-        }
-
-        try {
-            return $this->connection->commit();
-        } catch (PDOException) {
-            return false;
-        }
-    }
-
-    /**
-     * Rôle : Annuler la transaction active afin de préserver la cohérence des données.
-     * Paramètres : Aucun.
-     * Retour : true si l'annulation réussit ou si aucune transaction n'est active, sinon false.
-     */
-    public function rollback(): bool
-    {
-        if ($this->connection === null) {
-            return false;
-        }
-
-        if (!$this->connection->inTransaction()) {
-            return true;
-        }
-
-        try {
-            return $this->connection->rollBack();
-        } catch (PDOException) {
-            return false;
-        }
-    }
-
-    /**
-     * Rôle : Vérifier la présence et le type des paramètres nécessaires à PDO.
-     * Paramètres : Tableau de configuration à contrôler.
-     * Retour : true si la configuration est exploitable, sinon false.
-     */
-    private function configurationIsValid(array $databaseConfig): bool
-    {
-        if (!isset(
-            $databaseConfig['host'],
-            $databaseConfig['port'],
-            $databaseConfig['database'],
-            $databaseConfig['charset'],
-            $databaseConfig['username'],
-            $databaseConfig['password']
-        )) {
-            return false;
-        }
-
-        if (
-            !is_string($databaseConfig['host'])
-            || (!is_int($databaseConfig['port']) && !is_string($databaseConfig['port']))
-            || !is_string($databaseConfig['database'])
-            || !is_string($databaseConfig['charset'])
-            || !is_string($databaseConfig['username'])
-            || !is_string($databaseConfig['password'])
-        ) {
-            return false;
-        }
-
-        return true;
     }
 }

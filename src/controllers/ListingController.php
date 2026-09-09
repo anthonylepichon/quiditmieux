@@ -11,13 +11,14 @@ namespace App\controllers;
 
 use App\core\Controller;
 use App\core\Database;
-use App\core\PhotoStorage;
+use App\services\PhotoStorage;
 use App\core\Session;
 use App\models\BidModel;
 use App\models\CategoryModel;
 use App\models\FollowModel;
 use App\models\ListingModel;
 use App\models\PhotoModel;
+// NATIF PHP : DateTimeImmutable est la classe native de gestion des dates sans modification de l’objet original ; elle fiabilise ici les comparaisons et les formats.
 use DateTimeImmutable;
 
 class ListingController extends Controller
@@ -47,6 +48,7 @@ class ListingController extends Controller
      */
     public function __construct(Database $database, Session $session)
     {
+        // Le stockage physique est séparé du modèle PhotoModel, qui ne conserve que les références en base.
         parent::__construct($database, $session);
         $this->photoStorage = new PhotoStorage();
     }
@@ -58,14 +60,16 @@ class ListingController extends Controller
      */
     public function search(): void
     {
+        // Les catégories servent à valider le filtre et à afficher les libellés de chaque annonce.
         $currentTime = new DateTimeImmutable();
-        $categories = (new CategoryModel())->getAllCategories();
+        $categories = (new CategoryModel($this->database))->getAllCategories();
         $categoriesAvailable = $categories !== null;
 
         if ($categories === null) {
             $categories = [];
         }
 
+        // Les critères sont normalisés avant toute requête de recherche.
         $validation = $this->validateCriteria($categories, $categoriesAvailable);
         $criteria = $validation['criteria'];
         $errors = $validation['errors'];
@@ -75,6 +79,7 @@ class ListingController extends Controller
         $message = 'Corrigez les champs signalés, puis relancez la recherche. Vos autres critères sont conservés.';
         $success = $errors === [];
 
+        // Le modèle n'est interrogé que lorsque les critères reçus sont valides.
         if ($success) {
             $listingModel = new ListingModel($this->database);
             $searchResult = $listingModel->searchListings(
@@ -115,25 +120,43 @@ class ListingController extends Controller
         }
 
         $pagination = $this->buildPagination($criteria, $searchResult);
+        $publicCriteria = $this->publicCriteria($criteria);
+        $searchDisplay = $this->buildSearchDisplay(
+            $stateKey,
+            $message,
+            $errors,
+            $categoriesAvailable,
+            $publicCriteria,
+            $categories,
+            $pagination
+        );
         $response = [
             'success' => $success,
             'message' => $message,
             'state_key' => $stateKey,
-            'criteria' => $this->publicCriteria($criteria),
+            'criteria' => $publicCriteria,
             'errors' => $errors,
+            'field_error_messages' => $searchDisplay['field_error_messages'],
+            'first_search_error' => $searchDisplay['first_search_error'],
+            'has_price_range_error' => $searchDisplay['has_price_range_error'],
+            'results_state_key' => $searchDisplay['results_state_key'],
+            'results_message' => $searchDisplay['results_message'],
+            'filter_summary' => $searchDisplay['filter_summary'],
             'categories_available' => $categoriesAvailable,
             'categories' => $categories,
             'listings' => $searchResult['listings'],
             'pagination' => $pagination,
             'total_items' => $searchResult['total_items'],
-            'is_connected' => $this->session->estUtilisateurConnecte(),
-            'csrf_token' => $this->session->obtenirJetonCsrf(),
-            'flash_success' => $this->session->recupererMessageTemporaire('success'),
-            'flash_notice' => $this->session->recupererMessageTemporaire('notice'),
+            'is_connected' => $this->session->isUserConnected(),
+            'csrf_token' => $this->session->getCsrfToken(),
+            'flash_success' => $this->session->getFlashMessage('success'),
+            'flash_notice' => $this->session->getFlashMessage('notice'),
         ];
 
+        // JavaScript attend une structure JSON ; une navigation classique reçoit le template complet.
         if ($this->isJsonRequest()) {
             if ($errors !== []) {
+                // NATIF PHP : http_response_code() définit le statut HTTP de la réponse ; il signale ici au client si la demande a réussi ou rencontré une erreur.
                 http_response_code(422);
             }
 
@@ -151,19 +174,22 @@ class ListingController extends Controller
      */
     public function showDetail(): void
     {
+        // L'instant de référence est partagé par tous les calculs d'état de l'annonce affichée.
         $currentTime = new DateTimeImmutable();
+        // L'identifiant est contrôlé avant tout accès à l'annonce ou à ses informations associées.
         $listingId = $this->readPositiveGetIdentifier('id');
 
         if ($listingId === null) {
-            $this->session->enregistrerMessageTemporaire('notice', 'L’annonce demandée est introuvable.');
+            $this->session->setFlashMessage('notice', 'L’annonce demandée est introuvable.');
             $this->redirect('home');
         }
 
+        // Le modèle lit les données métier ; le contrôleur choisit seulement la réponse appropriée.
         $listingModel = new ListingModel($this->database);
         $listing = $listingModel->getDetail($listingId);
 
         if ($listing === false) {
-            $this->session->enregistrerMessageTemporaire(
+            $this->session->setFlashMessage(
                 'notice',
                 'Les données de cette annonce sont momentanément indisponibles.'
             );
@@ -171,11 +197,11 @@ class ListingController extends Controller
         }
 
         if ($listing === null) {
-            $this->session->enregistrerMessageTemporaire('notice', 'L’annonce demandée est introuvable.');
+            $this->session->setFlashMessage('notice', 'L’annonce demandée est introuvable.');
             $this->redirect('home');
         }
 
-        $categoryLabel = (new CategoryModel())->getCategoryLabel((int) $listing['categorie_id']);
+        $categoryLabel = (new CategoryModel($this->database))->getCategoryLabel((int) $listing['categorie_id']);
 
         if ($categoryLabel === null) {
             $categoryLabel = 'Catégorie indisponible';
@@ -187,14 +213,14 @@ class ListingController extends Controller
         $summary = $bidModel->getSummary($listingId);
 
         if ($summary === false) {
-            $this->session->enregistrerMessageTemporaire(
+            $this->session->setFlashMessage(
                 'notice',
                 'Les données de cette annonce sont momentanément indisponibles.'
             );
             $this->redirect('home');
         }
 
-        $viewerId = $this->session->obtenirIdentifiantUtilisateurConnecte();
+        $viewerId = $this->session->getConnectedUserId();
         $isOwner = $viewerId !== null && $viewerId === (int) $listing['utilisateur_id'];
         $viewerHasBid = false;
         $isFollowing = false;
@@ -204,7 +230,7 @@ class ListingController extends Controller
             $isFollowing = $followModel->isFollowing($viewerId, $listingId);
 
             if ($viewerHasBid === null || $isFollowing === null) {
-                $this->session->enregistrerMessageTemporaire(
+                $this->session->setFlashMessage(
                     'notice',
                     'Les données de cette annonce sont momentanément indisponibles.'
                 );
@@ -218,7 +244,7 @@ class ListingController extends Controller
         );
 
         if (!$deadline instanceof DateTimeImmutable) {
-            $this->session->enregistrerMessageTemporaire('notice', 'Cette annonce ne peut pas être affichée.');
+            $this->session->setFlashMessage('notice', 'Cette annonce ne peut pas être affichée.');
             $this->redirect('home');
         }
 
@@ -237,7 +263,7 @@ class ListingController extends Controller
             $historyRows = $bidModel->getHistory($listingId);
 
             if ($historyRows === false) {
-                $this->session->enregistrerMessageTemporaire(
+                $this->session->setFlashMessage(
                     'notice',
                     'Les données de cette annonce sont momentanément indisponibles.'
                 );
@@ -251,7 +277,7 @@ class ListingController extends Controller
         $photoRows = $photoModel->getListingPhotos($listingId);
 
         if ($photoRows === false) {
-            $this->session->enregistrerMessageTemporaire(
+            $this->session->setFlashMessage(
                 'notice',
                 'Les données de cette annonce sont momentanément indisponibles.'
             );
@@ -276,7 +302,7 @@ class ListingController extends Controller
             );
 
             if ($canEdit === null || $canParticipate === null) {
-                $this->session->enregistrerMessageTemporaire(
+                $this->session->setFlashMessage(
                     'notice',
                     'Les données de cette annonce sont momentanément indisponibles.'
                 );
@@ -297,6 +323,7 @@ class ListingController extends Controller
                 'minimum_bid' => $currentAmountInEuros + 1,
                 'minimum_bid_label' => $this->formatEuros($currentAmountInEuros + 1),
                 'bid_count' => (int) $summary['bid_count'],
+                // NATIF PHP : DATE_ATOM désigne le format de date ISO 8601 ; elle prépare ici une date interprétable sans ambiguïté par JavaScript.
                 'deadline' => $deadline->format(DATE_ATOM),
                 'deadline_label' => $this->formatFrenchDateTime(
                     $deadline,
@@ -320,9 +347,25 @@ class ListingController extends Controller
                 'can_bid' => $canParticipate === true,
                 'can_view_history' => $isOwner || $viewerHasBid,
             ],
-            'csrf_token' => $this->session->obtenirJetonCsrf(),
-            'flash_success' => $this->session->recupererMessageTemporaire('success'),
-            'flash_notice' => $this->session->recupererMessageTemporaire('notice'),
+            'display' => $this->buildDetailDisplay(
+                $isEnded,
+                (int) $summary['bid_count'],
+                $this->determineFinalState($isEnded, (int) $summary['bid_count']),
+                [
+                    'is_connected' => $viewerId !== null,
+                    'is_owner' => $isOwner,
+                    'has_bid' => $viewerHasBid,
+                    'is_best_bidder' => $viewerId !== null && $viewerId === $summary['best_bidder_id'],
+                    'is_following' => $isFollowing,
+                    'can_edit' => $canEdit === true,
+                    'can_bid' => $canParticipate === true,
+                ],
+                $bidRejection,
+                $this->formatEuros($currentAmountInEuros)
+            ),
+            'csrf_token' => $this->session->getCsrfToken(),
+            'flash_success' => $this->session->getFlashMessage('success'),
+            'flash_notice' => $this->session->getFlashMessage('notice'),
         ]);
     }
 
@@ -337,7 +380,7 @@ class ListingController extends Controller
             return;
         }
 
-        $categories = (new CategoryModel())->getAllCategories();
+        $categories = (new CategoryModel($this->database))->getAllCategories();
         $errors = [];
 
         if ($categories === null) {
@@ -360,7 +403,8 @@ class ListingController extends Controller
             return;
         }
 
-        $categories = (new CategoryModel())->getAllCategories();
+        // Les valeurs et les fichiers sont contrôlés avant toute écriture en base ou sur le disque.
+        $categories = (new CategoryModel($this->database))->getAllCategories();
         $values = $this->readListingFormValues();
         $errors = [];
 
@@ -373,16 +417,11 @@ class ListingController extends Controller
             $errors['form'] = 'La création ou la modification de l’annonce est impossible pour le moment.';
         }
 
+        // Les données validées sont transformées dans le format attendu par le modèle.
         $normalizedData = $this->validateListingValues($values, $categories, $errors, 'create');
         $uploadedPhotos = $this->validateUploadedPhotos($errors, 'create');
 
         if ($errors !== []) {
-            $this->renderListingForm('create', $values, $errors, $categories, []);
-            return;
-        }
-
-        if (!$this->database->beginTransaction()) {
-            $errors['form'] = 'La publication ne peut pas démarrer pour le moment.';
             $this->renderListingForm('create', $values, $errors, $categories, []);
             return;
         }
@@ -400,7 +439,6 @@ class ListingController extends Controller
         $storedFiles = [];
 
         if ($listingId === null) {
-            $this->database->rollback();
             $errors['form'] = 'L’annonce ne peut pas être enregistrée pour le moment.';
             $this->renderListingForm('create', $values, $errors, $categories, []);
             return;
@@ -408,8 +446,7 @@ class ListingController extends Controller
 
         $photosStored = $this->storeUploadedPhotos($listingId, $uploadedPhotos, $storedFiles);
 
-        if (!$photosStored || !$this->database->commit()) {
-            $this->database->rollback();
+        if (!$photosStored) {
             $this->deleteStoredFiles($storedFiles);
             $errors['form'] = 'L’annonce et ses photographies n’ont pas pu être enregistrées.';
             $this->renderListingForm('create', $values, $errors, $categories, []);
@@ -440,7 +477,7 @@ class ListingController extends Controller
         }
 
         if ($listing === false) {
-            $this->session->enregistrerMessageTemporaire(
+            $this->session->setFlashMessage(
                 'notice',
                 'Les données de cette annonce sont momentanément indisponibles.'
             );
@@ -448,7 +485,7 @@ class ListingController extends Controller
         }
 
         if ($listing === null) {
-            $this->session->enregistrerMessageTemporaire('notice', 'Cette annonce ne peut pas être modifiée.');
+            $this->session->setFlashMessage('notice', 'Cette annonce ne peut pas être modifiée.');
             $this->redirect('dashboard');
         }
 
@@ -457,7 +494,7 @@ class ListingController extends Controller
         $lockedState = $listingModel->getLastManagementRestriction();
 
         if ($canModify === null) {
-            $this->session->enregistrerMessageTemporaire(
+            $this->session->setFlashMessage(
                 'notice',
                 'Les données de cette annonce sont momentanément indisponibles.'
             );
@@ -465,11 +502,11 @@ class ListingController extends Controller
         }
 
         if ($lockedState === 'owner' || $lockedState === 'missing' || $lockedState === 'error') {
-            $this->session->enregistrerMessageTemporaire('notice', 'Cette annonce ne peut pas être modifiée.');
+            $this->session->setFlashMessage('notice', 'Cette annonce ne peut pas être modifiée.');
             $this->redirect('dashboard');
         }
 
-        $categories = (new CategoryModel())->getAllCategories();
+        $categories = (new CategoryModel($this->database))->getAllCategories();
         $errors = [];
 
         if ($categories === null) {
@@ -497,7 +534,7 @@ class ListingController extends Controller
     }
 
     /**
-     * Rôle : Revalider les droits, les données et les photographies puis modifier l'annonce en transaction.
+     * Rôle : Revalider les droits, les données et les photographies puis modifier l'annonce.
      * Paramètres : Aucun, les données sont lues dans la requête POST.
      * Retour : Aucun, le formulaire est réaffiché ou le détail mis à jour est ouvert.
      */
@@ -511,7 +548,7 @@ class ListingController extends Controller
         }
 
         if ($listingId === null) {
-            $this->session->enregistrerMessageTemporaire('notice', 'L’annonce à modifier est introuvable.');
+            $this->session->setFlashMessage('notice', 'L’annonce à modifier est introuvable.');
             $this->redirect('dashboard');
         }
 
@@ -519,7 +556,7 @@ class ListingController extends Controller
         $listingModel = $this->requireListingOwner($listingId, $userId, 'Modification verrouillée');
         $values = $this->readListingFormValues();
         $values['id'] = $listingId;
-        $categories = (new CategoryModel())->getAllCategories();
+        $categories = (new CategoryModel($this->database))->getAllCategories();
         $errors = [];
 
         if (!$csrfIsValid) {
@@ -546,6 +583,7 @@ class ListingController extends Controller
         $removedPhotos = [];
 
         foreach ($existingPhotos as $photo) {
+            // NATIF PHP : in_array() recherche une valeur dans un tableau ; il vérifie ici que la donnée appartient à la liste autorisée.
             if (in_array($photo['id'], $removeIds, true)) {
                 $removedPhotos[] = $photo;
             } else {
@@ -553,6 +591,7 @@ class ListingController extends Controller
             }
         }
 
+        // NATIF PHP : count() compte les éléments d’un tableau ; il permet ici de connaître la quantité avant le traitement.
         if (count($keptPhotos) + count($uploadedPhotos) > 3) {
             $errors['photos'] = 'Capacité atteinte. Supprimez une photo pour en ajouter une autre. La suivante devient principale si la première est supprimée.';
         }
@@ -568,18 +607,11 @@ class ListingController extends Controller
             return;
         }
 
-        if (!$this->database->beginTransaction()) {
-            $errors['form'] = 'La modification ne peut pas démarrer pour le moment.';
-            $this->renderListingForm('edit', $values, $errors, $categories, $this->addPhotoUrls($existingPhotos));
-            return;
-        }
-
         $currentTime = new DateTimeImmutable();
         $canModify = $listingModel->canBeModifiedBy($listingId, $userId, $currentTime);
 
         if ($canModify === null) {
-            $this->database->rollback();
-            $this->session->enregistrerMessageTemporaire(
+            $this->session->setFlashMessage(
                 'notice',
                 'Les données de cette annonce sont momentanément indisponibles.'
             );
@@ -589,7 +621,6 @@ class ListingController extends Controller
         $restriction = $listingModel->getLastManagementRestriction();
 
         if (!$canModify) {
-            $this->database->rollback();
             $lockedMessage = 'Modification verrouillée';
 
             if ($restriction === 'ended') {
@@ -598,7 +629,7 @@ class ListingController extends Controller
                 $lockedMessage = 'Une enchère a été enregistrée. Cette annonce ne peut plus être modifiée ni supprimée.';
             }
 
-            $this->session->enregistrerMessageTemporaire('notice', $lockedMessage);
+            $this->session->setFlashMessage('notice', $lockedMessage);
             $this->redirect('listing_detail', ['id' => $listingId]);
         }
 
@@ -633,8 +664,7 @@ class ListingController extends Controller
             $updated = false;
         }
 
-        if (!$updated || !$this->database->commit()) {
-            $this->database->rollback();
+        if (!$updated) {
             $this->deleteStoredFiles($storedFiles);
             $errors['form'] = 'Les modifications n’ont pas pu être enregistrées.';
             $this->renderListingForm('edit', $values, $errors, $categories, $this->addPhotoUrls($existingPhotos));
@@ -646,7 +676,7 @@ class ListingController extends Controller
     }
 
     /**
-     * Rôle : Supprimer en transaction une annonce encore active, sans enchère et appartenant au vendeur connecté.
+     * Rôle : Supprimer une annonce encore active, sans enchère et appartenant au vendeur connecté.
      * Paramètres : Aucun, l'identifiant et le jeton sont lus dans la requête POST.
      * Retour : Aucun, une redirection vers le tableau de bord ou le détail est envoyée.
      */
@@ -660,7 +690,7 @@ class ListingController extends Controller
         }
 
         if ($listingId === null || !$this->isSubmittedCsrfTokenValid()) {
-            $this->session->enregistrerMessageTemporaire('notice', 'La suppression ne peut pas être confirmée.');
+            $this->session->setFlashMessage('notice', 'La suppression ne peut pas être confirmée.');
             $this->redirect('dashboard');
         }
 
@@ -670,20 +700,11 @@ class ListingController extends Controller
             'Cette annonce ne peut plus être supprimée.'
         );
 
-        if (!$this->database->beginTransaction()) {
-            $this->session->enregistrerMessageTemporaire(
-                'notice',
-                'La suppression est temporairement indisponible.'
-            );
-            $this->redirect('listing_detail', ['id' => $listingId]);
-        }
-
         $currentTime = new DateTimeImmutable();
         $canDelete = $listingModel->canBeDeletedBy($listingId, $userId, $currentTime);
 
         if ($canDelete === null) {
-            $this->database->rollback();
-            $this->session->enregistrerMessageTemporaire(
+            $this->session->setFlashMessage(
                 'notice',
                 'Les données de cette annonce sont momentanément indisponibles.'
             );
@@ -691,8 +712,7 @@ class ListingController extends Controller
         }
 
         if (!$canDelete) {
-            $this->database->rollback();
-            $this->session->enregistrerMessageTemporaire(
+            $this->session->setFlashMessage(
                 'notice',
                 'Cette annonce ne peut plus être supprimée.'
             );
@@ -703,17 +723,15 @@ class ListingController extends Controller
         $photos = $photoModel->getListingPhotos($listingId);
 
         if ($photos === false) {
-            $this->database->rollback();
-            $this->session->enregistrerMessageTemporaire(
+            $this->session->setFlashMessage(
                 'notice',
                 'Les photographies de cette annonce sont momentanément indisponibles.'
             );
             $this->redirect('listing_detail', ['id' => $listingId]);
         }
 
-        if (!$listingModel->deleteListing($listingId) || !$this->database->commit()) {
-            $this->database->rollback();
-            $this->session->enregistrerMessageTemporaire(
+        if (!$listingModel->deleteListing($listingId)) {
+            $this->session->setFlashMessage(
                 'notice',
                 'L’annonce n’a pas pu être supprimée.'
             );
@@ -721,7 +739,7 @@ class ListingController extends Controller
         }
 
         $this->deletePhotoFiles($photos);
-        $this->session->enregistrerMessageTemporaire('success', 'L’annonce a été supprimée.');
+        $this->session->setFlashMessage('success', 'L’annonce a été supprimée.');
         $this->redirect('dashboard');
     }
 
@@ -736,7 +754,7 @@ class ListingController extends Controller
         $isOwner = $listingModel->isOwnedBy($listingId, $userId);
 
         if ($isOwner === null) {
-            $this->session->enregistrerMessageTemporaire(
+            $this->session->setFlashMessage(
                 'notice',
                 'Les données de cette annonce sont momentanément indisponibles.'
             );
@@ -744,7 +762,7 @@ class ListingController extends Controller
         }
 
         if (!$isOwner) {
-            $this->session->enregistrerMessageTemporaire('notice', $deniedMessage);
+            $this->session->setFlashMessage('notice', $deniedMessage);
             $this->redirect('listing_detail', ['id' => $listingId]);
         }
 
@@ -794,6 +812,7 @@ class ListingController extends Controller
      */
     private function validateListingValues(array $values, array $categories, array &$errors, string $mode): array
     {
+        // NATIF PHP : trim() retire les espaces placés au début et à la fin du texte ; il normalise ici une valeur reçue avant son contrôle.
         $title = trim($values['title']);
         $description = trim($values['description']);
         $categoryId = null;
@@ -804,6 +823,7 @@ class ListingController extends Controller
             } else {
                 $errors['title'] = 'Le titre est obligatoire.';
             }
+        // NATIF PHP : mb_strlen() compte les caractères d’un texte UTF-8 ; il contrôle ici une longueur sans mal compter les caractères accentués.
         } elseif (mb_strlen($title) < 3) {
             $errors['title'] = 'Le titre doit comporter au moins 3 caractères.';
         } elseif (mb_strlen($title) > 255) {
@@ -817,7 +837,9 @@ class ListingController extends Controller
         }
 
         if (
+            // NATIF PHP : preg_match() vérifie un texte avec une expression régulière ; il contrôle ici que la valeur respecte le format attendu.
             preg_match('/^[1-9][0-9]*$/D', $values['category']) !== 1
+            // NATIF PHP : isset() vérifie qu’une variable ou une entrée de tableau existe et ne vaut pas null ; il évite ici de lire une valeur absente.
             || !isset($categories[$values['category']])
         ) {
             $errors['category'] = 'Choisissez une catégorie proposée dans la liste.';
@@ -898,6 +920,7 @@ class ListingController extends Controller
             $validationMessage = 'Corrigez les champs signalés avant d’enregistrer les modifications.';
         }
 
+        // NATIF PHP : $_FILES est un tableau superglobal décrivant les fichiers téléversés ; il fournit ici le nom, l’erreur et l’emplacement temporaire de chaque photographie.
         if (!isset($_FILES['photos'])) {
             return [];
         }
@@ -905,6 +928,7 @@ class ListingController extends Controller
         $fileData = $_FILES['photos'];
 
         if (
+            // NATIF PHP : is_array() vérifie qu’une valeur est un tableau ; il évite ici de parcourir ou transmettre un type inattendu.
             !is_array($fileData)
             || !isset($fileData['name'], $fileData['tmp_name'], $fileData['error'], $fileData['size'])
             || !is_array($fileData['name'])
@@ -918,18 +942,25 @@ class ListingController extends Controller
 
         $photos = [];
         $allowedMimeTypes = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp'];
+        // NATIF PHP : finfo est la classe native qui analyse le contenu réel des fichiers ; elle contrôle ici le type MIME de la photographie.
+        // NATIF PHP : FILEINFO_MIME_TYPE demande à Fileinfo de retourner le type MIME ; elle vérifie ici le contenu réel de la photographie.
         $fileInfo = new \finfo(FILEINFO_MIME_TYPE);
 
         foreach ($fileData['error'] as $index => $uploadError) {
+            // NATIF PHP : UPLOAD_ERR_NO_FILE signale qu’aucun fichier n’a été envoyé ; elle distingue ici une sélection vide des autres erreurs.
             if ($uploadError === UPLOAD_ERR_NO_FILE) {
                 continue;
             }
 
             if (
+                // NATIF PHP : UPLOAD_ERR_OK signale un téléversement réussi ; elle autorise ici la validation du fichier reçu.
                 $uploadError !== UPLOAD_ERR_OK
                 || !isset($fileData['tmp_name'][$index], $fileData['size'][$index])
+                // NATIF PHP : is_string() vérifie qu’une valeur est une chaîne de caractères ; il évite ici de traiter un type inattendu comme du texte.
                 || !is_string($fileData['tmp_name'][$index])
+                // NATIF PHP : is_numeric() vérifie qu’une valeur représente un nombre ; il protège ici la conversion ou le calcul qui suit.
                 || !is_numeric($fileData['size'][$index])
+                // NATIF PHP : is_uploaded_file() confirme que le fichier provient réellement d’un téléversement HTTP ; il sécurise ici le traitement de la photographie.
                 || !is_uploaded_file($fileData['tmp_name'][$index])
             ) {
                 $errors['photos'] = $validationMessage;
@@ -946,6 +977,7 @@ class ListingController extends Controller
             if (
                 !is_string($mimeType)
                 || !isset($allowedMimeTypes[$mimeType])
+                // NATIF PHP : getimagesize() lit les dimensions et le type d’une image ; il vérifie ici que le fichier reçu est une image exploitable.
                 || getimagesize($fileData['tmp_name'][$index]) === false
             ) {
                 $errors['photos'] = $validationMessage;
@@ -962,6 +994,7 @@ class ListingController extends Controller
             $errors['photos'] = 'Capacité atteinte. Supprimez une photo pour en ajouter une autre. La suivante devient principale si la première est supprimée.';
         }
 
+        // NATIF PHP : array_slice() extrait une partie d’un tableau ; il limite ici les éléments conservés au nombre autorisé.
         return array_slice($photos, 0, 3);
     }
 
@@ -1024,6 +1057,7 @@ class ListingController extends Controller
      */
     private function readPhotoIdentifiersToRemove(): array
     {
+        // NATIF PHP : $_POST est un tableau superglobal contenant les champs envoyés en POST ; il récupère ici les données du formulaire à contrôler.
         if (!isset($_POST['remove_photos']) || !is_array($_POST['remove_photos'])) {
             return [];
         }
@@ -1035,6 +1069,8 @@ class ListingController extends Controller
                 continue;
             }
 
+            // NATIF PHP : filter_var() valide ou filtre une valeur selon une règle native ; il refuse ici une donnée qui ne respecte pas le format attendu.
+            // NATIF PHP : FILTER_VALIDATE_INT demande à filter_var() de valider un entier ; elle contrôle ici un identifiant ou un montant.
             $identifier = filter_var($value, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
 
             if ($identifier !== false) {
@@ -1042,6 +1078,7 @@ class ListingController extends Controller
             }
         }
 
+        // NATIF PHP : array_values() réindexe un tableau avec des clés numériques continues ; il prépare ici une liste propre pour la suite du traitement.
         return array_values($identifiers);
     }
 
@@ -1101,18 +1138,20 @@ class ListingController extends Controller
      */
     private function recoverBidRejection(int $listingId): ?array
     {
-        $encodedData = $this->session->recupererMessageTemporaire('bid_rejection');
+        $encodedData = $this->session->getFlashMessage('bid_rejection');
 
         if ($encodedData === null) {
             return null;
         }
 
+        // NATIF PHP : json_decode() convertit un texte JSON en donnée PHP ; il permet ici d’exploiter la réponse reçue.
         $data = json_decode($encodedData, true);
 
         if (
             !is_array($data)
             || !isset($data['listing_id'], $data['minimum_in_euros'], $data['amount_in_euros'])
             || (int) $data['listing_id'] !== $listingId
+            // NATIF PHP : is_int() vérifie qu’une valeur est un entier ; il évite ici d’utiliser un autre type dans un traitement numérique.
             || !is_int($data['minimum_in_euros'])
             || !is_int($data['amount_in_euros'])
         ) {
@@ -1163,8 +1202,182 @@ class ListingController extends Controller
             'categories' => $categories,
             'existing_photos' => $existingPhotos,
             'locked_state' => $lockedState,
-            'csrf_token' => $this->session->obtenirJetonCsrf(),
+            'form_display' => $this->buildListingFormDisplay(
+                $mode,
+                $values,
+                $errors,
+                $categories,
+                $existingPhotos,
+                $lockedState
+            ),
+            'csrf_token' => $this->session->getCsrfToken(),
         ]);
+    }
+
+    /**
+     * Rôle : Préparer les textes et états visuels du formulaire de création ou de modification d'une annonce.
+     * Paramètres : Mode, valeurs réaffichables, erreurs, catégories disponibles et état de verrouillage.
+     * Retour : Données de présentation prêtes à afficher sans décision métier dans le template.
+     */
+    private function buildListingFormDisplay(
+        string $mode,
+        array $values,
+        array $errors,
+        array $categories,
+        array $existingPhotos,
+        string $lockedState
+    ): array {
+        $isEditMode = $mode === 'edit';
+        $isLocked = $lockedState === 'bid' || $lockedState === 'ended';
+        $categoriesUnavailable = $categories === [];
+        $globalErrorTitle = 'Vérifiez le formulaire';
+        $globalErrorMessage = 'Corrigez les champs signalés avant de publier l’annonce.';
+        $eyebrow = 'NOUVELLE VENTE';
+        $lockedMessage = '';
+        $lockedAttribute = '';
+        $formTitle = 'Publier une annonce';
+        $formRoute = 'listing_create';
+        $submitLabel = 'Publier l’annonce';
+
+        if ($isEditMode) {
+            $globalErrorTitle = 'Vérifiez les modifications';
+            $globalErrorMessage = 'Corrigez les champs signalés avant d’enregistrer les modifications.';
+            $eyebrow = 'GESTION DE L’ANNONCE';
+            $formTitle = (string) $values['title'];
+            $formRoute = 'listing_update';
+            $submitLabel = 'Enregistrer les modifications';
+        }
+
+        if ($lockedState === 'bid') {
+            $lockedMessage = 'Une enchère a été enregistrée. Cette annonce ne peut plus être modifiée ni supprimée.';
+            $lockedAttribute = 'disabled';
+            $formTitle = 'Annonce verrouillée';
+        } elseif ($lockedState === 'ended') {
+            $lockedMessage = 'L’échéance est atteinte. Cette annonce ne peut plus être modifiée ni supprimée.';
+            $lockedAttribute = 'disabled';
+            $formTitle = 'Vente terminée';
+        }
+
+        if ($categoriesUnavailable) {
+            $globalErrorTitle = 'Catégories indisponibles';
+            $globalErrorMessage = 'La création ou la modification de l’annonce est impossible pour le moment.';
+            $eyebrow = 'GESTION DE L’ANNONCE';
+        }
+
+        if (isset($errors['form']) && is_string($errors['form'])) {
+            $globalErrorMessage = $errors['form'];
+        }
+
+        $alert = [
+            'variant' => 'info',
+            'title' => 'Préparez votre vente',
+            'message' => 'Tous les champs marqués sont requis. Vous pouvez ajouter jusqu’à trois photographies.',
+            'role' => 'note',
+            'illustrated' => false,
+        ];
+
+        if ($isLocked) {
+            $alert = [
+                'variant' => 'warning',
+                'title' => 'Modification verrouillée',
+                'message' => $lockedMessage,
+                'role' => 'status',
+                'illustrated' => true,
+            ];
+        } elseif ($errors !== []) {
+            $alert = [
+                'variant' => 'error',
+                'title' => $globalErrorTitle,
+                'message' => $globalErrorMessage,
+                'role' => 'alert',
+                'illustrated' => true,
+            ];
+        } elseif ($isEditMode) {
+            $alert = [
+                'variant' => 'info',
+                'title' => 'Modification autorisée',
+                'message' => 'Aucune enchère enregistrée et échéance non atteinte.',
+                'role' => 'note',
+                'illustrated' => false,
+            ];
+        }
+
+        $photoTitle = 'Aucune photographie ajoutée';
+        $photoStatus = 'Vous pouvez publier sans photo ou en ajouter jusqu’à trois.';
+        $actionInformation = 'Le prix de départ doit être strictement positif et saisi en euros entiers.';
+        $buttonLabel = $submitLabel;
+        $categoryPlaceholder = 'Choisir une catégorie';
+
+        if ($isLocked || $isEditMode) {
+            $photoTitle = 'Gestion des photographies';
+        } elseif ($existingPhotos !== []) {
+            $photoTitle = 'Photographies ajoutées';
+        }
+
+        if ($isLocked) {
+            $photoStatus = 'Les informations restent consultables en lecture seule.';
+        } elseif ($existingPhotos === []) {
+            $photoStatus = 'Vous pouvez publier sans photo ou en ajouter jusqu’à trois.';
+        } elseif (count($existingPhotos) >= 3) {
+            $photoStatus = 'Capacité atteinte. Supprimez une photo pour en ajouter une autre. La suivante devient principale si la première est supprimée.';
+        } elseif ($isEditMode) {
+            $photoStatus = 'Ajoutez, remplacez ou supprimez les photographies dans la limite de trois.';
+        } else {
+            $photoStatus = 'La première photographie ajoutée est automatiquement l’image principale.';
+        }
+
+        if ($isEditMode && !$isLocked) {
+            $actionInformation = 'Modification possible tant qu’aucune enchère n’est enregistrée et avant l’échéance.';
+        }
+
+        if ($categoriesUnavailable) {
+            $buttonLabel = 'Publication indisponible';
+            $actionInformation = 'Aucune catégorie locale de remplacement n’est proposée.';
+            $categoryPlaceholder = 'Indisponible';
+        }
+
+        $bidCountLabel = $bidCount . ' enchère';
+        $hasBidAttribute = 'false';
+        $isBestBidderAttribute = 'false';
+        $actionsClass = 'listing-summary__actions';
+        $defaultParticipationLabel = $saleStatusLabel;
+
+        if ($bidCount > 1) {
+            $bidCountLabel .= 's';
+        }
+
+        if ($viewer['has_bid']) {
+            $hasBidAttribute = 'true';
+        }
+
+        if ($viewer['is_best_bidder']) {
+            $isBestBidderAttribute = 'true';
+        }
+
+        if ($isEnded) {
+            $actionsClass .= ' listing-summary__actions--ended';
+        }
+
+        if ($viewer['is_connected'] && !$viewer['is_owner']) {
+            $defaultParticipationLabel = 'Annonce non suivie';
+        }
+
+        return [
+            'is_edit_mode' => $isEditMode,
+            'is_locked' => $isLocked,
+            'categories_unavailable' => $categoriesUnavailable,
+            'eyebrow' => $eyebrow,
+            'locked_attribute' => $lockedAttribute,
+            'form_title' => $formTitle,
+            'form_route' => $formRoute,
+            'alert' => $alert,
+            'photo_title' => $photoTitle,
+            'photo_status' => $photoStatus,
+            'show_photo_upload' => !$isLocked,
+            'action_information' => $actionInformation,
+            'button_label' => $buttonLabel,
+            'category_placeholder' => $categoryPlaceholder,
+        ];
     }
 
     /**
@@ -1227,6 +1440,176 @@ class ListingController extends Controller
     }
 
     /**
+     * Rôle : Préparer les libellés et messages du détail d'une annonce selon son état et les droits du visiteur.
+     * Paramètres : État de la vente, nombre d'enchères, résultat final, droits du visiteur, refus éventuel et prix affiché.
+     * Retour : Données d'affichage prêtes à présenter dans le template de détail.
+     */
+    private function buildDetailDisplay(
+        bool $isEnded,
+        int $bidCount,
+        string $finalState,
+        array $viewer,
+        ?array $bidRejection,
+        string $currentPriceLabel
+    ): array {
+        $saleStatusLabel = 'Vente en cours';
+        $finalResultTitle = '';
+        $priceLabel = 'PRIX COURANT';
+        $historyTitle = 'Historique des enchères';
+        $historySubtitle = 'Les informations détaillées sont réservées aux utilisateurs autorisés.';
+        $historyLockedTitle = 'Historique détaillé non accessible dans cette vue';
+        $historyLockedBody = 'Les informations publiques restent disponibles : prix, nombre d’enchères et résultat final.';
+        $summaryMessage = '';
+        $endedAlertTitle = 'Vente terminée';
+        $endedMessage = 'Aucune action de participation ou de modification n’est disponible.';
+        $showEmptyHistory = false;
+        $visitorInvitation = '';
+        $ownerLockedMessage = 'Une enchère a été enregistrée : modification et suppression impossibles.';
+        $bidMinimumHelp = 'Montant supérieur d’au moins 1 € au prix courant.';
+        $bidStatusMessage = '';
+
+        if ($isEnded) {
+            $saleStatusLabel = 'Vente terminée';
+            $finalResultTitle = 'Vente adjugée';
+            $priceLabel = 'PRIX FINAL';
+
+            if ($finalState === 'Non adjugée') {
+                $finalResultTitle = 'Vente non adjugée';
+            }
+
+            if ($bidCount === 0) {
+                $historySubtitle = 'La vente s’est terminée sans enchère.';
+                $showEmptyHistory = true;
+            }
+        }
+
+        $participationLabel = $saleStatusLabel;
+
+        if ($isEnded && $bidCount === 0) {
+            $participationLabel = 'Non adjugée';
+        }
+
+        if ($viewer['is_best_bidder']) {
+            $participationLabel = 'Meilleure enchère';
+        } elseif ($viewer['has_bid']) {
+            $participationLabel = 'Enchère dépassée';
+        } elseif ($viewer['is_following']) {
+            $participationLabel = 'Annonce suivie';
+        } elseif ($viewer['is_owner'] && !$isEnded) {
+            $participationLabel = 'Votre vente active';
+        } elseif ($viewer['is_connected'] && !$isEnded) {
+            $participationLabel = 'Annonce non suivie';
+        }
+
+        $followRoute = 'follow_listing';
+        $followLabel = 'Suivre';
+
+        if ($viewer['is_following']) {
+            $followRoute = 'unfollow_listing';
+            $followLabel = 'Ne plus suivre';
+        }
+
+        if (!$isEnded) {
+            if ($viewer['can_edit']) {
+                $summaryMessage = 'Aucune enchère enregistrée : vos actions restent disponibles.';
+                $historySubtitle = 'Aucune enchère n’a encore été enregistrée.';
+                $showEmptyHistory = true;
+            } elseif ($viewer['is_owner']) {
+                $participationLabel = 'Actions verrouillées';
+                $summaryMessage = 'Votre annonce reste visible jusqu’à l’échéance. Les actions d’édition sont définitivement bloquées.';
+                $historyTitle = 'Historique détaillé des enchères';
+                $historySubtitle = 'La première enchère verrouille modification et suppression.';
+            } elseif ($viewer['is_best_bidder']) {
+                $summaryMessage = 'Vous êtes actuellement le mieux-disant. Vous pouvez enchérir de nouveau si nécessaire.';
+                $historyTitle = 'Historique détaillé des enchères';
+                $historySubtitle = 'Pseudo, montant, date et heure — Europe/Paris.';
+            } elseif ($viewer['has_bid']) {
+                $summaryMessage = 'Votre meilleure offre n’est plus en tête. Le minimum actuel est indiqué dans le formulaire.';
+                $historyTitle = 'Historique détaillé des enchères';
+                $historySubtitle = 'Une offre supérieure a été enregistrée.';
+            } elseif ($viewer['is_connected']) {
+                $historySubtitle = 'Vous n’avez pas encore enchéri sur cette annonce.';
+                $historyLockedTitle = 'Historique accessible après votre première enchère';
+
+                if ($viewer['is_following']) {
+                    $historyLockedBody = 'Vous pouvez continuer à suivre l’annonce et enchérir.';
+                } else {
+                    $historyLockedBody = 'Vous ne suivez pas encore cette annonce. Suivez-la pour la retrouver dans votre tableau de bord.';
+                }
+            }
+        } elseif ($bidCount > 0) {
+            $historyTitle = 'Historique final des enchères';
+
+            if ($viewer['is_owner']) {
+                $participationLabel = 'Vente adjugée';
+                $finalResultTitle = 'Un gagnant a été désigné';
+                $summaryMessage = 'La vente est terminée et adjugée. Aucune action transactionnelle n’est ajoutée ici.';
+                $endedAlertTitle = 'Vente adjugée';
+                $endedMessage = 'Le résultat final et l’historique restent consultables.';
+                $historySubtitle = 'L’enchère gagnante est identifiée dans l’historique.';
+            } elseif ($viewer['is_best_bidder']) {
+                $participationLabel = 'Enchère remportée';
+                $finalResultTitle = 'Vous remportez cette enchère';
+                $summaryMessage = 'Votre offre de ' . $currentPriceLabel . ' est la meilleure. Le résultat et l’historique restent consultables.';
+                $endedAlertTitle = 'Enchère remportée';
+                $endedMessage = 'Votre offre est identifiée dans l’historique final.';
+                $historySubtitle = 'Votre enchère gagnante est mise en évidence.';
+            } elseif ($viewer['has_bid']) {
+                $participationLabel = 'Enchère non remportée';
+                $finalResultTitle = 'Votre enchère n’a pas gagné';
+                $summaryMessage = 'Votre meilleure offre n’a pas remporté la vente. La vente est désormais terminée.';
+                $endedMessage = 'Votre enchère n’a pas remporté cette vente.';
+                $historySubtitle = 'Votre meilleure offre et l’enchère gagnante restent visibles.';
+            } else {
+                $participationLabel = 'Vente adjugée';
+                $finalResultTitle = 'Vente terminée — adjugée';
+                $endedAlertTitle = 'Vente adjugée';
+                $endedMessage = 'Le prix final et le nombre d’enchères sont publics.';
+                $historyTitle = 'Historique des enchères';
+                $historySubtitle = 'Le détail de l’historique n’est pas accessible dans cette vue.';
+            }
+        }
+
+        if ($bidRejection !== null && $viewer['can_bid']) {
+            $participationLabel = 'Enchère refusée';
+            $historySubtitle = 'L’offre de ' . $bidRejection['amount_label'] . ' n’a pas été enregistrée.';
+            $historyLockedBody = 'Aucune enchère valide n’a été enregistrée. Corrigez le montant puis réessayez.';
+            $bidMinimumHelp = 'Montant insuffisant : minimum ' . $bidRejection['minimum_label'] . '.';
+            $bidStatusMessage = 'Enchère refusée : saisissez au minimum ' . $bidRejection['minimum_label'] . '.';
+        }
+
+        if (!$viewer['is_connected'] && !$isEnded) {
+            $visitorInvitation = 'Connectez-vous pour suivre cette annonce ou enchérir.';
+        }
+
+        return [
+            'sale_status_label' => $saleStatusLabel,
+            'final_result_title' => $finalResultTitle,
+            'price_label' => $priceLabel,
+            'history_title' => $historyTitle,
+            'history_subtitle' => $historySubtitle,
+            'history_locked_title' => $historyLockedTitle,
+            'history_locked_body' => $historyLockedBody,
+            'summary_message' => $summaryMessage,
+            'ended_alert_title' => $endedAlertTitle,
+            'ended_message' => $endedMessage,
+            'show_empty_history' => $showEmptyHistory,
+            'bid_count_label' => $bidCountLabel,
+            'participation_label' => $participationLabel,
+            'follow_route' => $followRoute,
+            'follow_label' => $followLabel,
+            'has_bid_attribute' => $hasBidAttribute,
+            'is_best_bidder_attribute' => $isBestBidderAttribute,
+            'actions_class' => $actionsClass,
+            'default_participation_label' => $defaultParticipationLabel,
+            'visitor_invitation' => $visitorInvitation,
+            'owner_locked_message' => $ownerLockedMessage,
+            'bid_minimum_help' => $bidMinimumHelp,
+            'bid_status_message' => $bidStatusMessage,
+        ];
+    }
+
+    /**
      * Rôle : Contrôler et normaliser tous les critères reçus depuis la recherche.
      * Paramètres : Catégories disponibles et indicateur de disponibilité de l'API.
      * Retour : Critères normalisés, erreurs associées et présence d'une recherche personnalisée.
@@ -1257,9 +1640,11 @@ class ListingController extends Controller
         $words = [];
 
         if ($text !== '') {
+            // NATIF PHP : preg_split() découpe un texte avec une expression régulière ; il sépare ici les différentes valeurs reçues.
             $splitWords = preg_split('/\s+/u', $text);
 
             if (is_array($splitWords)) {
+                // NATIF PHP : array_filter() retire les éléments ne respectant pas le filtre ; il conserve ici uniquement les valeurs utiles.
                 $words = array_values(array_filter($splitWords, 'is_string'));
             }
         }
@@ -1371,6 +1756,7 @@ class ListingController extends Controller
      */
     private function readStringParameter(string $name, array &$errors): string
     {
+        // NATIF PHP : $_GET est un tableau superglobal contenant les paramètres de l’URL ; il récupère ici la route, un identifiant ou un filtre transmis en GET.
         if (!isset($_GET[$name])) {
             return '';
         }
@@ -1491,6 +1877,18 @@ class ListingController extends Controller
                 $saleState = 'active';
             }
 
+            $saleStateLabel = 'Vente terminée';
+            $deadlineDisplayLabel = 'Vente terminée';
+
+            if ($saleState === 'active') {
+                $saleStateLabel = 'Vente en cours';
+                $deadlineDisplayLabel = $this->formatFrenchDateTime(
+                    $deadline,
+                    false,
+                    true
+                );
+            }
+
             $displayListings[] = [
                 'id' => $identifier,
                 'title' => (string) $listing['titre'],
@@ -1505,6 +1903,8 @@ class ListingController extends Controller
                     true
                 ),
                 'sale_state' => $saleState,
+                'sale_state_label' => $saleStateLabel,
+                'deadline_display_label' => $deadlineDisplayLabel,
                 'photo_url' => $photoUrl,
                 'detail_url' => $this->buildRouteUrl('listing_detail', ['id' => $identifier]),
             ];
@@ -1576,6 +1976,132 @@ class ListingController extends Controller
         }
 
         return $searchResult['total_items'] . ' ventes actives · échéance croissante';
+    }
+
+    /**
+     * Rôle : Préparer les messages et libellés d'affichage de la recherche.
+     * Paramètres : État, message métier, erreurs, catégories, critères publics et pagination.
+     * Retour : Données de présentation prêtes à afficher sans décision supplémentaire dans le template.
+     */
+    private function buildSearchDisplay(
+        string $stateKey,
+        string $message,
+        array $errors,
+        bool $categoriesAvailable,
+        array $criteria,
+        array $categories,
+        array $pagination
+    ): array {
+        $fieldErrorMessages = [
+            'q' => '',
+            'category' => '',
+            'item_state' => '',
+            'sale_state' => '',
+            'minimum_price' => '',
+            'maximum_price' => '',
+        ];
+
+        foreach (array_keys($fieldErrorMessages) as $fieldName) {
+            if (isset($errors[$fieldName]) && is_string($errors[$fieldName])) {
+                $fieldErrorMessages[$fieldName] = $errors[$fieldName];
+            }
+        }
+
+        if (!$categoriesAvailable && $fieldErrorMessages['category'] === '') {
+            $fieldErrorMessages['category'] = 'Catégories temporairement indisponibles.';
+        }
+
+        $firstSearchError = 'Corrigez les champs signalés, puis relancez la recherche. Vos autres critères sont conservés.';
+        $hasPriceRangeError = false;
+
+        if (isset($errors['minimum_price'], $errors['maximum_price'])
+            && $errors['maximum_price'] === 'Le prix maximum doit être supérieur ou égal au prix minimum.'
+        ) {
+            $hasPriceRangeError = true;
+            $firstSearchError = 'Le prix maximum doit être supérieur ou égal au prix minimum.';
+            $fieldErrorMessages['maximum_price'] = 'Le maximum doit être supérieur ou égal au minimum.';
+        }
+
+        $resultsStateKey = $stateKey;
+
+        if ($stateKey === 'initial' && (int) $pagination['total_pages'] > 1) {
+            $resultsStateKey = 'pagination';
+        }
+
+        $resultsMessage = [
+            'title' => '',
+            'body' => $message,
+            'blocked_title' => '',
+            'blocked_body' => '',
+        ];
+
+        if ($stateKey === 'invalid_criteria') {
+            $resultsMessage = [
+                'title' => 'Corrigez les critères indiqués',
+                'body' => $firstSearchError,
+                'blocked_title' => 'La recherche n’a pas été exécutée.',
+                'blocked_body' => 'Corrigez les champs signalés, puis relancez la recherche. Vos autres critères sont conservés.',
+            ];
+        } elseif ($stateKey === 'search_error') {
+            $resultsMessage['title'] = 'Recherche temporairement indisponible';
+        } elseif ($stateKey === 'categories_unavailable') {
+            $resultsMessage['title'] = 'Catégories temporairement indisponibles';
+        } elseif ($stateKey === 'no_results') {
+            $resultsMessage = [
+                'title' => 'Aucune annonce ne correspond à vos critères',
+                'body' => 'Modifiez un ou plusieurs critères pour élargir votre recherche.',
+                'blocked_title' => '',
+                'blocked_body' => '',
+            ];
+        }
+
+        $filterSummaryParts = [];
+
+        if ((string) $criteria['text'] !== '') {
+            $filterSummaryParts[] = (string) $criteria['text'];
+        }
+
+        if ($criteria['category_id'] !== null && isset($categories[$criteria['category_id']])) {
+            $filterSummaryParts[] = (string) $categories[$criteria['category_id']];
+        }
+
+        if ($criteria['item_state'] !== null) {
+            $filterSummaryParts[] = ucfirst((string) $criteria['item_state']);
+        }
+
+        if ((string) $criteria['minimum_price'] !== '' || (string) $criteria['maximum_price'] !== '') {
+            $minimumPriceLabel = '0,00 €';
+            $maximumPriceLabel = 'sans limite';
+
+            if ((string) $criteria['minimum_price'] !== '') {
+                $minimumPriceLabel = (string) $criteria['minimum_price'] . ' €';
+            }
+
+            if ((string) $criteria['maximum_price'] !== '') {
+                $maximumPriceLabel = (string) $criteria['maximum_price'] . ' €';
+            }
+
+            $filterSummaryParts[] = $minimumPriceLabel . ' à ' . $maximumPriceLabel;
+        }
+
+        if ((string) $criteria['sale_state'] !== 'active') {
+            $saleStateLabel = 'Toutes';
+
+            if ((string) $criteria['sale_state'] === 'ended') {
+                $saleStateLabel = 'Terminées';
+            }
+
+            $filterSummaryParts[] = $saleStateLabel;
+        }
+
+        return [
+            'field_error_messages' => $fieldErrorMessages,
+            'first_search_error' => $firstSearchError,
+            'has_price_range_error' => $hasPriceRangeError,
+            'results_state_key' => $resultsStateKey,
+            'results_message' => $resultsMessage,
+            'filter_summary' => implode(' · ', $filterSummaryParts),
+        ];
     }
 
     /**

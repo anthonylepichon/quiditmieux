@@ -11,12 +11,13 @@ namespace App\controllers;
 
 use App\core\Controller;
 use App\core\Database;
-use App\core\PhotoStorage;
+use App\services\PhotoStorage;
 use App\core\Session;
 use App\models\CategoryModel;
 use App\models\ListingModel;
 use App\models\PhotoModel;
 use App\models\UserModel;
+// NATIF PHP : DateTimeImmutable est la classe native de gestion des dates sans modification de l’objet original ; elle fiabilise ici les comparaisons et les formats.
 use DateTimeImmutable;
 
 class UserController extends Controller
@@ -38,6 +39,7 @@ class UserController extends Controller
      */
     public function __construct(Database $database, Session $session)
     {
+        // Le stockage physique est séparé du modèle PhotoModel, qui ne conserve que les références en base.
         parent::__construct($database, $session);
         $this->photoStorage = new PhotoStorage();
     }
@@ -49,10 +51,12 @@ class UserController extends Controller
      */
     public function showAccountForm(): void
     {
+        // L'accès au compte est réservé à l'utilisateur authentifié par la session.
         $userId = $this->requireConnectedUser('account_form');
         if ($userId === null) {
             return;
         }
+        // Le modèle fournit uniquement les informations réaffichables du compte.
         $account = (new UserModel($this->database))->getAccount($userId);
 
         if ($account === false) {
@@ -65,14 +69,14 @@ class UserController extends Controller
         }
 
         if ($account === null) {
-            $this->session->deconnecterUtilisateur();
+            $this->session->deconnectUser();
             $this->redirect('home');
             return;
         }
         $this->renderAccountForm(
             ['pseudo' => (string) $account['pseudo'], 'email' => (string) $account['email']],
             [],
-            $this->session->recupererMessageTemporaire('success')
+            $this->session->getFlashMessage('success')
         );
     }
 
@@ -83,13 +87,17 @@ class UserController extends Controller
      */
     public function updateAccount(): void
     {
+        // L'identité du compte à modifier provient de la session, jamais d'un champ de formulaire.
         $userId = $this->requireConnectedUser('account_form');
         if ($userId === null) {
             return;
         }
 
+        // Les mots de passe sont lus séparément et ne seront jamais renvoyés au template.
         $values = [
+            // NATIF PHP : trim() retire les espaces placés au début et à la fin du texte ; il normalise ici une valeur reçue avant son contrôle.
             'pseudo' => trim($this->readPostString('pseudo')),
+            // NATIF PHP : mb_strtolower() convertit un texte UTF-8 en minuscules ; il normalise ici la comparaison sans perdre les caractères accentués.
             'email' => mb_strtolower(trim($this->readPostString('email'))),
         ];
         $currentPassword = $this->readPostString('current_password');
@@ -109,7 +117,7 @@ class UserController extends Controller
         }
 
         if ($account === null) {
-            $this->session->deconnecterUtilisateur();
+            $this->session->deconnectUser();
             $this->redirect('home');
             return;
         }
@@ -177,8 +185,8 @@ class UserController extends Controller
             return;
         }
 
-        $this->session->connecterUtilisateur($userId);
-        $this->session->enregistrerMessageTemporaire('success', 'Les champs de mot de passe ont été vidés après l’enregistrement.');
+        $this->session->connectUser($userId);
+        $this->session->setFlashMessage('success', 'Les champs de mot de passe ont été vidés après l’enregistrement.');
         $this->redirect('account_form');
     }
 
@@ -189,21 +197,25 @@ class UserController extends Controller
      */
     public function showDashboard(): void
     {
+        // Le tableau de bord est construit uniquement pour l'utilisateur actuellement connecté.
         $userId = $this->requireConnectedUser('dashboard');
         if ($userId === null) {
             return;
         }
 
+        // Les trois zones du tableau sont préparées une fois avant le rendu du template.
         $dashboard = $this->buildDashboard($userId);
-        $dashboard['csrf_token'] = $this->session->obtenirJetonCsrf();
-        $dashboard['flash_success'] = $this->session->recupererMessageTemporaire('success');
-        $dashboard['flash_notice'] = $this->session->recupererMessageTemporaire('notice');
+        $dashboard['csrf_token'] = $this->session->getCsrfToken();
+        $dashboard['flash_success'] = $this->session->getFlashMessage('success');
+        $dashboard['flash_notice'] = $this->session->getFlashMessage('notice');
 
         if ($dashboard['load_error']) {
             $dashboard['flash_notice'] = 'Le tableau de bord ne peut pas être actualisé pour le moment.';
         }
 
         unset($dashboard['load_error']);
+        $dashboard = $this->addDashboardCardDisplay($dashboard);
+        $dashboard['dashboard_message'] = $this->buildDashboardMessage($dashboard);
         $this->render('pages/dashboard.php', $dashboard);
     }
 
@@ -214,7 +226,8 @@ class UserController extends Controller
      */
     public function refreshSales(): void
     {
-        $userId = $this->session->obtenirIdentifiantUtilisateurConnecte();
+        // Cette route JSON ne transmet que les ventes de l'utilisateur de la session.
+        $userId = $this->session->getConnectedUserId();
         if ($userId === null) {
             $this->respondDashboardUnavailable();
             return;
@@ -247,7 +260,8 @@ class UserController extends Controller
      */
     public function refreshParticipations(): void
     {
-        $userId = $this->session->obtenirIdentifiantUtilisateurConnecte();
+        // Cette route JSON ne transmet que les participations de l'utilisateur de la session.
+        $userId = $this->session->getConnectedUserId();
         if ($userId === null) {
             $this->respondDashboardUnavailable();
             return;
@@ -322,7 +336,7 @@ class UserController extends Controller
      */
     private function getDashboardCategories(): array
     {
-        $categories = (new CategoryModel())->getAllCategories();
+        $categories = (new CategoryModel($this->database))->getAllCategories();
 
         if ($categories === null) {
             return [];
@@ -372,6 +386,7 @@ class UserController extends Controller
     {
         $ids = [];
         foreach ($rows as $row) {
+            // NATIF PHP : isset() vérifie qu’une variable ou une entrée de tableau existe et ne vaut pas null ; il évite ici de lire une valeur absente.
             if (isset($row['id'])) {
                 $ids[] = (int) $row['id'];
             }
@@ -462,6 +477,7 @@ class UserController extends Controller
      */
     private function readWinnerId(array $row): ?int
     {
+        // NATIF PHP : is_numeric() vérifie qu’une valeur représente un nombre ; il protège ici la conversion ou le calcul qui suit.
         if (isset($row['winner_id']) && is_numeric($row['winner_id'])) {
             return (int) $row['winner_id'];
         }
@@ -522,12 +538,243 @@ class UserController extends Controller
      */
     private function renderAccountForm(array $values, array $errors, ?string $successMessage): void
     {
+        // Le message global est déterminé ici afin que le template n'interprète pas les erreurs métier.
         $this->render('pages/account.php', [
             'values' => $values,
             'errors' => $errors,
             'success_message' => $successMessage,
-            'csrf_token' => $this->session->obtenirJetonCsrf(),
+            'alert' => $this->buildAccountAlert($errors, $successMessage),
+            'csrf_token' => $this->session->getCsrfToken(),
         ]);
+    }
+
+    /**
+     * Rôle : Préparer le message de synthèse adapté à l'état du formulaire de compte.
+     * Paramètres : Erreurs de validation et message temporaire de réussite éventuel.
+     * Retour : Variante, titre, contenu et rôle ARIA de l'alerte à afficher.
+     */
+    private function buildAccountAlert(array $errors, ?string $successMessage): array
+    {
+        if ($errors !== []) {
+            $errorKeys = array_keys($errors);
+            sort($errorKeys);
+            $title = 'Vérifiez les informations';
+            $message = 'Plusieurs champs doivent être corrigés avant l’enregistrement.';
+            $newPasswordKeys = array_diff($errorKeys, ['new_password', 'new_password_confirmation']);
+
+            if ($errorKeys === ['email', 'pseudo']
+                && $errors['pseudo'] === 'Ce pseudo est déjà utilisé.'
+                && $errors['email'] === 'Cette adresse électronique est déjà utilisée.'
+            ) {
+                $title = 'Informations déjà utilisées';
+                $message = 'Choisissez un autre pseudo et une autre adresse électronique.';
+            } elseif ($errorKeys === ['current_password']
+                && $errors['current_password'] === 'Le mot de passe actuel est incorrect.'
+            ) {
+                $title = 'Vérification impossible';
+                $message = 'Le mot de passe actuel indiqué est incorrect.';
+            } elseif ($newPasswordKeys === []) {
+                $title = 'Nouveau mot de passe invalide';
+                $message = 'Respectez les règles indiquées et confirmez exactement le nouveau mot de passe.';
+            } elseif ($errorKeys === ['form']) {
+                $title = 'Vérification impossible';
+                $message = (string) $errors['form'];
+            }
+
+            return [
+                'variant' => 'error',
+                'title' => $title,
+                'message' => $message,
+                'role' => 'alert',
+                'heading' => 'Mon compte',
+                'illustrated' => true,
+            ];
+        }
+
+        if ($successMessage !== null) {
+            return [
+                'variant' => 'success',
+                'title' => 'Votre compte a été mis à jour',
+                'message' => $successMessage,
+                'role' => 'status',
+                'heading' => 'Compte mis à jour',
+                'illustrated' => true,
+            ];
+        }
+
+        return [
+            'variant' => 'info',
+            'title' => 'Protégez vos modifications',
+            'message' => 'Votre mot de passe actuel est requis pour enregistrer toute modification.',
+            'role' => 'note',
+            'heading' => 'Mon compte',
+            'illustrated' => false,
+        ];
+    }
+
+    /**
+     * Rôle : Déterminer le message récapitulatif adapté aux données du tableau de bord.
+     * Paramètres : Zones du tableau de bord déjà préparées par le contrôleur.
+     * Retour : Variante, titre et contenu du message à afficher.
+     */
+    private function buildDashboardMessage(array $dashboard): array
+    {
+        $message = [
+            'variant' => 'info',
+            'title' => 'Votre activité en un coup d’œil',
+            'body' => 'Les trois zones restent disponibles, même lorsqu’elles ne contiennent encore aucune annonce.',
+        ];
+
+        foreach ($dashboard['sales'] as $sale) {
+            if ($sale['is_active']) {
+                $message = [
+                    'variant' => 'info',
+                    'title' => 'Vente active',
+                    'body' => 'Mes ventes actives sont actualisées automatiquement toutes les 10 secondes.',
+                ];
+            } else {
+                $message = [
+                    'variant' => 'success',
+                    'title' => 'Ventes terminées',
+                    'body' => 'Les résultats finaux sont conservés sans actualisation périodique.',
+                ];
+            }
+        }
+
+        if ($dashboard['participations'] !== []) {
+            $participation = $dashboard['participations'][0];
+
+            if (!$participation['is_active']) {
+                $message = [
+                    'variant' => 'error',
+                    'title' => 'Vente terminée',
+                    'body' => 'Cette enchère perdue reste visible dans votre historique, sans actualisation.',
+                ];
+            } elseif ($participation['user_best_bid'] === null) {
+                $message = [
+                    'variant' => 'info',
+                    'title' => 'Annonce suivie',
+                    'body' => 'Les annonces actives suivies sont actualisées automatiquement toutes les 2 secondes.',
+                ];
+            } elseif (!empty($participation['is_current_winner'])) {
+                $message = [
+                    'variant' => 'success',
+                    'title' => 'Vous avez la meilleure enchère',
+                    'body' => 'Cette annonce active est actualisée automatiquement toutes les 2 secondes.',
+                ];
+            } else {
+                $message = [
+                    'variant' => 'error',
+                    'title' => 'Votre enchère a été dépassée',
+                    'body' => 'Cette annonce active est actualisée automatiquement toutes les 2 secondes.',
+                ];
+            }
+        }
+
+        if ($dashboard['wins'] !== []) {
+            return [
+                'variant' => 'success',
+                'title' => 'Enchère remportée',
+                'body' => 'L’annonce apparaît uniquement dans la zone Enchères remportées.',
+            ];
+        }
+
+        return $message;
+    }
+
+    /**
+     * Rôle : Ajouter à chaque carte du tableau de bord les libellés liés à son état.
+     * Paramètres : Zones de ventes, participations et enchères remportées déjà préparées.
+     * Retour : Zones enrichies des données de présentation nécessaires au template.
+     */
+    private function addDashboardCardDisplay(array $dashboard): array
+    {
+        foreach (['sales', 'participations', 'wins'] as $zoneKey) {
+            foreach ($dashboard[$zoneKey] as $index => $listing) {
+                $dashboard[$zoneKey][$index]['display'] = $this->buildDashboardCardDisplay(
+                    $listing,
+                    $zoneKey
+                );
+            }
+        }
+
+        return $dashboard;
+    }
+
+    /**
+     * Rôle : Déterminer les textes d'état d'une carte de tableau de bord.
+     * Paramètres : Données d'une annonce et zone du tableau de bord qui la présente.
+     * Retour : Libellés de date, d'état, d'actualisation et de lien de la carte.
+     */
+    private function buildDashboardCardDisplay(array $listing, string $zoneKey): array
+    {
+        $deadlinePrefix = 'Terminée le ';
+        $deadlineSuffix = ' — Europe/Paris';
+        $deadlineLabel = $listing['deadline'];
+        $refreshLabel = '';
+        $statusLabel = 'Vente terminée';
+        $statusSymbol = '●';
+        $detailLinkLabel = 'Voir l’annonce →';
+
+        if ($listing['is_active']) {
+            $deadlinePrefix = 'Se termine le ';
+            $statusLabel = 'Vente active';
+        }
+
+        if ($zoneKey === 'sales' && !$listing['is_active']) {
+            $deadlineSuffix = ' · Europe/Paris';
+            $deadlineLabel = $listing['deadline_date'];
+            $statusSymbol = '✓';
+            $detailLinkLabel = 'Voir →';
+
+            if ((int) $listing['bid_count'] > 0) {
+                $statusLabel = 'Adjugée';
+            } else {
+                $statusLabel = 'Non adjugée';
+            }
+        }
+
+        if ($zoneKey === 'participations') {
+            $statusLabel = 'Enchère perdue — vente terminée';
+            $statusSymbol = '×';
+
+            if ($listing['is_active'] && $listing['user_best_bid'] === null) {
+                $statusLabel = 'Annonce suivie';
+                $statusSymbol = '○';
+            } elseif ($listing['is_active'] && !empty($listing['is_current_winner'])) {
+                $statusLabel = 'Meilleure enchère';
+                $statusSymbol = '★';
+            } elseif ($listing['is_active']) {
+                $statusLabel = 'Enchère dépassée';
+                $statusSymbol = '!';
+            } else {
+                $deadlinePrefix = 'Vente terminée le ';
+            }
+        }
+
+        if ($zoneKey === 'wins') {
+            $statusLabel = 'Enchère remportée';
+            $statusSymbol = '✓';
+            $deadlinePrefix = 'Vente terminée le ';
+        }
+
+        if ($listing['is_active']) {
+            if ($zoneKey === 'sales') {
+                $refreshLabel = ' · actualisation 10 s';
+            } else {
+                $refreshLabel = ' · actualisation 2 s';
+            }
+        }
+
+        return [
+            'deadline_prefix' => $deadlinePrefix,
+            'deadline_suffix' => $deadlineSuffix,
+            'deadline_label' => $deadlineLabel,
+            'refresh_label' => $refreshLabel,
+            'status_label' => $statusLabel,
+            'status_symbol' => $statusSymbol,
+            'detail_link_label' => $detailLinkLabel,
+        ];
     }
 
     /**
@@ -564,6 +811,7 @@ class UserController extends Controller
                 $errors['new_password'] = 'Le nouveau mot de passe ne respecte pas les règles requises.';
             }
 
+            // NATIF PHP : hash_equals() compare deux chaînes en limitant les attaques basées sur le temps de réponse ; il sécurise ici la vérification du jeton.
             if ($confirmation === '' || !hash_equals($newPassword, $confirmation)) {
                 $errors['new_password_confirmation'] = 'La confirmation ne correspond pas au nouveau mot de passe.';
             }

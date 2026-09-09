@@ -16,25 +16,26 @@ class Session
     // ====================
 
     /**
-     * Rôle : Démarrer et sécuriser la session lorsqu'aucune session n'est déjà active.
+     * Rôle : Démarrer la session lorsqu'aucune session n'est déjà active.
      * Paramètres : Aucun.
      * Retour : Aucun.
      */
-    public function demarrerSession(): void
+    public function startSession(): void
     {
+        // Une session déjà ouverte est conservée afin de ne pas envoyer une seconde fois les en-têtes HTTP.
+        // NATIF PHP : session_status() indique l’état actuel de la session PHP ; il évite ici de redémarrer une session déjà active.
+        // NATIF PHP : PHP_SESSION_NONE indique qu’aucune session PHP n’existe ; elle permet ici de savoir si session_start() doit être appelé.
         if (session_status() !== PHP_SESSION_NONE) {
             return;
         }
 
-        $secureCookie = false;
-
-        if (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') {
-            $secureCookie = true;
-        }
-
+        // Le cookie est marqué Secure uniquement lorsqu'une connexion HTTPS est réellement utilisée.
+        $secureCookie = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off';
+        // Les paramètres déjà définis par PHP sont conservés pour le chemin et le domaine du cookie.
         $cookieParameters = session_get_cookie_params();
-
+        // Le mode strict refuse les identifiants de session inconnus fournis par un visiteur.
         ini_set('session.use_strict_mode', '1');
+        // Le cookie reste inaccessible au JavaScript et n'est envoyé que dans le contexte de navigation attendu.
         session_set_cookie_params([
             'lifetime' => 0,
             'path' => $cookieParameters['path'],
@@ -43,6 +44,8 @@ class Session
             'httponly' => true,
             'samesite' => 'Lax',
         ]);
+
+        // NATIF PHP : session_start() démarre une session ou reprend la session existante ; il rend disponibles les données conservées dans $_SESSION.
         session_start();
     }
 
@@ -51,35 +54,30 @@ class Session
      * Paramètres : Identifiant de l'utilisateur connecté.
      * Retour : Aucun.
      */
-    public function connecterUtilisateur(int $userId): void
+    public function connectUser(int $userId): void
     {
-        $this->demarrerSession();
+        // La session est ouverte avant toute écriture dans son tableau de données.
+        $this->startSession();
+        // NATIF PHP : session_regenerate_id() remplace l’identifiant de session tout en conservant ses données ; il limite ici le détournement de session après connexion.
         session_regenerate_id(true);
+        // NATIF PHP : $_SESSION est un tableau superglobal conservé entre plusieurs pages ; il mémorise ici l’utilisateur connecté, les messages ou le jeton CSRF.
         $_SESSION['user_id'] = $userId;
     }
 
     /**
-     * Rôle : Retirer l'authentification de la session et renouveler son identifiant.
+     * Rôle : Retirer les informations de l'utilisateur puis détruire sa session.
      * Paramètres : Aucun.
      * Retour : Aucun.
      */
-    public function deconnecterUtilisateur(): void
+    public function deconnectUser(): void
     {
-        $this->demarrerSession();
+        // La session est ouverte avant la suppression de ses données côté serveur.
+        $this->startSession();
+
+        // Retire toutes les informations conservées pour l’utilisateur pendant sa navigation.
         $_SESSION = [];
 
-        if (ini_get('session.use_cookies')) {
-            $cookieParameters = session_get_cookie_params();
-            setcookie(session_name(), '', [
-                'expires' => time() - 42000,
-                'path' => $cookieParameters['path'],
-                'domain' => $cookieParameters['domain'],
-                'secure' => $cookieParameters['secure'],
-                'httponly' => true,
-                'samesite' => 'Lax',
-            ]);
-        }
-
+        // NATIF PHP : session_destroy() supprime les données de la session côté serveur ; il termine ici la connexion de l’utilisateur.
         session_destroy();
     }
 
@@ -88,10 +86,13 @@ class Session
      * Paramètres : Aucun.
      * Retour : true lorsqu'un identifiant utilisateur est présent, sinon false.
      */
-    public function estUtilisateurConnecte(): bool
+    public function isUserConnected(): bool
     {
-        $this->demarrerSession();
+        // La vérification reste fiable même si la méthode est appelée avant le démarrage explicite de la session.
+        $this->startSession();
 
+        // NATIF PHP : isset() vérifie que l’entrée user_id existe et ne vaut pas null ; il détermine ici si un utilisateur est authentifié.
+        // NATIF PHP : is_int() vérifie qu’une valeur est un entier ; il évite ici d’utiliser un autre type dans un traitement numérique.
         return isset($_SESSION['user_id']) && is_int($_SESSION['user_id']);
     }
 
@@ -100,9 +101,10 @@ class Session
      * Paramètres : Aucun.
      * Retour : Identifiant de l'utilisateur ou null lorsque personne n'est connecté.
      */
-    public function obtenirIdentifiantUtilisateurConnecte(): ?int
+    public function getConnectedUserId(): ?int
     {
-        if (!$this->estUtilisateurConnecte()) {
+        // L'identifiant n'est lu que lorsqu'il a passé le contrôle de connexion et de type.
+        if (!$this->isUserConnected()) {
             return null;
         }
 
@@ -114,14 +116,17 @@ class Session
      * Paramètres : Type du message et texte à afficher.
      * Retour : Aucun.
      */
-    public function enregistrerMessageTemporaire(string $type, string $message): void
+    public function setFlashMessage(string $type, string $message): void
     {
-        $this->demarrerSession();
+        // La session est ouverte avant la préparation de la zone de messages temporaires.
+        $this->startSession();
 
+        // NATIF PHP : is_array() vérifie qu’une valeur est un tableau ; il évite ici de parcourir ou transmettre un type inattendu.
         if (!isset($_SESSION['flash_messages']) || !is_array($_SESSION['flash_messages'])) {
             $_SESSION['flash_messages'] = [];
         }
 
+        // Le message reste disponible jusqu'à ce que la page suivante le lise.
         $_SESSION['flash_messages'][$type] = $message;
     }
 
@@ -130,14 +135,16 @@ class Session
      * Paramètres : Type du message recherché.
      * Retour : Texte du message ou null lorsqu'il est absent.
      */
-    public function recupererMessageTemporaire(string $type): ?string
+    public function getFlashMessage(string $type): ?string
     {
-        $this->demarrerSession();
+        // La session est ouverte avant la lecture et la suppression du message temporaire.
+        $this->startSession();
 
         if (!isset($_SESSION['flash_messages'][$type])) {
             return null;
         }
 
+        // Le message est copié puis supprimé pour qu'il ne s'affiche qu'une seule fois.
         $message = $_SESSION['flash_messages'][$type];
         unset($_SESSION['flash_messages'][$type]);
 
@@ -145,6 +152,7 @@ class Session
             unset($_SESSION['flash_messages']);
         }
 
+        // NATIF PHP : is_string() vérifie qu’une valeur est une chaîne de caractères ; il évite ici de traiter un type inattendu comme du texte.
         if (!is_string($message)) {
             return null;
         }
@@ -157,11 +165,14 @@ class Session
      * Paramètres : Aucun.
      * Retour : Jeton CSRF utilisable dans les formulaires concernés.
      */
-    public function obtenirJetonCsrf(): string
+    public function getCsrfToken(): string
     {
-        $this->demarrerSession();
+        // La session conserve le même jeton pour les formulaires successifs d'un même visiteur.
+        $this->startSession();
 
         if (!isset($_SESSION['csrf_token']) || !is_string($_SESSION['csrf_token'])) {
+            // NATIF PHP : bin2hex() convertit des octets en texte hexadécimal ; il produit ici une valeur sûre à stocker dans un nom ou un jeton.
+            // NATIF PHP : random_bytes() génère des octets aléatoires sécurisés ; il crée ici un jeton ou un nom de fichier difficile à deviner.
             $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
         }
 
@@ -173,18 +184,21 @@ class Session
      * Paramètres : Jeton reçu, éventuellement absent.
      * Retour : true lorsque les jetons correspondent, sinon false.
      */
-    public function estJetonCsrfValide(?string $token): bool
+    public function isCsrfTokenValid(?string $token): bool
     {
-        $this->demarrerSession();
+        // La session doit être disponible pour comparer le jeton reçu avec celui qui a été généré.
+        $this->startSession();
 
         if ($token === null || $token === '') {
             return false;
         }
 
+        // Un jeton absent de la session ne peut pas valider une action qui modifie des données.
         if (!isset($_SESSION['csrf_token']) || !is_string($_SESSION['csrf_token'])) {
             return false;
         }
 
+        // NATIF PHP : hash_equals() compare deux chaînes en limitant les attaques basées sur le temps de réponse ; il sécurise ici la vérification du jeton.
         return hash_equals($_SESSION['csrf_token'], $token);
     }
 }

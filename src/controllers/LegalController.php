@@ -24,9 +24,11 @@ class LegalController extends Controller
      */
     public function showPrivacyPolicy(): void
     {
+        // Le template reçoit l'état de connexion pour afficher la navigation adaptée au visiteur.
+        // Le jeton CSRF reste disponible si le layout affiche une action POST, notamment la déconnexion.
         $this->render('pages/privacy.php', [
-            'is_connected' => $this->session->estUtilisateurConnecte(),
-            'csrf_token' => $this->session->obtenirJetonCsrf(),
+            'is_connected' => $this->session->isUserConnected(),
+            'csrf_token' => $this->session->getCsrfToken(),
         ]);
     }
 }

@@ -12,6 +12,7 @@
 /** @var array<int, string> $pageScripts Scripts propres à la page courante. */
 
 $projectRoot = dirname(__DIR__, 2);
+// NATIF PHP : filemtime() retourne la date de dernière modification d’un fichier ; il renouvelle ici l’adresse de la ressource après une mise à jour.
 $mainStylesheetVersion = filemtime($projectRoot . '/public/assets/css/main.css');
 $mainScriptVersion = filemtime($projectRoot . '/public/assets/js/main.js');
 
@@ -27,7 +28,9 @@ $mainScriptVersion = filemtime($projectRoot . '/public/assets/js/main.js');
     <link rel="stylesheet" href="public/assets/css/main.css?v=<?= (int) $mainStylesheetVersion ?>">
     <script src="public/assets/js/main.js?v=<?= (int) $mainScriptVersion ?>" defer></script>
     <?php foreach ($pageScripts as $pageScript): ?>
-        <?php $pageScriptVersion = filemtime($projectRoot . '/' . $pageScript); ?>
+        <?php
+            $pageScriptVersion = filemtime($projectRoot . '/' . $pageScript);
+        ?>
         <script src="<?= htmlspecialchars($pageScript . '?v=' . (int) $pageScriptVersion, ENT_QUOTES, 'UTF-8') ?>" defer></script>
     <?php endforeach; ?>
 </head>

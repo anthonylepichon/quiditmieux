@@ -50,6 +50,7 @@ class LanceurTest
     {
         $this->itemActuel = $nomItem;
 
+        // NATIF PHP : isset() vérifie qu’une variable ou une entrée de tableau existe et ne vaut pas null ; il évite ici de lire une valeur absente.
         if (!isset($this->resultatsParItem[$nomItem])) {
             $this->resultatsParItem[$nomItem] = [
                 'reussis' => 0,
@@ -57,6 +58,7 @@ class LanceurTest
             ];
         }
 
+        // NATIF PHP : PHP_EOL contient le retour à la ligne du système ; elle produit ici une sortie de test lisible sur chaque environnement.
         echo PHP_EOL;
         echo "----- " . $nomItem . " -----" . PHP_EOL;
     }
@@ -87,6 +89,7 @@ class LanceurTest
             echo "❌ " . $message . PHP_EOL;
 
             echo "   Valeur attendue : ";
+            // NATIF PHP : var_dump() affiche le type et la valeur détaillée d’une donnée ; il fournit ici un diagnostic lors d’un échec de test.
             var_dump($valeurAttendue);
 
             echo "   Valeur obtenue : ";
