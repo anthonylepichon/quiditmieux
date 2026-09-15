@@ -2,7 +2,7 @@
 
 /**
  * Description générale : Routeur central de l'application.
- * Rôle : Associer chaque demande au contrôleur et à la méthode prévus par la configuration.
+ * Rôle : Associer chaque demande au contrôleur et à la méthode prévus par la configuration. Cela évite qu'une demande incomplète ou inconnue démarre un contrôleur qui ne lui correspond pas.
  * Tâches : Enregistrer les routes, contrôler la méthode HTTP et appeler le traitement correspondant.
  * Liens avec les autres fichiers : Est utilisé par App.php, reçoit les routes de routes.php et lance les contrôleurs enfants.
  */
@@ -27,7 +27,7 @@ class Router
     // ====================
 
     /**
-     * Rôle : Conserver les services communs de la requête.
+     * Rôle : Conserver les services communs de la requête. Cela évite qu'une demande incomplète ou inconnue démarre un contrôleur qui ne lui correspond pas.
      * Paramètres : Gestionnaires Database et Session initialisés par App.
      * Retour : Aucun.
      */
@@ -38,7 +38,7 @@ class Router
     }
 
     /**
-     * Rôle : Enregistrer les routes disponibles.
+     * Rôle : Enregistrer les routes disponibles. Cela évite qu'une demande incomplète ou inconnue démarre un contrôleur qui ne lui correspond pas.
      * Paramètres : Tableau associatif des définitions de route.
      * Retour : Aucun.
      */
@@ -48,7 +48,7 @@ class Router
     }
 
     /**
-     * Rôle : Rechercher la route demandée, vérifier sa configuration puis exécuter la méthode du contrôleur associé.
+     * Rôle : Rechercher la route demandée, vérifier sa configuration puis exécuter la méthode du contrôleur associé. Cela évite qu'une demande incomplète ou inconnue démarre un contrôleur qui ne lui correspond pas.
      * Paramètres : Nom de la route transmis par App et méthode HTTP utilisée pour envoyer la demande.
      * Retour : Aucun. La méthode exécute l'action prévue ou affiche un message si la demande ne peut pas être traitée.
      */
@@ -108,7 +108,7 @@ class Router
         $controller->$methodName();
     }
 
-    // Rôle : afficher un message simple lorsqu’une demande ne peut pas être traitée.
+    // Rôle : afficher un message simple lorsqu’une demande ne peut pas être traitée. Cela évite qu'une demande incomplète ou inconnue démarre un contrôleur qui ne lui correspond pas.
     // Paramètres : $message représente le message compréhensible à afficher au visiteur.
     // Retour : Aucun.
     private function showError(string $message): void

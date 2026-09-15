@@ -2,7 +2,7 @@
 
 /**
  * Description générale : Contrôleur du tableau de bord de l'utilisateur connecté.
- * Rôle : Afficher et actualiser les ventes, suivis et enchères de l'espace personnel.
+ * Rôle : Afficher et actualiser les ventes, suivis et enchères de l'espace personnel. Chaque utilisateur reçoit ainsi uniquement ses propres activités, classées dans la section correspondant à leur état.
  * Tâches : Protéger l'accès, charger les annonces, préparer les cartes et produire les réponses HTML ou JSON.
  * Liens avec les autres fichiers : Étend Controller.php et utilise les modèles du tableau de bord ainsi que PhotoStorage.php.
  */
@@ -32,7 +32,7 @@ class DashboardController extends Controller
     // ====================
 
     /**
-     * Rôle : Conserver les dépendances communes et préparer le gestionnaire des fichiers photographiques.
+     * Rôle : Conserver les dépendances communes et préparer le gestionnaire des fichiers photographiques. Cela évite une référence sans fichier, un fichier orphelin ou l'association d'une photographie à la mauvaise annonce.
      * Paramètres : Gestionnaires de base de données et de session partagés avec l'application.
      * Retour : Aucun.
      */
@@ -44,7 +44,7 @@ class DashboardController extends Controller
     }
 
     /**
-     * Rôle : Afficher les ventes, participations et enchères remportées de l'utilisateur connecté.
+     * Rôle : Afficher les ventes, participations et enchères remportées de l'utilisateur connecté. Cela évite de mélanger les annonces vendues, suivies, perdues ou gagnées dans une même liste.
      * Paramètres : Aucun.
      * Retour : Aucun, le template du tableau de bord est affiché ou une redirection est envoyée.
      */
@@ -73,7 +73,7 @@ class DashboardController extends Controller
     }
 
     /**
-     * Rôle : Fournir l'état actualisé des ventes du vendeur connecté.
+     * Rôle : Fournir l'état actualisé des ventes du vendeur connecté. L'appelant reçoit ainsi une donnée prévisible sans devoir connaître directement son mode de stockage.
      * Paramètres : Aucun.
      * Retour : Aucun, une réponse JSON limitée aux cartes de vente est envoyée.
      */
@@ -107,7 +107,7 @@ class DashboardController extends Controller
     }
 
     /**
-     * Rôle : Fournir l'état actualisé des participations et gains de l'utilisateur connecté.
+     * Rôle : Fournir l'état actualisé des participations et gains de l'utilisateur connecté. Cela évite les doublons et empêche de modifier la participation d'un autre utilisateur.
      * Paramètres : Aucun.
      * Retour : Aucun, une réponse JSON structurée est envoyée.
      */
@@ -145,7 +145,7 @@ class DashboardController extends Controller
     }
 
     /**
-     * Rôle : Construire toutes les zones du tableau de bord.
+     * Rôle : Construire toutes les zones du tableau de bord. Les données transmises à l'étape suivante ont ainsi une forme cohérente et cette préparation n'est pas répétée ailleurs.
      * Paramètres : Identifiant de l'utilisateur connecté.
      * Retour : Données prêtes à afficher.
      */
@@ -183,7 +183,7 @@ class DashboardController extends Controller
     }
 
     /**
-     * Rôle : Charger les catégories du tableau de bord avec un repli simple en cas d'indisponibilité.
+     * Rôle : Charger les catégories du tableau de bord avec un repli simple en cas d'indisponibilité. Une réponse absente ou mal formée de l'API est ainsi empêchée de devenir une donnée exploitable par l'application.
      * Paramètres : Aucun.
      * Retour : Catégories indexées ou tableau vide.
      */
@@ -199,7 +199,7 @@ class DashboardController extends Controller
     }
 
     /**
-     * Rôle : Construire l'état vide commun utilisé lorsque le tableau de bord ne peut pas être chargé.
+     * Rôle : Construire l'état vide commun utilisé lorsque le tableau de bord ne peut pas être chargé. Les données transmises à l'étape suivante ont ainsi une forme cohérente et cette préparation n'est pas répétée ailleurs.
      * Paramètres : Aucun.
      * Retour : Zones vides accompagnées de l'indicateur d'erreur.
      */
@@ -214,7 +214,7 @@ class DashboardController extends Controller
     }
 
     /**
-     * Rôle : Envoyer la réponse JSON commune lorsqu'une actualisation du tableau de bord échoue.
+     * Rôle : Envoyer la réponse JSON commune lorsqu'une actualisation du tableau de bord échoue. Le JavaScript reçoit ainsi toujours un indicateur d'échec et un message compréhensible au lieu d'une réponse impossible à interpréter.
      * Paramètres : Aucun.
      * Retour : Aucun, la réponse JSON est envoyée.
      */
@@ -227,7 +227,7 @@ class DashboardController extends Controller
     }
 
     /**
-     * Rôle : Enrichir les lignes de la base avec leurs photos et libellés d'affichage.
+     * Rôle : Enrichir les lignes de la base avec leurs photos et libellés d'affichage. Les données transmises à l'étape suivante ont ainsi une forme cohérente et cette préparation n'est pas répétée ailleurs.
      * Paramètres : Lignes du tableau de bord, catégories de l'API et instant de référence.
      * Retour : Cartes limitées aux données utiles ou false en cas d'erreur SQL.
      */
@@ -324,7 +324,7 @@ class DashboardController extends Controller
     }
 
     /**
-     * Rôle : Lire l'identifiant du gagnant sans accepter une valeur invalide.
+     * Rôle : Lire l'identifiant du gagnant sans accepter une valeur invalide. Une valeur absente ou incorrecte ne peut ainsi pas attribuer visuellement une victoire au mauvais utilisateur.
      * Paramètres : Ligne d'annonce issue de la base.
      * Retour : Identifiant du gagnant ou null.
      */
@@ -338,7 +338,7 @@ class DashboardController extends Controller
     }
 
     /**
-     * Rôle : Lire le nombre d'enchères d'une ligne du tableau de bord.
+     * Rôle : Lire le nombre d'enchères d'une ligne du tableau de bord. Une valeur incorrecte est ainsi ramenée à un nombre exploitable avant la construction des textes d'état.
      * Paramètres : Ligne d'annonce issue de la base.
      * Retour : Nombre d'enchères, égal à zéro lorsqu'il est absent.
      */
@@ -351,7 +351,7 @@ class DashboardController extends Controller
     }
 
     /**
-     * Rôle : Construire l'adresse de la photographie principale.
+     * Rôle : Construire l'adresse de la photographie principale. Cela évite une référence sans fichier, un fichier orphelin ou l'association d'une photographie à la mauvaise annonce.
      * Paramètres : Photographies indexées et identifiant d'annonce.
      * Retour : Adresse publique de l'image ou null lorsqu'elle est absente.
      */
@@ -364,7 +364,7 @@ class DashboardController extends Controller
     }
 
     /**
-     * Rôle : Séparer les participations ordinaires des enchères remportées.
+     * Rôle : Séparer les participations ordinaires des enchères remportées. Une annonce gagnée apparaît ainsi une seule fois dans la section des victoires au lieu de rester parmi les suivis.
      * Paramètres : Cartes préparées et identifiant de l'utilisateur connecté.
      * Retour : Deux listes destinées aux zones correspondantes.
      */
@@ -385,7 +385,7 @@ class DashboardController extends Controller
     }
 
     /**
-     * Rôle : Déterminer le message récapitulatif adapté aux données du tableau de bord.
+     * Rôle : Déterminer le message récapitulatif adapté aux données du tableau de bord. L'utilisateur reçoit ainsi une explication cohérente lorsque ses listes sont vides, chargées ou momentanément indisponibles.
      * Paramètres : Zones du tableau de bord déjà préparées par le contrôleur.
      * Retour : Variante, titre et contenu du message à afficher.
      */
@@ -455,7 +455,7 @@ class DashboardController extends Controller
     }
 
     /**
-     * Rôle : Ajouter à chaque carte du tableau de bord les libellés liés à son état.
+     * Rôle : Ajouter à chaque carte du tableau de bord les libellés liés à son état. Le template peut ainsi afficher directement le bon statut sans recalculer les règles de la vente.
      * Paramètres : Zones de ventes, participations et enchères remportées déjà préparées.
      * Retour : Zones enrichies des données de présentation nécessaires au template.
      */
@@ -474,7 +474,7 @@ class DashboardController extends Controller
     }
 
     /**
-     * Rôle : Déterminer les textes d'état d'une carte de tableau de bord.
+     * Rôle : Déterminer les textes d'état d'une carte de tableau de bord. Les données transmises à l'étape suivante ont ainsi une forme cohérente et cette préparation n'est pas répétée ailleurs.
      * Paramètres : Données d'une annonce et zone du tableau de bord qui la présente.
      * Retour : Libellés de date, d'état, d'actualisation et de lien de la carte.
      */

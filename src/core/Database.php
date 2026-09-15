@@ -2,7 +2,7 @@
 
 /**
  * Description générale : Gestionnaire commun de la base de données de l'application.
- * Rôle : Créer la connexion PDO et fournir les opérations communes d'exécution des requêtes.
+ * Rôle : Créer la connexion PDO et fournir les opérations communes d'exécution des requêtes. Une seule configuration de connexion est ainsi utilisée par tous les modèles, ce qui évite des ouvertures différentes ou mal configurées.
  * Tâches : Configurer PDO, exécuter une requête et récupérer un ou plusieurs enregistrements.
  * Liens avec les autres fichiers : Est créée par App.php puis transmise par Router.php aux contrôleurs et aux modèles.
  */
@@ -28,7 +28,7 @@ class Database
     // ====================
 
     /**
-     * Rôle : Créer la connexion PDO à partir de la configuration privée.
+     * Rôle : Créer la connexion PDO à partir de la configuration privée. Une seule configuration de connexion est ainsi utilisée par tous les modèles, ce qui évite des ouvertures différentes ou mal configurées.
      * Paramètres : Tableau contenant les paramètres de connexion à la base de données.
      * Retour : Aucun.
      */
@@ -62,7 +62,7 @@ class Database
     }
 
     /**
-     * Rôle : Indiquer si la connexion PDO a été créée correctement.
+     * Rôle : Indiquer si la connexion PDO a été créée correctement. L'application peut ainsi interrompre proprement les traitements qui nécessitent MySQL lorsque la connexion a échoué.
      * Paramètres : Aucun.
      * Retour : true si la connexion est disponible, sinon false.
      */
@@ -73,7 +73,7 @@ class Database
     }
 
     /**
-     * Rôle : Préparer et exécuter une requête ne nécessitant pas de résultat à retourner.
+     * Rôle : Préparer et exécuter une requête ne nécessitant pas de résultat à retourner. La préparation centralisée des requêtes évite de concaténer directement les valeurs reçues dans le SQL.
      * Paramètres : Requête SQL et tableau facultatif de paramètres.
      * Retour : true si la requête est exécutée, sinon false.
      */
@@ -96,7 +96,7 @@ class Database
     }
 
     /**
-     * Rôle : Préparer une requête et récupérer son premier enregistrement.
+     * Rôle : Préparer une requête et récupérer son premier enregistrement. Cela évite que chaque modèle répète la préparation de la requête et la lecture d'une ligne unique.
      * Paramètres : Requête SQL et tableau facultatif de paramètres.
      * Retour : Tableau du premier enregistrement, null s'il est absent ou false en cas d'erreur SQL.
      */
@@ -125,7 +125,7 @@ class Database
     }
 
     /**
-     * Rôle : Préparer une requête et récupérer tous ses enregistrements.
+     * Rôle : Préparer une requête et récupérer tous ses enregistrements. Cela évite que chaque modèle répète la préparation de la requête et la lecture d'une liste de résultats.
      * Paramètres : Requête SQL et tableau facultatif de paramètres.
      * Retour : Tableau des enregistrements, éventuellement vide, ou false en cas d'erreur SQL.
      */
@@ -147,7 +147,7 @@ class Database
     }
 
     /**
-     * Rôle : Récupérer l'identifiant entier généré par la dernière insertion.
+     * Rôle : Récupérer l'identifiant entier généré par la dernière insertion. Le modèle peut ainsi retrouver immédiatement la ligne créée pour poursuivre le traitement ou effectuer une redirection.
      * Paramètres : Aucun.
      * Retour : Identifiant généré ou false en cas d'erreur PDO.
      */

@@ -2,7 +2,7 @@
 
 /**
  * Description générale : Bloc commun des messages temporaires stockés en session.
- * Rôle : Afficher un éventuel succès puis un éventuel avertissement déjà préparés par le contrôleur.
+ * Rôle : Afficher un éventuel succès puis un éventuel avertissement déjà préparés par le contrôleur. Le template reste ainsi consacré à la présentation des données déjà préparées, sans décider des règles métier.
  * Tâches : Échapper les messages et conserver leur rôle d'accessibilité.
  * Liens avec les autres fichiers : Est inclus par home.php, dashboard.php et listing-detail.php.
  */

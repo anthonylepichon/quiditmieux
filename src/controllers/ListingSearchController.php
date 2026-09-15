@@ -2,7 +2,7 @@
 
 /**
  * Description générale : Contrôleur de recherche des annonces proposées aux enchères.
- * Rôle : Afficher l'accueil et traiter les recherches d'annonces.
+ * Rôle : Afficher l'accueil et traiter les recherches d'annonces. Cela évite qu'un critère invalide produise une requête incohérente, une mauvaise page ou un résultat difficile à afficher.
  * Tâches : Valider les critères, interroger les modèles, enrichir les résultats et préparer la pagination.
  * Liens avec les autres fichiers : Étend Controller.php et utilise les modèles nécessaires à la recherche ainsi que PhotoStorage.php.
  */
@@ -41,7 +41,7 @@ class ListingSearchController extends Controller
     // ====================
 
     /**
-     * Rôle : Conserver les dépendances communes et préparer le gestionnaire des fichiers photographiques.
+     * Rôle : Conserver les dépendances communes et préparer le gestionnaire des fichiers photographiques. Cela évite une référence sans fichier, un fichier orphelin ou l'association d'une photographie à la mauvaise annonce.
      * Paramètres : Gestionnaires de base de données et de session partagés avec l'application.
      * Retour : Aucun.
      */
@@ -53,7 +53,7 @@ class ListingSearchController extends Controller
     }
 
     /**
-     * Rôle : Afficher l'accueil ou renvoyer les résultats actualisés d'une recherche paginée.
+     * Rôle : Afficher l'accueil ou renvoyer les résultats actualisés d'une recherche paginée. Cela évite qu'un critère invalide produise une requête incohérente, une mauvaise page ou un résultat difficile à afficher.
      * Paramètres : Aucun, les critères sont lus dans la requête GET.
      * Retour : Aucun, une réponse HTML ou JSON est envoyée au navigateur.
      */
@@ -170,7 +170,7 @@ class ListingSearchController extends Controller
     }
 
     /**
-     * Rôle : Contrôler et normaliser tous les critères reçus depuis la recherche.
+     * Rôle : Contrôler et normaliser tous les critères reçus depuis la recherche. Cela évite qu'un critère invalide produise une requête incohérente, une mauvaise page ou un résultat difficile à afficher.
      * Paramètres : Catégories disponibles et indicateur de disponibilité de l'API.
      * Retour : Critères normalisés, erreurs associées et présence d'une recherche personnalisée.
      */
@@ -310,7 +310,7 @@ class ListingSearchController extends Controller
     }
 
     /**
-     * Rôle : Lire un paramètre GET simple sans accepter de tableau ou d'objet inattendu.
+     * Rôle : Lire un paramètre GET simple sans accepter de tableau ou d'objet inattendu. L'appelant reçoit ainsi une donnée prévisible sans devoir connaître directement son mode de stockage.
      * Paramètres : Nom du paramètre et tableau d'erreurs à compléter.
      * Retour : Chaîne reçue ou chaîne vide lorsque le paramètre est absent ou invalide.
      */
@@ -330,7 +330,7 @@ class ListingSearchController extends Controller
     }
 
     /**
-     * Rôle : Valider et convertir une limite de prix facultative en euros entiers.
+     * Rôle : Valider et convertir une limite de prix facultative en euros entiers. Les données transmises à l'étape suivante ont ainsi une forme cohérente et cette préparation n'est pas répétée ailleurs.
      * Paramètres : Valeur reçue, nom du champ, libellé compréhensible et erreurs à compléter.
      * Retour : Prix en euros ou null lorsque le champ est vide ou invalide.
      */
@@ -360,7 +360,7 @@ class ListingSearchController extends Controller
     }
 
     /**
-     * Rôle : Ajouter le prix courant, la photographie principale et les informations d'affichage aux annonces.
+     * Rôle : Ajouter le prix courant, la photographie principale et les informations d'affichage aux annonces. Cela évite une référence sans fichier, un fichier orphelin ou l'association d'une photographie à la mauvaise annonce.
      * Paramètres : Annonces brutes, catégories fournies par l'API et instant de référence.
      * Retour : Annonces prêtes à afficher ou false en cas d'erreur SQL complémentaire.
      */
@@ -474,7 +474,7 @@ class ListingSearchController extends Controller
     }
 
     /**
-     * Rôle : Choisir l'état d'affichage correspondant au résultat de la recherche.
+     * Rôle : Choisir l'état d'affichage correspondant au résultat de la recherche. Cela évite qu'un critère invalide produise une requête incohérente, une mauvaise page ou un résultat difficile à afficher.
      * Paramètres : Résultat paginé, présence de critères personnalisés et disponibilité des catégories.
      * Retour : Clé d'état utilisée par le template et JavaScript.
      */
@@ -503,7 +503,7 @@ class ListingSearchController extends Controller
     }
 
     /**
-     * Rôle : Produire un message compréhensible adapté à l'état courant de l'accueil.
+     * Rôle : Produire un message compréhensible adapté à l'état courant de l'accueil. L'utilisateur sait ainsi si la liste est vide, si ses critères sont invalides ou si la recherche a rencontré une erreur.
      * Paramètres : Clé d'état et résultat paginé.
      * Retour : Message destiné à l'affichage ou à la réponse JSON.
      */
@@ -539,7 +539,7 @@ class ListingSearchController extends Controller
     }
 
     /**
-     * Rôle : Préparer les messages et libellés d'affichage de la recherche.
+     * Rôle : Préparer les messages et libellés d'affichage de la recherche. Cela évite qu'un critère invalide produise une requête incohérente, une mauvaise page ou un résultat difficile à afficher.
      * Paramètres : État, message métier, erreurs, catégories, critères publics et pagination.
      * Retour : Données de présentation prêtes à afficher sans décision supplémentaire dans le template.
      */
@@ -665,7 +665,7 @@ class ListingSearchController extends Controller
     }
 
     /**
-     * Rôle : Construire les informations et liens de pagination en conservant les critères.
+     * Rôle : Construire les informations et liens de pagination en conservant les critères. Cela évite qu'un critère invalide produise une requête incohérente, une mauvaise page ou un résultat difficile à afficher.
      * Paramètres : Critères normalisés et résultat de recherche.
      * Retour : Informations de pagination nécessaires à l'affichage.
      */
@@ -693,7 +693,7 @@ class ListingSearchController extends Controller
     }
 
     /**
-     * Rôle : Construire une adresse GET partageable pour une page de résultats.
+     * Rôle : Construire une adresse GET partageable pour une page de résultats. Les données transmises à l'étape suivante ont ainsi une forme cohérente et cette préparation n'est pas répétée ailleurs.
      * Paramètres : Critères normalisés et numéro de page à intégrer.
      * Retour : Adresse interne de la recherche.
      */
@@ -733,7 +733,7 @@ class ListingSearchController extends Controller
     }
 
     /**
-     * Rôle : Limiter les critères renvoyés au navigateur aux valeurs utiles à l'interface.
+     * Rôle : Limiter les critères renvoyés au navigateur aux valeurs utiles à l'interface. Cela évite qu'un critère invalide produise une requête incohérente, une mauvaise page ou un résultat difficile à afficher.
      * Paramètres : Critères internes normalisés.
      * Retour : Critères publics utilisables par le template et JavaScript.
      */

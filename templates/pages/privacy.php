@@ -2,7 +2,7 @@
 
 /**
  * Description générale : Page publique présentant la politique de confidentialité de QUIDITMIEUX.
- * Rôle : Informer clairement les utilisateurs sur les données traitées et leurs droits.
+ * Rôle : Informer clairement les utilisateurs sur les données traitées et leurs droits. Le template reste ainsi consacré à la présentation des données déjà préparées, sans décider des règles métier.
  * Tâches : Présenter les finalités, bases légales, destinataires, durées, protections et droits applicables.
  * Liens avec les autres fichiers : Est affiché par LegalController.php puis inséré dans base.php.
  */

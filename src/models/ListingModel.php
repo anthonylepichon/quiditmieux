@@ -2,7 +2,7 @@
 
 /**
  * Description générale : Modèle des annonces proposées aux enchères.
- * Rôle : Rechercher les annonces et appliquer leurs règles d'autorisation métier.
+ * Rôle : Rechercher les annonces et appliquer leurs règles d'autorisation métier. Cela évite qu'un critère invalide produise une requête incohérente, une mauvaise page ou un résultat difficile à afficher.
  * Tâches : Déclarer la table ANNONCE, construire la recherche et décider des modifications ou suppressions autorisées.
  * Liens avec les autres fichiers : Étend Model.php, fournit les annonces aux contrôleurs.
  */
@@ -39,7 +39,7 @@ class ListingModel extends Model
     // ====================
 
     /**
-     * Rôle : Créer une annonce à partir des informations déjà validées par le contrôleur.
+     * Rôle : Créer une annonce à partir des informations déjà validées par le contrôleur. Cela évite d'écrire en base une information incomplète, invalide ou rattachée au mauvais enregistrement.
      * Paramètres : Auteur, titre, description, état, prix en euros, échéance et catégorie.
      * Retour : Identifiant de l'annonce créée ou null lorsque la création échoue.
      */
@@ -80,7 +80,7 @@ class ListingModel extends Model
     }
 
     /**
-     * Rôle : Modifier les informations autorisées d'une annonce déjà validées par le contrôleur.
+     * Rôle : Modifier les informations autorisées d'une annonce déjà validées par le contrôleur. Le traitement est ainsi interrompu avant qu'un utilisateur non autorisé puisse consulter ou modifier la ressource.
      * Paramètres : Identifiant, titre, description, état, prix en euros, échéance et catégorie.
      * Retour : true lorsque la mise à jour est exécutée, sinon false.
      */
@@ -105,7 +105,7 @@ class ListingModel extends Model
     }
 
     /**
-     * Rôle : Supprimer une annonce dont l'autorisation a déjà été vérifiée.
+     * Rôle : Supprimer une annonce dont l'autorisation a déjà été vérifiée. Le traitement est ainsi interrompu avant qu'un utilisateur non autorisé puisse consulter ou modifier la ressource.
      * Paramètres : Identifiant de l'annonce.
      * Retour : true lorsque la suppression est exécutée, sinon false.
      */
@@ -116,7 +116,7 @@ class ListingModel extends Model
     }
 
     /**
-     * Rôle : Vérifier rapidement si une annonce appartient à l'utilisateur demandé.
+     * Rôle : Vérifier rapidement si une annonce appartient à l'utilisateur demandé. Un utilisateur qui n'est pas le vendeur peut ainsi être refusé avant le chargement des photographies et des autres données de l'annonce.
      * Paramètres : Identifiants de l'annonce et de l'utilisateur.
      * Retour : true si l'utilisateur est propriétaire, false sinon ou null en cas d'erreur SQL.
      */
@@ -140,7 +140,7 @@ class ListingModel extends Model
     }
 
     /**
-     * Rôle : Vérifier si une annonce peut être modifiée par l'utilisateur demandé.
+     * Rôle : Vérifier si une annonce peut être modifiée par l'utilisateur demandé. Cela empêche la modification par un autre vendeur ou après le début des enchères ou la fin de la vente.
      * Paramètres : Identifiants de l'annonce et de l'utilisateur, puis instant de référence.
      * Retour : true si la modification est autorisée, false si elle est interdite ou null en cas d'erreur SQL.
      */
@@ -155,7 +155,7 @@ class ListingModel extends Model
     }
 
     /**
-     * Rôle : Vérifier si une annonce peut être supprimée par l'utilisateur demandé.
+     * Rôle : Vérifier si une annonce peut être supprimée par l'utilisateur demandé. Cela empêche la suppression par un autre vendeur ou après le début des enchères ou la fin de la vente.
      * Paramètres : Identifiants de l'annonce et de l'utilisateur, puis instant de référence.
      * Retour : true si la suppression est autorisée, false si elle est interdite ou null en cas d'erreur SQL.
      */
@@ -170,7 +170,7 @@ class ListingModel extends Model
     }
 
     /**
-     * Rôle : Fournir le motif de la dernière interdiction de modification ou de suppression.
+     * Rôle : Fournir le motif de la dernière interdiction de modification ou de suppression. Le traitement est ainsi interrompu avant qu'un utilisateur non autorisé puisse consulter ou modifier la ressource.
      * Paramètres : Aucun.
      * Retour : Motif `missing`, `owner`, `ended`, `bid`, `error` ou chaîne vide si l'action est autorisée.
      */
@@ -181,7 +181,7 @@ class ListingModel extends Model
     }
 
     /**
-     * Rôle : Vérifier si un utilisateur peut suivre une annonce ou y déposer une enchère.
+     * Rôle : Vérifier si un utilisateur peut suivre une annonce ou y déposer une enchère. Cela refuse le vendeur de l'annonce, une vente terminée ou une annonce introuvable avant toute participation.
      * Paramètres : Identifiants de l'annonce et de l'utilisateur, puis instant de référence.
      * Retour : true si la participation est autorisée, false si elle est interdite ou null en cas d'erreur SQL.
      */
@@ -232,7 +232,7 @@ class ListingModel extends Model
     }
 
     /**
-     * Rôle : Fournir le motif de la dernière interdiction de suivi ou d'enchère.
+     * Rôle : Fournir le motif de la dernière interdiction de suivi ou d'enchère. Le contrôleur peut ainsi afficher une explication adaptée au lieu d'un refus générique.
      * Paramètres : Aucun.
      * Retour : Motif `missing`, `owner`, `ended`, `error` ou chaîne vide si l'action est autorisée.
      */
@@ -243,7 +243,7 @@ class ListingModel extends Model
     }
 
     /**
-     * Rôle : Rechercher et paginer les annonces à partir de critères déjà validés.
+     * Rôle : Rechercher et paginer les annonces à partir de critères déjà validés. Cela évite qu'un critère invalide produise une requête incohérente, une mauvaise page ou un résultat difficile à afficher.
      * Paramètres : Critères normalisés, page, nombre d'annonces par page et instant de référence.
      * Retour : Résultat structuré contenant le succès, les annonces et la pagination.
      */
@@ -341,7 +341,7 @@ class ListingModel extends Model
     }
 
     /**
-     * Rôle : Récupérer toutes les informations publiques d'une annonce et le pseudo de son vendeur.
+     * Rôle : Récupérer toutes les informations publiques d'une annonce et le pseudo de son vendeur. Le contrôleur reçoit ainsi en une seule lecture les données nécessaires au détail sans exposer les informations privées du vendeur.
      * Paramètres : Identifiant de l'annonce.
      * Retour : Données de l'annonce, null si elle est absente ou false en cas d'erreur SQL.
      */
@@ -359,7 +359,7 @@ class ListingModel extends Model
     }
 
     /**
-     * Rôle : Récupérer les annonces vendues par l'utilisateur avec leur prix courant.
+     * Rôle : Récupérer les annonces vendues par l'utilisateur avec leur prix courant. Cette règle évite d'afficher ou d'enregistrer un montant incompatible avec l'état réel de la vente.
      * Paramètres : Identifiant de l'utilisateur connecté et instant de référence.
      * Retour : Liste des ventes ou false en cas d'erreur SQL.
      */
@@ -384,7 +384,7 @@ class ListingModel extends Model
     }
 
     /**
-     * Rôle : Récupérer les suivis et enchères de l'utilisateur utiles au tableau de bord.
+     * Rôle : Récupérer les suivis et enchères de l'utilisateur utiles au tableau de bord. Cette règle évite d'afficher ou d'enregistrer un montant incompatible avec l'état réel de la vente.
      * Paramètres : Identifiant de l'utilisateur connecté et instant de référence.
      * Retour : Participations de l'utilisateur ou false en cas d'erreur SQL.
      */
@@ -432,7 +432,7 @@ class ListingModel extends Model
     }
 
     /**
-     * Rôle : Ajouter chaque mot recherché comme condition obligatoire sur le titre ou la description.
+     * Rôle : Ajouter chaque mot recherché comme condition obligatoire sur le titre ou la description. Cela garantit que toutes les expressions demandées sont présentes dans chaque annonce retournée.
      * Paramètres : Critères normalisés, conditions SQL et paramètres de requête à compléter.
      * Retour : Aucun.
      */
@@ -458,7 +458,7 @@ class ListingModel extends Model
     }
 
     /**
-     * Rôle : Ajouter le filtre exact sur l'identifiant de catégorie fourni par l'API externe.
+     * Rôle : Ajouter le filtre exact sur l'identifiant de catégorie fourni par l'API externe. Une réponse absente ou mal formée de l'API est ainsi empêchée de devenir une donnée exploitable par l'application.
      * Paramètres : Critères normalisés, conditions SQL et paramètres de requête à compléter.
      * Retour : Aucun.
      */
@@ -475,7 +475,7 @@ class ListingModel extends Model
     }
 
     /**
-     * Rôle : Ajouter le filtre exact sur l'état de l'objet lorsqu'il est renseigné.
+     * Rôle : Ajouter le filtre exact sur l'état de l'objet lorsqu'il est renseigné. Les résultats restent ainsi limités à l'état choisi sans modifier les autres critères de recherche.
      * Paramètres : Critères normalisés, conditions SQL et paramètres de requête à compléter.
      * Retour : Aucun.
      */
@@ -492,7 +492,7 @@ class ListingModel extends Model
     }
 
     /**
-     * Rôle : Ajouter les limites éventuelles appliquées au prix courant calculé.
+     * Rôle : Ajouter les limites éventuelles appliquées au prix courant calculé. Cette règle évite d'afficher ou d'enregistrer un montant incompatible avec l'état réel de la vente.
      * Paramètres : Critères normalisés, conditions SQL, paramètres et expression du prix courant.
      * Retour : Aucun.
      */
@@ -526,7 +526,7 @@ class ListingModel extends Model
     }
 
     /**
-     * Rôle : Limiter la recherche aux ventes en cours ou terminées selon le choix reçu.
+     * Rôle : Limiter la recherche aux ventes en cours ou terminées selon le choix reçu. Cela évite qu'un critère invalide produise une requête incohérente, une mauvaise page ou un résultat difficile à afficher.
      * Paramètres : Critères normalisés, conditions, paramètres SQL et instant formaté.
      * Retour : Aucun.
      */
@@ -549,7 +549,7 @@ class ListingModel extends Model
     }
 
     /**
-     * Rôle : Définir un ordre déterministe adapté à l'état des ventes recherché.
+     * Rôle : Définir un ordre déterministe adapté à l'état des ventes recherché. Les données transmises à l'étape suivante ont ainsi une forme cohérente et cette préparation n'est pas répétée ailleurs.
      * Paramètres : État de vente normalisé, paramètres SQL et instant formaté.
      * Retour : Fragment SQL contenant uniquement l'ordre interne prévu par le modèle.
      */
@@ -583,7 +583,7 @@ class ListingModel extends Model
     }
 
     /**
-     * Rôle : Appliquer les règles communes de modification et de suppression d'une annonce.
+     * Rôle : Appliquer les règles communes de modification et de suppression d'une annonce. Cela évite qu'une même annonce soit autorisée dans une action et refusée différemment dans l'autre.
      * Paramètres : Identifiants de l'annonce et de l'utilisateur, puis instant de référence.
      * Retour : true si l'action est autorisée, false si elle est interdite ou null en cas d'erreur SQL.
      */
@@ -641,7 +641,7 @@ class ListingModel extends Model
     }
 
     /**
-     * Rôle : Fournir un résultat uniforme lorsqu'une requête de recherche échoue.
+     * Rôle : Fournir un résultat uniforme lorsqu'une requête de recherche échoue. Cela évite qu'un critère invalide produise une requête incohérente, une mauvaise page ou un résultat difficile à afficher.
      * Paramètres : Nombre d'annonces prévu par page.
      * Retour : Résultat structuré signalant l'échec de la recherche.
      */

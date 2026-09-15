@@ -4,7 +4,7 @@
  * Description générale :
  * Tests unitaires liés à la gestion de la session utilisateur.
  *
- * Rôle :
+ * Rôle : Vérifier que la session démarre correctement et conserve l'identifiant de l'utilisateur connecté. Cette vérification permet de détecter une régression avant la présentation ou la livraison du projet.
  * Vérifier que la classe Session permet de démarrer et de gérer
  * correctement une session PHP.
  *

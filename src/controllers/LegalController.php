@@ -2,7 +2,7 @@
 
 /**
  * Description générale : Contrôleur des pages d'information légale de l'application.
- * Rôle : Préparer et afficher les informations publiques relatives à la confidentialité.
+ * Rôle : Préparer et afficher les informations publiques relatives à la confidentialité. Les données transmises à l'étape suivante ont ainsi une forme cohérente et cette préparation n'est pas répétée ailleurs.
  * Tâches : Afficher la politique de confidentialité avec l'état de connexion courant.
  * Liens avec les autres fichiers : Étend Controller.php et affiche le template privacy.php.
  */
@@ -18,7 +18,7 @@ class LegalController extends Controller
     // ====================
 
     /**
-     * Rôle : Afficher la politique de confidentialité publique de QUIDITMIEUX.
+     * Rôle : Afficher la politique de confidentialité publique de QUIDITMIEUX. L'utilisateur reçoit ainsi une présentation cohérente sans mélanger l'affichage avec les décisions métier.
      * Paramètres : Aucun.
      * Retour : Aucun, le template de confidentialité est affiché.
      */

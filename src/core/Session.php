@@ -2,7 +2,7 @@
 
 /**
  * Description générale : Gestionnaire de session de l'application.
- * Rôle : Sécuriser la session PHP et conserver l'identifiant de l'utilisateur connecté.
+ * Rôle : Sécuriser la session PHP et conserver l'identifiant de l'utilisateur connecté. Cette centralisation évite que les contrôleurs manipulent directement les données internes de la session.
  * Tâches : Démarrer la session, gérer l'authentification, les messages temporaires et les jetons CSRF.
  * Liens avec les autres fichiers : Est créée par App.php, est transmise aux contrôleurs par Router.php.
  */
@@ -16,7 +16,7 @@ class Session
     // ====================
 
     /**
-     * Rôle : Démarrer la session lorsqu'aucune session n'est déjà active.
+     * Rôle : Démarrer la session lorsqu'aucune session n'est déjà active. Sans ce démarrage, PHP ne pourrait ni lire ni conserver les informations de connexion entre deux pages.
      * Paramètres : Aucun.
      * Retour : Aucun.
      */
@@ -50,7 +50,7 @@ class Session
     }
 
     /**
-     * Rôle : Enregistrer l'identifiant de l'utilisateur authentifié et renouveler la session.
+     * Rôle : Enregistrer l'identifiant de l'utilisateur authentifié et renouveler la session. Le renouvellement de la session évite de conserver l'ancien identifiant technique après la connexion.
      * Paramètres : Identifiant de l'utilisateur connecté.
      * Retour : Aucun.
      */
@@ -65,7 +65,7 @@ class Session
     }
 
     /**
-     * Rôle : Retirer les informations de l'utilisateur puis détruire sa session.
+     * Rôle : Retirer les informations de l'utilisateur puis détruire sa session. Cela empêche qu'un utilisateur déconnecté reste reconnu ou conserve des informations privées dans sa session.
      * Paramètres : Aucun.
      * Retour : Aucun.
      */
@@ -82,7 +82,7 @@ class Session
     }
 
     /**
-     * Rôle : Indiquer si un utilisateur est actuellement authentifié.
+     * Rôle : Indiquer si un utilisateur est actuellement authentifié. Les contrôleurs peuvent ainsi refuser une page privée sans lire directement la variable de session.
      * Paramètres : Aucun.
      * Retour : true lorsqu'un identifiant utilisateur est présent, sinon false.
      */
@@ -97,7 +97,7 @@ class Session
     }
 
     /**
-     * Rôle : Obtenir l'identifiant de l'utilisateur actuellement authentifié.
+     * Rôle : Obtenir l'identifiant de l'utilisateur actuellement authentifié. Les actions privées savent ainsi quel compte utiliser sans accéder directement à la variable de session.
      * Paramètres : Aucun.
      * Retour : Identifiant de l'utilisateur ou null lorsque personne n'est connecté.
      */
@@ -112,7 +112,7 @@ class Session
     }
 
     /**
-     * Rôle : Conserver temporairement dans la session un message préparé par un contrôleur avant une redirection. La page affichée après la redirection pourra ainsi récupérer ce message et informer l’utilisateur du résultat de l’action réalisée.
+     * Rôle : Conserver temporairement dans la session un message préparé par un contrôleur avant une redirection. La page affichée après la redirection pourra ainsi récupérer ce message et informer l’utilisateur du résultat de l’action réalisée. Le message survit ainsi à la redirection vers une nouvelle page, alors qu'une variable PHP ordinaire serait perdue.
      * Paramètres : Type du message et texte à afficher.
      * Retour : Aucun.
      */
@@ -131,7 +131,7 @@ class Session
     }
 
     /**
-     * Rôle : Récupérer un message temporaire enregistré dans la session sous le type demandé, puis le supprimer immédiatement afin qu’il ne soit affiché qu’une seule fois après la redirection.
+     * Rôle : Récupérer un message temporaire enregistré dans la session sous le type demandé, puis le supprimer immédiatement afin qu’il ne soit affiché qu’une seule fois après la redirection. Sa suppression après lecture empêche que le même message réapparaisse à chaque rechargement de page.
      * Paramètres : Type du message recherché.
      * Retour : Texte du message ou null lorsqu'il est absent.
      */
@@ -161,7 +161,7 @@ class Session
     }
 
     /**
-     * Rôle : Obtenir le jeton CSRF de la session ou en créer un lorsqu'il est absent.
+     * Rôle : Obtenir le jeton CSRF de la session ou en créer un lorsqu'il est absent. Le formulaire reçoit ainsi une preuve propre à la session, nécessaire pour reconnaître son envoi légitime.
      * Paramètres : Aucun.
      * Retour : Jeton CSRF utilisable dans les formulaires concernés.
      */
@@ -180,7 +180,7 @@ class Session
     }
 
     /**
-     * Rôle : Comparer un jeton reçu avec celui conservé dans la session.
+     * Rôle : Comparer un jeton reçu avec celui conservé dans la session. Une valeur différente est refusée afin d'éviter qu'un formulaire extérieur déclenche une action au nom de l'utilisateur.
      * Paramètres : Jeton reçu, éventuellement absent.
      * Retour : true lorsque les jetons correspondent, sinon false.
      */

@@ -2,7 +2,7 @@
 
 /**
  * Description générale : Classe principale de l'application.
- * Rôle : Coordonner le démarrage de l'application et transmettre la demande au routeur.
+ * Rôle : Coordonner le démarrage de l'application et transmettre la demande au routeur. Cela évite qu'une demande incomplète ou inconnue démarre un contrôleur qui ne lui correspond pas.
  * Tâches : Initialiser Session et Database, charger les routes et lancer leur traitement.
  * Liens avec les autres fichiers : Est lancée par index.php et utilise Session.php, Database.php, Router.php et les configurations privées.
  */
@@ -22,7 +22,7 @@ class App
     // ====================
 
     /**
-     * Rôle : Préparer l’objet principal de l’application en mémorisant le chemin de la racine du projet. Ce chemin permet ensuite de retrouver les fichiers de configuration nécessaires au démarrage.
+     * Rôle : Préparer l’objet principal de l’application en mémorisant le chemin de la racine du projet. Ce chemin permet ensuite de retrouver les fichiers de configuration nécessaires au démarrage. Cela évite qu'une demande incomplète ou inconnue démarre un contrôleur qui ne lui correspond pas.
      * Paramètres : $projectRoot contient le chemin absolu du dossier principal du projet, transmis par index.php.
      * Retour : Aucun. Le constructeur enregistre le chemin reçu dans l’attribut $projectRoot.
      */
@@ -33,7 +33,7 @@ class App
     }
 
     /**
-     * Rôle : Coordonner le démarrage de l’application. La méthode démarre la session, prépare la connexion à la base de données, charge les routes, puis confie la demande HTTP au routeur.
+     * Rôle : Coordonner le démarrage de l’application. La méthode démarre la session, prépare la connexion à la base de données, charge les routes, puis confie la demande HTTP au routeur. Cela évite qu'une demande incomplète ou inconnue démarre un contrôleur qui ne lui correspond pas.
      * Paramètres : Aucun. La méthode utilise la configuration du projet ainsi que les informations de la requête reçue par le serveur.
      * Retour : Aucun. Le traitement s’arrête si la base ou les routes sont indisponibles ; sinon le routeur appelle le contrôleur correspondant.
      */
@@ -69,7 +69,7 @@ class App
     }
 
     /**
-     * Rôle : Préparer l’accès à MySQL. La méthode charge la configuration privée, crée l’objet Database et vérifie que la connexion PDO est disponible.
+     * Rôle : Préparer l’accès à MySQL. La méthode charge la configuration privée, crée l’objet Database et vérifie que la connexion PDO est disponible. Cela évite qu'une demande incomplète ou inconnue démarre un contrôleur qui ne lui correspond pas.
      * Paramètres : Aucun. Le chemin du fichier de configuration est construit à partir de l’attribut $projectRoot.
      * Retour : Un objet Database prêt à être utilisé, ou null si le fichier, sa configuration ou la connexion est indisponible.
      */
@@ -107,7 +107,7 @@ class App
     }
 
     /**
-     * Rôle : Charger la table de navigation de l’application depuis src/config/routes.php et vérifier que le fichier retourne bien un tableau.
+     * Rôle : Charger la table de navigation de l’application depuis src/config/routes.php et vérifier que le fichier retourne bien un tableau. Cela évite qu'une demande incomplète ou inconnue démarre un contrôleur qui ne lui correspond pas.
      * Paramètres : Aucun. Le chemin de routes.php est construit à partir de l’attribut $projectRoot.
      * Retour : Le tableau des routes à transmettre au routeur, ou null si le fichier est absent ou invalide.
      */
@@ -136,7 +136,7 @@ class App
     }
 
     /**
-     * Rôle : Déterminer quelle route a été demandée dans l’adresse de la page. Si aucune valeur de route exploitable n’est fournie, la page d’accueil est choisie.
+     * Rôle : Déterminer quelle route a été demandée dans l’adresse de la page. Si aucune valeur de route exploitable n’est fournie, la page d’accueil est choisie. Cela évite qu'une demande incomplète ou inconnue démarre un contrôleur qui ne lui correspond pas.
      * Paramètres : Aucun. La méthode lit directement la valeur route présente dans le tableau $_GET.
      * Retour : Le nom de la route à transmettre au routeur, par exemple home ou listing_detail.
      */
@@ -153,7 +153,7 @@ class App
     }
 
     /**
-     * Rôle : Identifier la méthode HTTP utilisée pour la demande courante afin que le routeur puisse vérifier si elle est autorisée pour la route.
+     * Rôle : Identifier la méthode HTTP utilisée pour la demande courante afin que le routeur puisse vérifier si elle est autorisée pour la route. Cela évite qu'une demande incomplète ou inconnue démarre un contrôleur qui ne lui correspond pas.
      * Paramètres : Aucun. La méthode lit REQUEST_METHOD dans le tableau $_SERVER.
      * Retour : Le nom de la méthode HTTP en majuscules, par exemple GET ou POST ; GET est utilisé si l’information est absente.
      */

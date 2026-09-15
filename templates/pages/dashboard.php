@@ -2,7 +2,7 @@
 
 /**
  * Description générale : Tableau de bord privé de l'utilisateur connecté.
- * Rôle : Présenter ses ventes, ses annonces suivies ou enchéries et ses enchères remportées.
+ * Rôle : Présenter ses ventes, ses annonces suivies ou enchéries et ses enchères remportées. Le template reste ainsi consacré à la présentation des données déjà préparées, sans décider des règles métier.
  * Tâches : Afficher trois zones autonomes et leurs états vides conformément à la maquette.
  * Liens avec les autres fichiers : Est affiché par DashboardController.php, inséré dans base.php et actualisé par dashboard.js.
  */

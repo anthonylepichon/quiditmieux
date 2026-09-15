@@ -2,7 +2,7 @@
 
 /**
  * Description générale : Contrôleur public de l'inscription et de l'authentification.
- * Rôle : Préparer les formulaires, coordonner le modèle de compte et gérer la session utilisateur.
+ * Rôle : Préparer les formulaires, coordonner le modèle de compte et gérer la session utilisateur. Cela empêche qu'une donnée de compte invalide ou sensible soit enregistrée, exposée ou utilisée pour ouvrir une session.
  * Tâches : Afficher et traiter l'inscription, la connexion et la déconnexion.
  * Liens avec les autres fichiers : Étend Controller.php, utilise UserModel.php, Session.php et les templates register.php et login.php.
  */
@@ -19,7 +19,7 @@ class AuthController extends Controller
     // ====================
 
     /**
-     * Rôle : Préparer et afficher le formulaire public d'inscription.
+     * Rôle : Préparer et afficher le formulaire public d'inscription. Les données transmises à l'étape suivante ont ainsi une forme cohérente et cette préparation n'est pas répétée ailleurs.
      * Paramètres : Aucun.
      * Retour : Aucun, le template d'inscription est affiché.
      */
@@ -30,7 +30,7 @@ class AuthController extends Controller
     }
 
     /**
-     * Rôle : Valider une demande d'inscription et créer le compte lorsqu'elle est conforme.
+     * Rôle : Valider une demande d'inscription et créer le compte lorsqu'elle est conforme. Cela empêche qu'une donnée de compte invalide ou sensible soit enregistrée, exposée ou utilisée pour ouvrir une session.
      * Paramètres : Aucun, les informations sont lues dans la requête POST.
      * Retour : Aucun, le formulaire est réaffiché ou une redirection est envoyée.
      */
@@ -98,7 +98,7 @@ class AuthController extends Controller
     }
 
     /**
-     * Rôle : Préparer et afficher le formulaire public de connexion.
+     * Rôle : Préparer et afficher le formulaire public de connexion. La page reçoit ainsi uniquement les valeurs réaffichables et les erreurs utiles, sans jamais réafficher le mot de passe saisi.
      * Paramètres : Aucun, la destination interne éventuelle est lue dans la requête GET.
      * Retour : Aucun, le template de connexion est affiché.
      */
@@ -122,7 +122,7 @@ class AuthController extends Controller
     }
 
     /**
-     * Rôle : Vérifier les identifiants reçus, ouvrir la session et choisir une destination sûre.
+     * Rôle : Vérifier les identifiants reçus, ouvrir la session et choisir une destination sûre. Cela empêche d'authentifier un compte avec des informations incorrectes ou de rediriger vers une adresse extérieure non prévue.
      * Paramètres : Aucun, les identifiants sont lus dans la requête POST.
      * Retour : Aucun, une redirection interne ou le formulaire est envoyé.
      */
@@ -173,7 +173,7 @@ class AuthController extends Controller
     }
 
     /**
-     * Rôle : Fermer complètement la session authentifiée puis revenir à l'accueil.
+     * Rôle : Fermer complètement la session authentifiée puis revenir à l'accueil. L'ancien utilisateur ne peut ainsi plus accéder aux pages privées avec les informations de sa session précédente.
      * Paramètres : Aucun, le jeton de sécurité est lu dans la requête POST.
      * Retour : Aucun, une redirection vers l'accueil est envoyée.
      */
@@ -192,7 +192,7 @@ class AuthController extends Controller
     }
 
     /**
-     * Rôle : Afficher le formulaire de connexion avec ses valeurs réaffichables et ses messages.
+     * Rôle : Afficher le formulaire de connexion avec ses valeurs réaffichables et ses messages. Le visiteur retrouve ainsi son identifiant et les explications utiles sans que son mot de passe soit conservé dans la vue.
      * Paramètres : Valeurs publiques, erreurs de validation et message temporaire éventuel.
      * Retour : Aucun.
      */
@@ -209,7 +209,7 @@ class AuthController extends Controller
     }
 
     /**
-     * Rôle : Afficher le formulaire d'inscription avec ses valeurs réaffichables et ses messages.
+     * Rôle : Afficher le formulaire d'inscription avec ses valeurs réaffichables et ses messages. L'utilisateur reçoit ainsi une présentation cohérente sans mélanger l'affichage avec les décisions métier.
      * Paramètres : Valeurs publiques, erreurs de validation et message temporaire éventuel.
      * Retour : Aucun.
      */
@@ -226,7 +226,7 @@ class AuthController extends Controller
     }
 
     /**
-     * Rôle : Préparer le message de synthèse adapté à l'état du formulaire de connexion.
+     * Rôle : Préparer le message de synthèse adapté à l'état du formulaire de connexion. Le visiteur sait ainsi si les informations sont incomplètes, incorrectes ou si la connexion a réussi.
      * Paramètres : Erreurs de validation et message temporaire de connexion éventuel.
      * Retour : Variante, titre, contenu et rôle ARIA de l'alerte à afficher.
      */
@@ -269,7 +269,7 @@ class AuthController extends Controller
     }
 
     /**
-     * Rôle : Préparer le message de synthèse adapté à l'état du formulaire d'inscription.
+     * Rôle : Préparer le message de synthèse adapté à l'état du formulaire d'inscription. Les données transmises à l'étape suivante ont ainsi une forme cohérente et cette préparation n'est pas répétée ailleurs.
      * Paramètres : Erreurs de validation et message temporaire d'inscription éventuel.
      * Retour : Variante, titre, contenu et rôle ARIA de l'alerte à afficher.
      */
@@ -332,7 +332,7 @@ class AuthController extends Controller
     }
 
     /**
-     * Rôle : Limiter une destination de connexion aux routes internes protégées prévues.
+     * Rôle : Limiter une destination de connexion aux routes internes protégées prévues. Cela empêche qu'une adresse reçue dans la requête redirige l'utilisateur vers une page extérieure ou non autorisée.
      * Paramètres : Nom de destination candidat.
      * Retour : Route interne autorisée ou tableau de bord par défaut.
      */
@@ -350,7 +350,7 @@ class AuthController extends Controller
     }
 
     /**
-     * Rôle : Appliquer toutes les règles de validation du formulaire d'inscription.
+     * Rôle : Appliquer toutes les règles de validation du formulaire d'inscription. Aucun compte n'est ainsi créé avec un pseudo, une adresse, un mot de passe ou un consentement non conforme.
      * Paramètres : Valeurs publiques, mot de passe, confirmation, champ anti-robot et acceptation de la politique.
      * Retour : Erreurs indexées par champ, éventuellement vides.
      */

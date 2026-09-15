@@ -2,7 +2,7 @@
 
 /**
  * Description générale : En-tête partagé par toutes les pages de l'application.
- * Rôle : Afficher l'identité, la navigation et les actions adaptées à la session.
+ * Rôle : Afficher l'identité, la navigation et les actions adaptées à la session. Le template reste ainsi consacré à la présentation des données déjà préparées, sans décider des règles métier.
  * Tâches : Centraliser les liens publics, les accès privés et le formulaire de déconnexion protégé.
  * Liens avec les autres fichiers : Est inclus par base.php et utilise les informations de session préparées par les templates.
  */

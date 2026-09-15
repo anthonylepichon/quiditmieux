@@ -2,7 +2,7 @@
 
 /**
  * Description générale : Structure HTML principale partagée par toutes les pages.
- * Rôle : Assembler l'en-tête technique, la navigation, le contenu de la page et le pied de page.
+ * Rôle : Assembler l'en-tête technique, la navigation, le contenu de la page et le pied de page. Le template reste ainsi consacré à la présentation des données déjà préparées, sans décider des règles métier.
  * Tâches : Éviter la répétition de la structure du document et conserver un ordre d'affichage uniforme.
  * Liens avec les autres fichiers : Est affiché par Controller.php et inclut head.php, header.php et footer.php.
  */

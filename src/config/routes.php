@@ -2,7 +2,7 @@
 
 /**
  * Description générale : Configuration des routes de l'application QUIDITMIEUX.
- * Rôle : Fournir à la classe App les routes que Router doit enregistrer.
+ * Rôle : Fournir à la classe App les routes que Router doit enregistrer. Sans cette liste centralisée, une adresse pourrait être reliée au mauvais contrôleur ou accepter une méthode HTTP non prévue.
  * Tâches : Associer chaque nom de route à son contrôleur, sa méthode PHP et sa méthode HTTP.
  * Liens avec les autres fichiers : Est chargé par App.php, qui enregistre chaque définition dans Router.php.
  */

@@ -2,7 +2,7 @@
 
 /**
  * Description générale : Carte réutilisable d'une annonce dans une zone du tableau de bord.
- * Rôle : Afficher une annonce et son statut déjà préparé par DashboardController.
+ * Rôle : Afficher une annonce et son statut déjà préparé par DashboardController. Le template reste ainsi consacré à la présentation des données déjà préparées, sans décider des règles métier.
  * Tâches : Présenter la photographie, les libellés de date, le statut, le prix et le lien de détail.
  * Liens avec les autres fichiers : Est inclus par dashboard.php pour les ventes, participations et enchères remportées.
  */

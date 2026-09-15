@@ -2,7 +2,7 @@
 
 /**
  * Description générale : Pied de page partagé par toutes les pages de l'application.
- * Rôle : Regrouper l'identité et les liens secondaires de QUIDITMIEUX.
+ * Rôle : Regrouper l'identité et les liens secondaires de QUIDITMIEUX. Le template reste ainsi consacré à la présentation des données déjà préparées, sans décider des règles métier.
  * Tâches : Centraliser la navigation de fin de page et le lien de confidentialité demandé.
  * Liens avec les autres fichiers : Est inclus par base.php après le contenu propre à chaque page.
  */

@@ -2,7 +2,7 @@
 
 /**
  * Description générale : Contrôleur des participations d'un utilisateur aux ventes.
- * Rôle : Coordonner le suivi volontaire et le dépôt des enchères.
+ * Rôle : Coordonner le suivi volontaire et le dépôt des enchères. Cela empêche d'enregistrer une participation sans vérifier la connexion, le jeton du formulaire, l'annonce et les droits de l'utilisateur.
  * Tâches : Contrôler la requête, appeler les modèles et choisir une réponse HTML ou JSON.
  * Liens avec les autres fichiers : Étend Controller.php et utilise ListingModel.php, FollowModel.php et BidModel.php.
  */
@@ -17,7 +17,7 @@ use App\models\ListingModel;
 class ParticipationController extends Controller
 {
     /**
-     * Rôle : Enregistrer une enchère strictement supérieure au prix courant d'une vente active.
+     * Rôle : Enregistrer une enchère strictement supérieure au prix courant d'une vente active. Cette règle évite d'afficher ou d'enregistrer un montant incompatible avec l'état réel de la vente.
      * Paramètres : Aucun, l'annonce, le montant et le jeton sont lus dans la requête POST.
      * Retour : Aucun, une réponse JSON ou une redirection vers le détail est envoyée.
      */
@@ -132,7 +132,7 @@ class ParticipationController extends Controller
     }
 
     /**
-     * Rôle : Ajouter le suivi volontaire d'une annonce active appartenant à un autre utilisateur.
+     * Rôle : Ajouter le suivi volontaire d'une annonce active appartenant à un autre utilisateur. Cela évite les doublons et empêche de modifier la participation d'un autre utilisateur.
      * Paramètres : Aucun, l'annonce et le jeton sont lus dans la requête POST.
      * Retour : Aucun, une réponse JSON ou une redirection vers le détail est envoyée.
      */
@@ -143,7 +143,7 @@ class ParticipationController extends Controller
     }
 
     /**
-     * Rôle : Retirer le suivi volontaire sans modifier les enchères déjà déposées.
+     * Rôle : Retirer le suivi volontaire sans modifier les enchères déjà déposées. L'utilisateur cesse ainsi de suivre l'annonce tout en conservant l'historique définitif de ses enchères.
      * Paramètres : Aucun, l'annonce et le jeton sont lus dans la requête POST.
      * Retour : Aucun, une réponse JSON ou une redirection vers le détail est envoyée.
      */
@@ -154,7 +154,7 @@ class ParticipationController extends Controller
     }
 
     /**
-     * Rôle : Appliquer l'ajout ou le retrait du suivi après tous les contrôles serveur.
+     * Rôle : Appliquer l'ajout ou le retrait du suivi après tous les contrôles serveur. Cela évite les doublons et empêche de modifier la participation d'un autre utilisateur.
      * Paramètres : État de suivi demandé.
      * Retour : Aucun.
      */
@@ -221,7 +221,7 @@ class ParticipationController extends Controller
     }
 
     /**
-     * Rôle : Envoyer un résultat JSON pour AJAX ou appliquer le repli POST-Redirect-GET.
+     * Rôle : Envoyer un résultat JSON pour AJAX ou appliquer le repli POST-Redirect-GET. La même action reste ainsi utilisable avec JavaScript ou avec une redirection classique sans être exécutée deux fois.
      * Paramètres : Succès, message, annonce éventuelle et état de suivi obtenu.
      * Retour : Aucun.
      */
@@ -258,7 +258,7 @@ class ParticipationController extends Controller
     }
 
     /**
-     * Rôle : Envoyer le résultat d'une enchère en JSON ou appliquer le repli POST-Redirect-GET.
+     * Rôle : Envoyer le résultat d'une enchère en JSON ou appliquer le repli POST-Redirect-GET. Cette règle évite d'afficher ou d'enregistrer un montant incompatible avec l'état réel de la vente.
      * Paramètres : Succès, message, annonce, résumé, minimum et montant refusé en euros éventuels.
      * Retour : Aucun.
      */
@@ -333,7 +333,7 @@ class ParticipationController extends Controller
     }
 
     /**
-     * Rôle : Construire l'adresse canonique du détail sans accepter de donnée extérieure.
+     * Rôle : Construire l'adresse canonique du détail sans accepter de donnée extérieure. Les données transmises à l'étape suivante ont ainsi une forme cohérente et cette préparation n'est pas répétée ailleurs.
      * Paramètres : Identifiant éventuel de l'annonce.
      * Retour : Adresse interne du détail ou de l'accueil.
      */

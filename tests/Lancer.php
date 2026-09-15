@@ -5,7 +5,7 @@
  * Point d'entrée permettant de lancer l'ensemble des tests
  * automatisés de l'application.
  *
- * Rôle :
+ * Rôle : Charger puis exécuter l'ensemble des tests unitaires et d'intégration du projet. Cette vérification permet de détecter une régression avant la présentation ou la livraison du projet.
  * Charger le lanceur de tests, exécuter les tests unitaires
  * et les tests d'intégration, puis afficher le résumé des résultats.
  *

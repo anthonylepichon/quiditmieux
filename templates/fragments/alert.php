@@ -2,7 +2,7 @@
 
 /**
  * Description générale : Alerte générique affichée dans les formulaires et pages de l'application.
- * Rôle : Présenter un message déjà préparé par le contrôleur, sans en déterminer le contenu.
+ * Rôle : Présenter un message déjà préparé par le contrôleur, sans en déterminer le contenu. Le template reste ainsi consacré à la présentation des données déjà préparées, sans décider des règles métier.
  * Tâches : Afficher la variante, le titre, le texte et le rôle ARIA transmis par la page appelante.
  * Liens avec les autres fichiers : Est inclus par les templates de page qui reçoivent un tableau alert depuis leur contrôleur.
  */

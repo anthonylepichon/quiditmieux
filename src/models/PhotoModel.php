@@ -2,7 +2,7 @@
 
 /**
  * Description générale : Modèle des photographies associées aux annonces.
- * Rôle : Fournir la photographie principale nécessaire aux cartes d'annonce.
+ * Rôle : Fournir la photographie principale nécessaire aux cartes d'annonce. Cela évite une référence sans fichier, un fichier orphelin ou l'association d'une photographie à la mauvaise annonce.
  * Tâches : Déclarer la table PHOTOGRAPHIE et sélectionner la première photographie dans l'ordre.
  * Liens avec les autres fichiers : Étend Model.php et complète les résultats affichés par home.php.
  */
@@ -31,7 +31,7 @@ class PhotoModel extends Model
     // ====================
 
     /**
-     * Rôle : Associer une nouvelle photographie à une annonce dans son ordre d'affichage.
+     * Rôle : Associer une nouvelle photographie à une annonce dans son ordre d'affichage. Cela évite une référence sans fichier, un fichier orphelin ou l'association d'une photographie à la mauvaise annonce.
      * Paramètres : Identifiant de l'annonce, nom sécurisé du fichier et position d'affichage.
      * Retour : true lorsque la photographie est enregistrée, sinon false.
      */
@@ -46,7 +46,7 @@ class PhotoModel extends Model
     }
 
     /**
-     * Rôle : Obtenir la première photographie ordonnée de chaque annonce demandée.
+     * Rôle : Obtenir la première photographie ordonnée de chaque annonce demandée. Cela évite une référence sans fichier, un fichier orphelin ou l'association d'une photographie à la mauvaise annonce.
      * Paramètres : Liste d'identifiants d'annonces.
      * Retour : Références indexées par annonce ou false en cas d'erreur SQL.
      */
@@ -105,7 +105,7 @@ class PhotoModel extends Model
     }
 
     /**
-     * Rôle : Récupérer toutes les photographies d'une annonce dans leur ordre d'affichage.
+     * Rôle : Récupérer toutes les photographies d'une annonce dans leur ordre d'affichage. Cela évite une référence sans fichier, un fichier orphelin ou l'association d'une photographie à la mauvaise annonce.
      * Paramètres : Identifiant de l'annonce.
      * Retour : Liste des photographies ou false en cas d'erreur SQL.
      */
@@ -144,7 +144,7 @@ class PhotoModel extends Model
     }
 
     /**
-     * Rôle : Supprimer une photographie uniquement lorsqu'elle appartient à l'annonce indiquée.
+     * Rôle : Supprimer une photographie uniquement lorsqu'elle appartient à l'annonce indiquée. Cela évite une référence sans fichier, un fichier orphelin ou l'association d'une photographie à la mauvaise annonce.
      * Paramètres : Identifiants de la photographie et de l'annonce.
      * Retour : true lorsque la requête est exécutée, sinon false.
      */
@@ -158,7 +158,7 @@ class PhotoModel extends Model
     }
 
     /**
-     * Rôle : Refermer les éventuels écarts d'ordre après la suppression de photographies.
+     * Rôle : Refermer les éventuels écarts d'ordre après la suppression de photographies. Cela évite une référence sans fichier, un fichier orphelin ou l'association d'une photographie à la mauvaise annonce.
      * Paramètres : Identifiant de l'annonce et photographies ordonnées.
      * Retour : true lorsque tous les ordres sont enregistrés, sinon false.
      */

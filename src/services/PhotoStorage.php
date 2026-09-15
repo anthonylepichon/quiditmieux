@@ -2,7 +2,7 @@
 
 /**
  * Description générale : Gestionnaire du stockage physique des photographies d'annonces.
- * Rôle : Enregistrer, supprimer et rendre accessibles les fichiers photographiques téléversés.
+ * Rôle : Enregistrer, supprimer et rendre accessibles les fichiers photographiques téléversés. Cela évite qu'un contrôleur manipule directement les chemins du serveur ou choisisse lui-même le nom définitif du fichier.
  * Tâches : Préparer le dossier de stockage, créer des noms uniques, déplacer les fichiers et construire leurs URL publiques.
  * Liens avec les autres fichiers : Est utilisé par les contrôleurs d'annonce et DashboardController.php pour séparer les fichiers physiques des données de PhotoModel.php.
  */
@@ -23,7 +23,7 @@ class PhotoStorage
     // ====================
 
     /**
-     * Rôle : Déplacer une photographie téléversée vers le dossier permanent avec un nom unique.
+     * Rôle : Déplacer une photographie téléversée vers le dossier permanent avec un nom unique. Cela évite qu'un contrôleur manipule directement les chemins du serveur ou choisisse lui-même le nom définitif du fichier.
      * Paramètres : Identifiant de l'annonce, chemin temporaire et extension validée du fichier.
      * Retour : Nom du fichier enregistré ou false lorsque le stockage échoue.
      */
@@ -73,7 +73,7 @@ class PhotoStorage
     }
 
     /**
-     * Rôle : Supprimer une photographie du dossier permanent lorsqu'elle n'est plus utilisée.
+     * Rôle : Supprimer une photographie du dossier permanent lorsqu'elle n'est plus utilisée. Cela évite de laisser sur le disque un fichier devenu inutile après la suppression de sa référence en base.
      * Paramètres : Nom du fichier à supprimer, sans chemin de dossier.
      * Retour : true si le fichier est absent ou supprimé, sinon false.
      */
@@ -111,7 +111,7 @@ class PhotoStorage
     }
 
     /**
-     * Rôle : Construire l'adresse publique d'une photographie enregistrée.
+     * Rôle : Construire l'adresse publique d'une photographie enregistrée. La vue reçoit ainsi une adresse utilisable sans connaître l'emplacement physique du fichier sur le serveur.
      * Paramètres : Nom du fichier photographique.
      * Retour : Adresse relative utilisable dans une page HTML.
      */
@@ -123,7 +123,7 @@ class PhotoStorage
     }
 
     /**
-     * Rôle : Construire le chemin absolu du dossier permanent des photographies.
+     * Rôle : Construire le chemin absolu du dossier permanent des photographies. Toutes les opérations utilisent ainsi le même dossier et ne risquent pas d'écrire les photographies à des emplacements différents.
      * Paramètres : Aucun.
      * Retour : Chemin absolu du dossier de stockage.
      */

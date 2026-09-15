@@ -2,7 +2,7 @@
 
 /**
  * Description générale : Page publique d'accueil et de recherche des annonces.
- * Rôle : Afficher le formulaire multicritère, les états de recherche, les cartes et la pagination.
+ * Rôle : Afficher le formulaire multicritère, les états de recherche, les cartes et la pagination. Le template reste ainsi consacré à la présentation des données déjà préparées, sans décider des règles métier.
  * Tâches : Présenter les données préparées par ListingSearchController et fournir une navigation sans JavaScript.
  * Liens avec les autres fichiers : Est affiché par ListingSearchController.php, inséré dans base.php et complété par home.js.
  */

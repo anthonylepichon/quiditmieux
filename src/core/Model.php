@@ -2,7 +2,7 @@
 
 /**
  * Description générale : Modèle parent abstrait commun aux modèles qui utilisent une table SQL.
- * Rôle : Regrouper les opérations CRUD simples partagées par les modèles enfants.
+ * Rôle : Regrouper les opérations CRUD simples partagées par les modèles enfants. L'utilisateur reçoit ainsi une présentation cohérente sans mélanger l'affichage avec les décisions métier.
  * Tâches : Conserver Database, lire un enregistrement par son identifiant, contrôler les champs autorisés, exécuter les écritures SQL et normaliser les listes d'identifiants.
  * Liens avec les autres fichiers : Est étendu par les modèles SQL et reçoit Database depuis les contrôleurs.
  */
@@ -31,7 +31,7 @@ abstract class Model
     // ====================
 
     /**
-     * Rôle : Conserver l'accès commun à la base de données.
+     * Rôle : Conserver l'accès commun à la base de données. Tous les modèles enfants utilisent ainsi la même connexion au lieu d'en créer une nouvelle pour chaque requête.
      * Paramètres : Gestionnaire Database créé pendant le démarrage.
      * Retour : Aucun.
      */
@@ -42,7 +42,7 @@ abstract class Model
     }
 
     /**
-     * Rôle : Créer un enregistrement avec les champs autorisés par le modèle enfant.
+     * Rôle : Créer un enregistrement avec les champs autorisés par le modèle enfant. Les champs inattendus sont ainsi ignorés et ne peuvent pas modifier la structure de la requête construite.
      * Paramètres : Tableau associatif contenant les données à enregistrer.
      * Retour : true si l'insertion réussit, sinon false.
      */
@@ -91,7 +91,7 @@ abstract class Model
     }
 
     /**
-     * Rôle : Rechercher un enregistrement de la table du modèle enfant à partir de son identifiant.
+     * Rôle : Rechercher un enregistrement de la table du modèle enfant à partir de son identifiant. Cela évite qu'un critère invalide produise une requête incohérente, une mauvaise page ou un résultat difficile à afficher.
      * Paramètres : Identifiant de l'enregistrement recherché.
      * Retour : Données trouvées, null si l'enregistrement est absent ou l'identifiant invalide, false en cas d'erreur SQL.
      */
@@ -110,7 +110,7 @@ abstract class Model
     }
 
     /**
-     * Rôle : Modifier un enregistrement identifié avec les champs autorisés par le modèle enfant.
+     * Rôle : Modifier un enregistrement identifié avec les champs autorisés par le modèle enfant. Les champs inattendus sont ainsi ignorés et seules les colonnes prévues par le modèle peuvent être mises à jour.
      * Paramètres : Identifiant de l'enregistrement et tableau associatif des données à modifier.
      * Retour : true si la modification réussit, sinon false.
      */
@@ -148,7 +148,7 @@ abstract class Model
     }
 
     /**
-     * Rôle : Supprimer un enregistrement à partir de son identifiant.
+     * Rôle : Supprimer un enregistrement à partir de son identifiant. Cette vérification préalable évite de retirer une donnée absente ou qui ne correspond pas à la demande courante.
      * Paramètres : Identifiant de l'enregistrement à supprimer.
      * Retour : true si la suppression réussit, sinon false.
      */
@@ -165,7 +165,7 @@ abstract class Model
     }
 
     /**
-     * Rôle : Récupérer l’identifiant attribué automatiquement par la base de données au dernier enregistrement ajouté.
+     * Rôle : Récupérer l’identifiant attribué automatiquement par la base de données au dernier enregistrement ajouté. L'appelant reçoit ainsi une donnée prévisible sans devoir connaître directement son mode de stockage.
      * Paramètres : Nom du champ à lire.
      * Retour : Valeur du champ ou null lorsque le champ est absent.
      */
@@ -180,7 +180,7 @@ abstract class Model
     }
 
     /**
-     * Rôle : Préparer une liste fiable d'identifiants d'annonces avant de l'utiliser dans une requête SQL groupée. Ce contrôle évite de rechercher des identifiants nuls ou négatifs et d'interroger plusieurs fois la même annonce, ce qui produirait des traitements inutiles.
+     * Rôle : Préparer une liste fiable d'identifiants d'annonces avant de l'utiliser dans une requête SQL groupée. Ce contrôle évite de rechercher des identifiants nuls ou négatifs et d'interroger plusieurs fois la même annonce, ce qui produirait des traitements inutiles. Cela évite qu'un critère invalide produise une requête incohérente, une mauvaise page ou un résultat difficile à afficher.
      * Paramètres : $identifiers contient les identifiants à contrôler.
      * Retour : Liste d'identifiants entiers, positifs et sans doublon.
      */

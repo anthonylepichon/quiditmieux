@@ -3,7 +3,7 @@
 /*
  * Description générale :
  * Tests d'intégration du gestionnaire de base de données.
- * Rôle : Vérifier que la classe Database communique correctement avec la base de données et que ses principales méthodes fonctionnent.
+ * Rôle : Vérifier que la classe Database communique correctement avec la base de données et que ses principales méthodes fonctionnent. Cette vérification permet de détecter une régression avant la présentation ou la livraison du projet.
  * Tâches :
  * - Vérifier la connexion PDO.
  * - Vérifier l'exécution d'une requête SQL.

@@ -2,7 +2,7 @@
 
 /**
  * Description générale : En-tête technique commun des documents HTML de l'application.
- * Rôle : Centraliser les métadonnées, favicons, styles et scripts de toutes les pages.
+ * Rôle : Centraliser les métadonnées, favicons, styles et scripts de toutes les pages. Le template reste ainsi consacré à la présentation des données déjà préparées, sans décider des règles métier.
  * Tâches : Échapper les textes dynamiques, charger les ressources communes avec leur version et ajouter les scripts propres à la page.
  * Liens avec les autres fichiers : Est inclus par base.php et reçoit ses variables depuis Controller.php et le template courant.
  */

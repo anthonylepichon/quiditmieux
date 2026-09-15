@@ -2,7 +2,7 @@
 
 /**
  * Description générale : Formulaire protégé de création et de modification d'une annonce.
- * Rôle : Afficher les informations de vente, les catégories externes et la gestion de zéro à trois photographies.
+ * Rôle : Afficher les informations de vente, les catégories externes et la gestion de zéro à trois photographies. Le template reste ainsi consacré à la présentation des données déjà préparées, sans décider des règles métier.
  * Tâches : Réafficher les valeurs sûres, les erreurs et transmettre les données en multipart par POST.
  * Liens avec les autres fichiers : Est affiché par ListingManagementController.php, inséré dans base.php et complété par listing-form.js.
  */

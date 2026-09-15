@@ -2,7 +2,7 @@
 
 /**
  * Description générale : Modèle des enchères déposées sur les annonces.
- * Rôle : Valider et enregistrer les enchères puis fournir les prix courants des annonces.
+ * Rôle : Valider et enregistrer les enchères puis fournir les prix courants des annonces. Cette règle évite d'afficher ou d'enregistrer un montant incompatible avec l'état réel de la vente.
  * Tâches : Déclarer la table ENCHERE, appliquer la progression minimale et calculer les meilleurs montants.
  * Liens avec les autres fichiers : Étend Model.php, complète les résultats fournis par ListingModel.php.
  */
@@ -33,7 +33,7 @@ class BidModel extends Model
     // ====================
 
     /**
-     * Rôle : Obtenir le montant courant d'une annonce en euros entiers.
+     * Rôle : Obtenir le montant courant d'une annonce en euros entiers. Cette règle évite d'afficher ou d'enregistrer un montant incompatible avec l'état réel de la vente.
      * Paramètres : Identifiant de l'annonce.
      * Retour : Montant courant en euros ou null si l'annonce est absente ou la requête échoue.
      */
@@ -59,7 +59,7 @@ class BidModel extends Model
     }
 
     /**
-     * Rôle : Obtenir le prochain montant minimal accepté pour une annonce.
+     * Rôle : Obtenir le prochain montant minimal accepté pour une annonce. Cette règle évite d'afficher ou d'enregistrer un montant incompatible avec l'état réel de la vente.
      * Paramètres : Identifiant de l'annonce.
      * Retour : Montant minimal en euros ou null si le montant courant est indisponible.
      */
@@ -76,7 +76,7 @@ class BidModel extends Model
     }
 
     /**
-     * Rôle : Vérifier qu'une proposition atteint le prochain montant minimal de l'annonce.
+     * Rôle : Vérifier qu'une proposition atteint le prochain montant minimal de l'annonce. Cette règle évite d'afficher ou d'enregistrer un montant incompatible avec l'état réel de la vente.
      * Paramètres : Identifiant de l'annonce et montant proposé en euros.
      * Retour : Décision métier et minimum attendu, ou null si le montant courant est indisponible.
      */
@@ -96,7 +96,7 @@ class BidModel extends Model
     }
 
     /**
-     * Rôle : Calculer en euros entiers le prix courant de chaque annonce demandée.
+     * Rôle : Calculer en euros entiers le prix courant de chaque annonce demandée. Cette règle évite d'afficher ou d'enregistrer un montant incompatible avec l'état réel de la vente.
      * Paramètres : Liste d'identifiants d'annonces et prix de départ indexés par annonce.
      * Retour : Prix courants en euros indexés par annonce ou false en cas de donnée invalide ou d'erreur SQL.
      */
@@ -161,7 +161,7 @@ class BidModel extends Model
     }
 
     /**
-     * Rôle : Obtenir le nombre d'enchères, le meilleur montant et son auteur pour une annonce.
+     * Rôle : Obtenir le nombre d'enchères, le meilleur montant et son auteur pour une annonce. Cette règle évite d'afficher ou d'enregistrer un montant incompatible avec l'état réel de la vente.
      * Paramètres : Identifiant de l'annonce.
      * Retour : Résumé des enchères ou false en cas d'erreur SQL.
      */
@@ -213,7 +213,7 @@ class BidModel extends Model
     }
 
     /**
-     * Rôle : Indiquer si un utilisateur a déjà enchéri sur une annonce.
+     * Rôle : Indiquer si un utilisateur a déjà enchéri sur une annonce. L'appelant reçoit ainsi une donnée prévisible sans devoir connaître directement son mode de stockage.
      * Paramètres : Identifiants de l'annonce et de l'utilisateur.
      * Retour : true si une enchère correspond, false sinon, ou null en cas d'erreur SQL.
      */
@@ -234,7 +234,7 @@ class BidModel extends Model
     }
 
     /**
-     * Rôle : Enregistrer une enchère validée par le modèle.
+     * Rôle : Enregistrer une enchère validée par le modèle. Cette règle évite d'afficher ou d'enregistrer un montant incompatible avec l'état réel de la vente.
      * Paramètres : Identifiants, montant proposé en euros et instant de référence.
      * Retour : true lorsque l'enchère est enregistrée, sinon false.
      */
@@ -254,7 +254,7 @@ class BidModel extends Model
     }
 
     /**
-     * Rôle : Récupérer l'historique détaillé et ordonné des enchères d'une annonce.
+     * Rôle : Récupérer l'historique détaillé et ordonné des enchères d'une annonce. Cette règle évite d'afficher ou d'enregistrer un montant incompatible avec l'état réel de la vente.
      * Paramètres : Identifiant de l'annonce.
      * Retour : Liste des enchères ou false en cas d'erreur SQL.
      */

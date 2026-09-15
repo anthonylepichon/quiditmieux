@@ -2,7 +2,7 @@
 
 /**
  * Description générale : Contrôleur du détail d'une annonce proposée aux enchères.
- * Rôle : Afficher une annonce et préparer les informations utiles à sa consultation.
+ * Rôle : Afficher une annonce et préparer les informations utiles à sa consultation. Les données transmises à l'étape suivante ont ainsi une forme cohérente et cette préparation n'est pas répétée ailleurs.
  * Tâches : Charger l'annonce, ses photographies, ses enchères et son état de suivi, puis préparer la vue de détail.
  * Liens avec les autres fichiers : Étend Controller.php et utilise les modèles liés au détail ainsi que PhotoStorage.php.
  */
@@ -34,7 +34,7 @@ class ListingDetailController extends Controller
     // ====================
 
     /**
-     * Rôle : Conserver les dépendances communes et préparer le gestionnaire des fichiers photographiques.
+     * Rôle : Conserver les dépendances communes et préparer le gestionnaire des fichiers photographiques. Cela évite une référence sans fichier, un fichier orphelin ou l'association d'une photographie à la mauvaise annonce.
      * Paramètres : Gestionnaires de base de données et de session partagés avec l'application.
      * Retour : Aucun.
      */
@@ -46,7 +46,7 @@ class ListingDetailController extends Controller
     }
 
     /**
-     * Rôle : Afficher le détail complet d'une annonce selon son état et les droits du visiteur.
+     * Rôle : Afficher le détail complet d'une annonce selon son état et les droits du visiteur. Le traitement est ainsi interrompu avant qu'un utilisateur non autorisé puisse consulter ou modifier la ressource.
      * Paramètres : Aucun, l'identifiant est lu dans la requête GET.
      * Retour : Aucun, le template de détail ou une redirection sûre est envoyé.
      */
@@ -248,7 +248,7 @@ class ListingDetailController extends Controller
     }
 
     /**
-     * Rôle : Récupérer l’état temporaire d’une enchère refusée pour la seule annonce concernée.
+     * Rôle : Récupérer l’état temporaire d’une enchère refusée pour la seule annonce concernée. La saisie et son explication sont ainsi réaffichées uniquement sur le bon détail, puis supprimées de la session.
      * Paramètres : Identifiant de l’annonce affichée.
      * Retour : Montant saisi et minimum formatés, ou null si aucun refus ne correspond.
      */
@@ -283,7 +283,7 @@ class ListingDetailController extends Controller
     }
 
     /**
-     * Rôle : Convertir l'historique brut en informations limitées et affichables en heure de Paris.
+     * Rôle : Convertir l'historique brut en informations limitées et affichables en heure de Paris. La comparaison et l'enregistrement utilisent ainsi une valeur temporelle cohérente, sans décaler la fin d'une vente.
      * Paramètres : Lignes d'enchères à formater.
      * Retour : Historique formaté et sûr pour le template.
      */
@@ -324,7 +324,7 @@ class ListingDetailController extends Controller
     }
 
     /**
-     * Rôle : Déterminer le libellé final public d'une vente terminée.
+     * Rôle : Déterminer le libellé final public d'une vente terminée. Les données transmises à l'étape suivante ont ainsi une forme cohérente et cette préparation n'est pas répétée ailleurs.
      * Paramètres : Indication de fin et nombre d'enchères.
      * Retour : Libellé final ou chaîne vide tant que la vente est active.
      */
@@ -342,7 +342,7 @@ class ListingDetailController extends Controller
     }
 
     /**
-     * Rôle : Préparer les libellés et messages du détail d'une annonce selon son état et les droits du visiteur.
+     * Rôle : Préparer les libellés et messages du détail d'une annonce selon son état et les droits du visiteur. Le traitement est ainsi interrompu avant qu'un utilisateur non autorisé puisse consulter ou modifier la ressource.
      * Paramètres : État de la vente, nombre d'enchères, résultat final, droits du visiteur, refus éventuel et prix affiché.
      * Retour : Données d'affichage prêtes à présenter dans le template de détail.
      */

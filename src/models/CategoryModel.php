@@ -2,7 +2,7 @@
 
 /**
  * Description générale : Modèle des catégories fournies par l'API externe de l'application.
- * Rôle : Interroger l'API et fournir aux contrôleurs des catégories validées.
+ * Rôle : Interroger l'API et fournir aux contrôleurs des catégories validées. Une réponse absente ou mal formée de l'API est ainsi empêchée de devenir une donnée exploitable par l'application.
  * Tâches : Charger et valider les catégories puis retrouver un libellé par identifiant.
  * Liens avec les autres fichiers : Est utilisé par les contrôleurs, n'étend pas le modèle SQL générique.
  */
@@ -22,7 +22,7 @@ class CategoryModel
     // ====================
 
     /**
-     * Rôle : Obtenir les catégories validées depuis l'API publique.
+     * Rôle : Obtenir les catégories validées depuis l'API publique. Une réponse absente ou mal formée de l'API est ainsi empêchée de devenir une donnée exploitable par l'application.
      * Paramètres : Aucun.
      * Retour : Catégories indexées par identifiant ou null lorsque l'API est indisponible.
      */
@@ -33,7 +33,7 @@ class CategoryModel
     }
 
     /**
-     * Rôle : Retrouver le libellé d'une catégorie externe à partir de son identifiant.
+     * Rôle : Retrouver le libellé d'une catégorie externe à partir de son identifiant. Une réponse absente ou mal formée de l'API est ainsi empêchée de devenir une donnée exploitable par l'application.
      * Paramètres : Identifiant de la catégorie demandée.
      * Retour : Libellé de la catégorie ou null si les données sont indisponibles ou l'identifiant absent.
      */
@@ -54,7 +54,7 @@ class CategoryModel
     }
 
     /**
-     * Rôle : Interroger l'API externe avec des délais d'attente limités.
+     * Rôle : Interroger l'API externe avec des délais d'attente limités. Une réponse absente ou mal formée de l'API est ainsi empêchée de devenir une donnée exploitable par l'application.
      * Paramètres : Aucun.
      * Retour : Catégories validées ou null lorsque la requête échoue.
      */
@@ -111,7 +111,7 @@ class CategoryModel
     }
 
     /**
-     * Rôle : Contrôler et indexer une liste de catégories provenant de l'API.
+     * Rôle : Contrôler et indexer une liste de catégories provenant de l'API. Une réponse absente ou mal formée de l'API est ainsi empêchée de devenir une donnée exploitable par l'application.
      * Paramètres : Tableau candidat associant un identifiant à un libellé.
      * Retour : Catégories normalisées ou null si une information est invalide.
      */

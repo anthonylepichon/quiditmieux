@@ -2,7 +2,7 @@
 
 /**
  * Description générale : Page publique de connexion à un compte utilisateur.
- * Rôle : Afficher le formulaire, les erreurs génériques et la destination interne conservée.
+ * Rôle : Afficher le formulaire, les erreurs génériques et la destination interne conservée. Le template reste ainsi consacré à la présentation des données déjà préparées, sans décider des règles métier.
  * Tâches : Transmettre les identifiants par POST avec un jeton CSRF sans réafficher le mot de passe.
  * Liens avec les autres fichiers : Est affiché par AuthController.php puis inséré dans base.php.
  */

@@ -2,7 +2,7 @@
 
 /**
  * Description générale : Contrôleur du compte de l'utilisateur connecté.
- * Rôle : Afficher et traiter la modification sécurisée du compte utilisateur.
+ * Rôle : Afficher et traiter la modification sécurisée du compte utilisateur. Cela empêche qu'une donnée de compte invalide ou sensible soit enregistrée, exposée ou utilisée pour ouvrir une session.
  * Tâches : Protéger l'accès, valider le formulaire et demander au modèle de modifier le compte.
  * Liens avec les autres fichiers : Étend Controller.php, utilise UserModel.php et affiche account.php.
  */
@@ -19,7 +19,7 @@ class AccountController extends Controller
     // ====================
 
     /**
-     * Rôle : Afficher le formulaire privé avec les informations actuelles du compte.
+     * Rôle : Afficher le formulaire privé avec les informations actuelles du compte. L'utilisateur peut ainsi vérifier son pseudo et son adresse sans que son mot de passe ou son empreinte soient renvoyés dans la page.
      * Paramètres : Aucun.
      * Retour : Aucun, le formulaire est affiché ou une redirection est envoyée.
      */
@@ -55,7 +55,7 @@ class AccountController extends Controller
     }
 
     /**
-     * Rôle : Valider puis modifier l'identité et éventuellement le mot de passe du compte connecté.
+     * Rôle : Valider puis modifier l'identité et éventuellement le mot de passe du compte connecté. Cela empêche qu'une donnée de compte invalide ou sensible soit enregistrée, exposée ou utilisée pour ouvrir une session.
      * Paramètres : Aucun, les informations sont lues dans la requête POST.
      * Retour : Aucun, le formulaire est réaffiché ou une redirection est envoyée.
      */
@@ -165,7 +165,7 @@ class AccountController extends Controller
     }
 
     /**
-     * Rôle : Afficher le formulaire de compte sans réafficher les mots de passe reçus.
+     * Rôle : Afficher le formulaire de compte sans réafficher les mots de passe reçus. Cela empêche qu'une donnée de compte invalide ou sensible soit enregistrée, exposée ou utilisée pour ouvrir une session.
      * Paramètres : Valeurs publiques, erreurs et message de réussite éventuel.
      * Retour : Aucun.
      */
@@ -182,7 +182,7 @@ class AccountController extends Controller
     }
 
     /**
-     * Rôle : Préparer le message de synthèse adapté à l'état du formulaire de compte.
+     * Rôle : Préparer le message de synthèse adapté à l'état du formulaire de compte. L'utilisateur comprend ainsi si la modification a réussi, si des champs sont invalides ou si le compte est indisponible.
      * Paramètres : Erreurs de validation et message temporaire de réussite éventuel.
      * Retour : Variante, titre, contenu et rôle ARIA de l'alerte à afficher.
      */
@@ -246,7 +246,7 @@ class AccountController extends Controller
     }
 
     /**
-     * Rôle : Appliquer les règles de validation des informations modifiables du compte.
+     * Rôle : Appliquer les règles de validation des informations modifiables du compte. Cela empêche qu'une donnée de compte invalide ou sensible soit enregistrée, exposée ou utilisée pour ouvrir une session.
      * Paramètres : Valeurs publiques, mot de passe actuel, nouveau mot de passe et confirmation.
      * Retour : Erreurs indexées par champ, éventuellement vides.
      */

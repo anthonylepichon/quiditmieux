@@ -2,7 +2,7 @@
 
 /**
  * Description générale : Page publique de détail d'une annonce mise aux enchères.
- * Rôle : Afficher la vente, ses photographies, son prix et les actions adaptées aux droits du visiteur.
+ * Rôle : Afficher la vente, ses photographies, son prix et les actions adaptées aux droits du visiteur. Le template reste ainsi consacré à la présentation des données déjà préparées, sans décider des règles métier.
  * Tâches : Présenter les états public, vendeur, suiveur, enchérisseur et vente terminée sans exposer de donnée privée.
  * Liens avec les autres fichiers : Est affiché par ListingDetailController.php, inséré dans base.php et complété par listing-detail.js.
  */

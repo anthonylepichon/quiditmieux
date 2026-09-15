@@ -2,7 +2,7 @@
 
 /**
  * Description générale : Formulaire privé de modification du compte utilisateur.
- * Rôle : Modifier le pseudo, l'adresse électronique et éventuellement le mot de passe.
+ * Rôle : Modifier le pseudo, l'adresse électronique et éventuellement le mot de passe. Le template reste ainsi consacré à la présentation des données déjà préparées, sans décider des règles métier.
  * Tâches : Afficher les erreurs par champ sans jamais réafficher un mot de passe.
  * Liens avec les autres fichiers : Est affiché par AccountController.php puis inséré dans base.php.
  */
