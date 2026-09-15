@@ -2,7 +2,7 @@
  * Description générale : Interactions de recherche et de pagination de la page d'accueil.
  * Rôle : Actualiser les résultats en AJAX tout en conservant une navigation GET utilisable sans JavaScript.
  * Tâches : Envoyer les critères, construire des cartes sûres, gérer la pagination et restaurer l'historique.
- * Liens avec les autres fichiers : Est chargé par home.php et appelle ListingController::search par la route home.
+ * Liens avec les autres fichiers : Est chargé par home.php et appelle ListingSearchController::search par la route home.
  */
 
 const qdmSearchForm = document.querySelector('#search-form');

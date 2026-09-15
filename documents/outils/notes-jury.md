@@ -16,7 +16,7 @@ MVC signifie **Modèle – Vue – Contrôleur**. Le but est de séparer les res
 |---|---|---|
 | Modèle | Interroge la base de données et porte les règles liées aux données. | `ListingModel`, `BidModel`, `UserModel` |
 | Vue | Affiche les informations dans une page HTML. | `templates/pages/listing-detail.php` |
-| Contrôleur | Reçoit la demande, vérifie les données, appelle les modèles et choisit la réponse. | `ListingController`, `ParticipationController` |
+| Contrôleur | Reçoit la demande, vérifie les données, appelle les modèles et choisit la réponse. | `ListingDetailController`, `ParticipationController` |
 
 Exemple : pour déposer une enchère, le contrôleur reçoit le formulaire. Il vérifie que la donnée reçue est correcte, puis il appelle le modèle. Le modèle vérifie les règles métier : annonce encore active, utilisateur différent du vendeur et montant suffisant. Enfin, le contrôleur redirige l’utilisateur ou renvoie une réponse JSON.
 
@@ -495,10 +495,10 @@ if (!$database->isConnected()) {
 La programmation orientée objet consiste à regrouper les données et les traitements qui ont le même rôle dans des classes.
 
 - `Controller` est la classe parent des contrôleurs. Elle fournit le rendu d’une vue, la redirection, les messages flash et les réponses JSON.
-- `Model` est la classe parent des modèles SQL. Elle centralise PDO et des opérations communes de création, modification et suppression.
+- `Model` est la classe parent des modèles SQL. Elle centralise PDO et les opérations CRUD simples : créer, lire par identifiant, modifier et supprimer.
 - `ListingModel`, `BidModel`, `PhotoModel` et `UserModel` sont des modèles enfants spécialisés dans leurs propres données.
 
-Une classe abstraite est une classe de base qui ne peut pas être utilisée directement avec `new`. Elle sert à partager des attributs et des méthodes avec des classes enfants plus spécialisées. Dans ce projet, `Model` et `Controller` sont abstraites : on crée un `ListingModel` ou un `ListingController`, mais jamais directement un objet `Model` ou `Controller`.
+Une classe abstraite est une classe de base qui ne peut pas être utilisée directement avec `new`. Elle sert à partager des attributs et des méthodes avec des classes enfants plus spécialisées. Dans ce projet, `Model` est abstraite : on crée par exemple un `ListingModel`, mais jamais directement un objet `Model`. `Controller` est également une classe parent partagée, mais elle n’est pas déclarée abstraite dans le code actuel.
 
 L’héritage évite de recopier les mêmes méthodes dans chaque modèle ou chaque contrôleur. `ListingModel` hérite de `Model`, mais possède aussi ses propres méthodes métier, par exemple la vérification qu’une annonce peut être modifiée ou qu’elle peut recevoir une enchère.
 

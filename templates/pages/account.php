@@ -4,7 +4,7 @@
  * Description générale : Formulaire privé de modification du compte utilisateur.
  * Rôle : Modifier le pseudo, l'adresse électronique et éventuellement le mot de passe.
  * Tâches : Afficher les erreurs par champ sans jamais réafficher un mot de passe.
- * Liens avec les autres fichiers : Est affiché par UserController.php puis inséré dans base.php.
+ * Liens avec les autres fichiers : Est affiché par AccountController.php puis inséré dans base.php.
  */
 
 /** @var array<string, mixed> $data Données préparées par le contrôleur. */
@@ -36,7 +36,7 @@ foreach ($invalid as $field => $attribute) {
             </div>
 
             <?php
-            // Fragment alert.php : message du compte déjà préparé par UserController.
+            // Fragment alert.php : message du compte déjà préparé par AccountController.
             $alertClasses = '';
             require __DIR__ . '/../fragments/alert.php';
             ?>

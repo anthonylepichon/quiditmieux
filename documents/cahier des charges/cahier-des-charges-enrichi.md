@@ -335,14 +335,17 @@ Les interfaces respectent au minimum les règles suivantes :
 
 ## 7. Contrôleurs proposés
 
-Cinq contrôleurs permettent de couvrir le périmètre sans multiplier inutilement les classes.
+Huit contrôleurs répartissent le périmètre par responsabilité sans ajouter de couche architecturale.
 
 | Contrôleur proposé | Responsabilités principales |
 |---|---|
 | `AuthController` | Afficher et traiter l’inscription, afficher et traiter la connexion, déconnecter l’utilisateur. |
-| `ListingController` | Afficher et rechercher les annonces, afficher le détail, créer, modifier et supprimer une annonce selon les droits. |
+| `ListingSearchController` | Afficher l’accueil, rechercher les annonces et préparer leur pagination. |
+| `ListingDetailController` | Afficher le détail d’une annonce, ses photographies, son historique et son état de suivi. |
+| `ListingManagementController` | Afficher et traiter la création, la modification et la suppression d’une annonce selon les droits du vendeur. |
 | `ParticipationController` | Enregistrer une enchère définitive, suivre une annonce active et arrêter son suivi. Ces actions représentent la participation de l’utilisateur à une enchère. |
-| `UserController` | Afficher le tableau de bord, afficher et traiter la modification sécurisée du compte. |
+| `AccountController` | Afficher et traiter la modification sécurisée du compte. |
+| `DashboardController` | Afficher et actualiser les ventes, suivis et enchères du tableau de bord. |
 | `LegalController` | Afficher les informations légales publiques, notamment la politique de confidentialité. |
 
 Le détail des méthodes sera fixé dans les spécifications et le schéma ergonomique.
@@ -401,4 +404,4 @@ Le projet est fonctionnellement conforme lorsque :
 - la politique de confidentialité est accessible et l’inscription est impossible tant que sa case d’acceptation n’est pas cochée ;
 - la matrice des états des huit templates est respectée dans la maquette et dans l’application ;
 - l’application reste utilisable à partir de 390 pixels et respecte les exigences d’accessibilité définies ;
-- les huit templates et les cinq contrôleurs `AuthController`, `LegalController`, `ListingController`, `ParticipationController` et `UserController` couvrent toutes les fonctions prévues sans ajouter de périmètre.
+- les huit templates et les huit contrôleurs `AuthController`, `LegalController`, `ListingSearchController`, `ListingDetailController`, `ListingManagementController`, `ParticipationController`, `AccountController` et `DashboardController` couvrent toutes les fonctions prévues sans ajouter de périmètre.

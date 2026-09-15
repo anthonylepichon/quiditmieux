@@ -4,7 +4,7 @@
  * Description générale : Tableau de bord privé de l'utilisateur connecté.
  * Rôle : Présenter ses ventes, ses annonces suivies ou enchéries et ses enchères remportées.
  * Tâches : Afficher trois zones autonomes et leurs états vides conformément à la maquette.
- * Liens avec les autres fichiers : Est affiché par UserController.php, inséré dans base.php et actualisé par dashboard.js.
+ * Liens avec les autres fichiers : Est affiché par DashboardController.php, inséré dans base.php et actualisé par dashboard.js.
  */
 
 /** @var array<string, mixed> $data Données préparées par le contrôleur. */
@@ -40,7 +40,7 @@ $dashboardMessage = $data['dashboard_message'];
     </section>
 
     <?php
-    // Fragment flash-messages.php : messages temporaires du tableau de bord préparés par UserController.
+    // Fragment flash-messages.php : messages temporaires du tableau de bord préparés par DashboardController.
     require __DIR__ . '/../fragments/flash-messages.php';
     ?>
 
@@ -70,7 +70,7 @@ $dashboardMessage = $data['dashboard_message'];
                     <?php foreach ($data[$zone['key']] as $listing): ?>
                         <?php $cardDisplay = $listing['display']; ?>
                         <?php
-                        // Fragment dashboard-card.php : carte et statut préparés par UserController.
+                        // Fragment dashboard-card.php : carte et statut préparés par DashboardController.
                         require __DIR__ . '/../fragments/dashboard-card.php';
                         ?>
                     <?php endforeach; ?>

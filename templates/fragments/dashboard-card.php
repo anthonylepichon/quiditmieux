@@ -2,13 +2,13 @@
 
 /**
  * Description générale : Carte réutilisable d'une annonce dans une zone du tableau de bord.
- * Rôle : Afficher une annonce et son statut déjà préparé par UserController.
+ * Rôle : Afficher une annonce et son statut déjà préparé par DashboardController.
  * Tâches : Présenter la photographie, les libellés de date, le statut, le prix et le lien de détail.
  * Liens avec les autres fichiers : Est inclus par dashboard.php pour les ventes, participations et enchères remportées.
  */
 
 /** @var array<string, mixed> $listing Annonce prête à afficher. */
-/** @var array<string, string> $cardDisplay Libellés visuels préparés par UserController. */
+/** @var array<string, string> $cardDisplay Libellés visuels préparés par DashboardController. */
 ?>
 <article class="dashboard-card" data-listing-id="<?= (int) $listing['id'] ?>">
     <a class="dashboard-card__media" href="<?= htmlspecialchars($listing['detail_url'], ENT_QUOTES, 'UTF-8') ?>">

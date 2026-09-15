@@ -4,7 +4,7 @@
  * Description générale : Page publique de détail d'une annonce mise aux enchères.
  * Rôle : Afficher la vente, ses photographies, son prix et les actions adaptées aux droits du visiteur.
  * Tâches : Présenter les états public, vendeur, suiveur, enchérisseur et vente terminée sans exposer de donnée privée.
- * Liens avec les autres fichiers : Est affiché par ListingController.php, inséré dans base.php et complété par listing-detail.js.
+ * Liens avec les autres fichiers : Est affiché par ListingDetailController.php, inséré dans base.php et complété par listing-detail.js.
  */
 
 /** @var array<string, mixed> $data Données préparées par le contrôleur. */
@@ -45,7 +45,7 @@ $actionsClass = $display['actions_class'];
 <main class="listing-detail container">
     <a class="back-link visually-hidden" href="index.php?route=home#annonces">Retour aux annonces</a>
     <?php
-    // Fragment flash-messages.php : messages temporaires de l'annonce préparés par ListingController.
+    // Fragment flash-messages.php : messages temporaires de l'annonce préparés par ListingDetailController.
     require __DIR__ . '/../fragments/flash-messages.php';
     ?>
 

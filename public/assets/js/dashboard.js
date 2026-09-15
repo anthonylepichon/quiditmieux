@@ -2,7 +2,7 @@
  * Description générale : Actualisations périodiques du tableau de bord privé.
  * Rôle : Rafraîchir séparément les ventes et les participations sans recharger la page.
  * Tâches : Éviter les requêtes simultanées, arrêter les actualisations devenues inutiles et reconstruire les cartes en sécurité.
- * Liens avec les autres fichiers : Est chargé par dashboard.php et appelle les routes JSON de UserController.php.
+ * Liens avec les autres fichiers : Est chargé par dashboard.php et appelle les routes JSON de DashboardController.php.
  */
 
 const qdmDashboardStatus = document.querySelector('[data-dashboard-status]');

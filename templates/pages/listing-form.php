@@ -4,7 +4,7 @@
  * Description générale : Formulaire protégé de création et de modification d'une annonce.
  * Rôle : Afficher les informations de vente, les catégories externes et la gestion de zéro à trois photographies.
  * Tâches : Réafficher les valeurs sûres, les erreurs et transmettre les données en multipart par POST.
- * Liens avec les autres fichiers : Est affiché par ListingController.php, inséré dans base.php et complété par listing-form.js.
+ * Liens avec les autres fichiers : Est affiché par ListingManagementController.php, inséré dans base.php et complété par listing-form.js.
  */
 
 /** @var array<string, mixed> $data Données préparées par le contrôleur. */
@@ -51,7 +51,7 @@ if ($isLocked) {
             <img src="public/assets/images/illustrations/shopping-cart.png" alt="" width="178" height="160">
         </div>
         <?php
-        // Fragment alert.php : état du formulaire déjà préparé par ListingController.
+        // Fragment alert.php : état du formulaire déjà préparé par ListingManagementController.
         $alertClasses = '';
         require __DIR__ . '/../fragments/alert.php';
         ?>

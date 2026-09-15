@@ -4,7 +4,7 @@
  * Description générale : Modèle des comptes utilisateurs de l'application.
  * Rôle : Créer, authentifier et modifier les comptes utilisateurs.
  * Tâches : Déclarer la table UTILISATEUR, gérer les mots de passe et vérifier l'unicité des comptes.
- * Liens avec les autres fichiers : Étend Model.php et est utilisé par AuthController.php et UserController.php.
+ * Liens avec les autres fichiers : Étend Model.php et est utilisé par AuthController.php et AccountController.php.
  */
 
 namespace App\models;

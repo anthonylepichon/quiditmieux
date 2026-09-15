@@ -3,8 +3,8 @@
 /**
  * Description générale : Page publique d'accueil et de recherche des annonces.
  * Rôle : Afficher le formulaire multicritère, les états de recherche, les cartes et la pagination.
- * Tâches : Présenter les données préparées par ListingController et fournir une navigation sans JavaScript.
- * Liens avec les autres fichiers : Est affiché par ListingController.php, inséré dans base.php et complété par home.js.
+ * Tâches : Présenter les données préparées par ListingSearchController et fournir une navigation sans JavaScript.
+ * Liens avec les autres fichiers : Est affiché par ListingSearchController.php, inséré dans base.php et complété par home.js.
  */
 
 /** @var array<string, mixed> $data Données préparées par le contrôleur. */
@@ -93,7 +93,7 @@ for ($pageNumber = 1; $pageNumber <= (int) $pagination['total_pages']; $pageNumb
 
     <div class="container section-stack">
         <?php
-        // Fragment flash-messages.php : messages temporaires de la recherche préparés par ListingController.
+        // Fragment flash-messages.php : messages temporaires de la recherche préparés par ListingSearchController.
         require __DIR__ . '/../fragments/flash-messages.php';
         ?>
         <!-- ==================== RECHERCHE ==================== -->
@@ -296,7 +296,7 @@ for ($pageNumber = 1; $pageNumber <= (int) $pagination['total_pages']; $pageNumb
             <div class="auction-grid" data-results-list>
                 <?php foreach ($listings as $listing): ?>
                     <?php
-                    // Fragment auction-card.php : carte de l'annonce courante préparée par ListingController.
+                    // Fragment auction-card.php : carte de l'annonce courante préparée par ListingSearchController.
                     require __DIR__ . '/../fragments/auction-card.php';
                     ?>
                 <?php endforeach; ?>

@@ -7,15 +7,18 @@
  * Liens avec les autres fichiers : Est chargé par App.php, qui enregistre chaque définition dans Router.php.
  */
 
+use App\controllers\AccountController;
 use App\controllers\AuthController;
+use App\controllers\DashboardController;
 use App\controllers\LegalController;
-use App\controllers\ListingController;
+use App\controllers\ListingDetailController;
+use App\controllers\ListingManagementController;
+use App\controllers\ListingSearchController;
 use App\controllers\ParticipationController;
-use App\controllers\UserController;
 
 return [
     'home' => [
-        'controller' => ListingController::class,
+        'controller' => ListingSearchController::class,
         'method' => 'search',
         'http_method' => 'GET',
     ],
@@ -25,32 +28,32 @@ return [
         'http_method' => 'GET',
     ],
     'listing_detail' => [
-        'controller' => ListingController::class,
+        'controller' => ListingDetailController::class,
         'method' => 'showDetail',
         'http_method' => 'GET',
     ],
     'listing_create_form' => [
-        'controller' => ListingController::class,
+        'controller' => ListingManagementController::class,
         'method' => 'showCreateForm',
         'http_method' => 'GET',
     ],
     'listing_create' => [
-        'controller' => ListingController::class,
+        'controller' => ListingManagementController::class,
         'method' => 'create',
         'http_method' => 'POST',
     ],
     'listing_edit_form' => [
-        'controller' => ListingController::class,
+        'controller' => ListingManagementController::class,
         'method' => 'showEditForm',
         'http_method' => 'GET',
     ],
     'listing_update' => [
-        'controller' => ListingController::class,
+        'controller' => ListingManagementController::class,
         'method' => 'update',
         'http_method' => 'POST',
     ],
     'listing_delete' => [
-        'controller' => ListingController::class,
+        'controller' => ListingManagementController::class,
         'method' => 'delete',
         'http_method' => 'POST',
     ],
@@ -95,27 +98,27 @@ return [
         'http_method' => 'POST',
     ],
     'dashboard' => [
-        'controller' => UserController::class,
+        'controller' => DashboardController::class,
         'method' => 'showDashboard',
         'http_method' => 'GET',
     ],
     'dashboard_sales' => [
-        'controller' => UserController::class,
+        'controller' => DashboardController::class,
         'method' => 'refreshSales',
         'http_method' => 'GET',
     ],
     'dashboard_participations' => [
-        'controller' => UserController::class,
+        'controller' => DashboardController::class,
         'method' => 'refreshParticipations',
         'http_method' => 'GET',
     ],
     'account_form' => [
-        'controller' => UserController::class,
+        'controller' => AccountController::class,
         'method' => 'showAccountForm',
         'http_method' => 'GET',
     ],
     'account_update' => [
-        'controller' => UserController::class,
+        'controller' => AccountController::class,
         'method' => 'updateAccount',
         'http_method' => 'POST',
     ],

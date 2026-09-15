@@ -4,7 +4,7 @@
  * Description générale : Gestionnaire du stockage physique des photographies d'annonces.
  * Rôle : Enregistrer, supprimer et rendre accessibles les fichiers photographiques téléversés.
  * Tâches : Préparer le dossier de stockage, créer des noms uniques, déplacer les fichiers et construire leurs URL publiques.
- * Liens avec les autres fichiers : Est utilisé par ListingController.php pour séparer les fichiers physiques des données de PhotoModel.php.
+ * Liens avec les autres fichiers : Est utilisé par les contrôleurs d'annonce et DashboardController.php pour séparer les fichiers physiques des données de PhotoModel.php.
  */
 
 namespace App\services;

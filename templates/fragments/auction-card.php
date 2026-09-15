@@ -2,9 +2,9 @@
 
 /**
  * Description générale : Carte réutilisable d'une annonce dans une liste de résultats.
- * Rôle : Présenter les informations publiques d'une annonce préparées par ListingController.
+ * Rôle : Présenter les informations publiques d'une annonce préparées par ListingSearchController.
  * Tâches : Afficher la photographie, l'état, le prix, l'échéance et le lien de détail.
- * Liens avec les autres fichiers : Est inclus par home.php pour chaque annonce issue de ListingController.php.
+ * Liens avec les autres fichiers : Est inclus par home.php pour chaque annonce issue de ListingSearchController.php.
  */
 
 /** @var array<string, mixed> $listing Annonce prête à afficher. */
