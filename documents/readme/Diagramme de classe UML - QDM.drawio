@@ -892,16 +892,16 @@
           <mxGeometry height="106" width="390" y="116" as="geometry" />
         </mxCell>
         <mxCell id="p4_cm" connectable="0" parent="p4_layer" style="group;" value="" vertex="1">
-          <mxGeometry height="312" width="420" x="78" y="566.15" as="geometry" />
+          <mxGeometry height="144" width="420" x="78" y="566.15" as="geometry" />
         </mxCell>
         <mxCell id="p4_cm_header" parent="p4_cm" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0891B2;strokeColor=#0891B2;fontColor=#FFFFFF;align=center;verticalAlign=middle;arcSize=10;" value="&lt;div style=&quot;font-size:10px;font-weight:400;&quot;&gt;&amp;lt;&amp;lt;modèle API&amp;gt;&amp;gt;&lt;/div&gt;&lt;div style=&quot;font-size:16px;font-weight:700;&quot;&gt;CategoryModel&lt;/div&gt;" vertex="1">
           <mxGeometry height="46" width="420" as="geometry" />
         </mxCell>
-        <mxCell id="p4_cm_attributes" parent="p4_cm" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#0891B2;fontColor=#18103A;fontSize=12;align=left;verticalAlign=top;spacing=8;overflow=fill;" value="&lt;div style=&quot;line-height:18px;&quot;&gt;- API_URL : string&lt;/div&gt;&lt;div style=&quot;line-height:18px;&quot;&gt;- CACHE_LIFETIME_SECONDS : int&lt;/div&gt;&lt;div style=&quot;line-height:18px;&quot;&gt;- CACHE_RELATIVE_PATH : string&lt;/div&gt;&lt;div style=&quot;line-height:18px;&quot;&gt;- categoriesLoaded : bool&lt;/div&gt;&lt;div style=&quot;line-height:18px;&quot;&gt;- categories : ?array&lt;/div&gt;" vertex="1">
-          <mxGeometry height="106" width="420" y="46" as="geometry" />
+        <mxCell id="p4_cm_attributes" parent="p4_cm" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#0891B2;fontColor=#18103A;fontSize=12;align=left;verticalAlign=top;spacing=8;overflow=fill;" value="&lt;div style=&quot;line-height:18px;&quot;&gt;- API_URL : string&lt;/div&gt;" vertex="1">
+          <mxGeometry height="44" width="420" y="46" as="geometry" />
         </mxCell>
-        <mxCell id="p4_cm_methods" parent="p4_cm" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#0891B2;fontColor=#18103A;fontSize=12;align=left;verticalAlign=top;spacing=8;overflow=fill;arcSize=6;" value="&lt;div style=&quot;line-height:18px;&quot;&gt;+ getAllCategories() : ?array&lt;/div&gt;&lt;div style=&quot;line-height:18px;&quot;&gt;+ getCategoryLabel(categoryId) : ?string&lt;/div&gt;&lt;div style=&quot;line-height:18px;&quot;&gt;- requestApiCategories() : ?array&lt;/div&gt;&lt;div style=&quot;line-height:18px;&quot;&gt;- readCachedData() : ?array&lt;/div&gt;&lt;div style=&quot;line-height:18px;&quot;&gt;- cacheIsFresh(savedAt) : bool&lt;/div&gt;&lt;div style=&quot;line-height:18px;&quot;&gt;- writeCache(categories) : bool&lt;/div&gt;&lt;div style=&quot;line-height:18px;&quot;&gt;- normalizeCategories(decoded) : ?array&lt;/div&gt;&lt;div style=&quot;line-height:18px;&quot;&gt;- getCachePath() : string&lt;/div&gt;" vertex="1">
-          <mxGeometry height="160" width="420" y="152" as="geometry" />
+        <mxCell id="p4_cm_methods" parent="p4_cm" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#0891B2;fontColor=#18103A;fontSize=12;align=left;verticalAlign=top;spacing=8;overflow=fill;arcSize=6;" value="&lt;div style=&quot;line-height:18px;&quot;&gt;+ getAllCategories() : ?array&lt;/div&gt;&lt;div style=&quot;line-height:18px;&quot;&gt;+ getCategoryLabel(categoryId) : ?string&lt;/div&gt;" vertex="1">
+          <mxGeometry height="54" width="420" y="90" as="geometry" />
         </mxCell>
         <mxCell id="p4_st" connectable="0" parent="p4_layer" style="group;" value="" vertex="1">
           <mxGeometry height="186" width="410" x="1812" y="860.86" as="geometry" />
@@ -957,7 +957,7 @@
         <mxCell id="p4_np" parent="p4_layer" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#D97706;fontColor=#18103A;fontSize=13;align=left;verticalAlign=middle;spacing=10;arcSize=10;dashed=1;" value="&lt;b&gt;Séparation importante&lt;/b&gt;&lt;br&gt;PhotoModel enregistre les références dans PHOTOGRAPHIE.&amp;nbsp;&lt;div&gt;PhotoStorage copie et supprime les fichiers physiques dans public/uploads/annonces.&amp;nbsp;&lt;/div&gt;&lt;div&gt;ListingController coordonne les deux et annule ce qui a déjà été fait en cas d&#39;échec.&lt;/div&gt;" vertex="1">
           <mxGeometry height="120" width="1200" x="64" y="1510" as="geometry" />
         </mxCell>
-        <mxCell id="_eQ7ZoswW0ZPBx46oW4y-0" parent="p4_layer" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0891B2;strokeColor=#0891B2;fontColor=#FFFFFF;align=center;verticalAlign=middle;spacing=6;arcSize=12;" value="&lt;div style=&quot;font-size:10px;&quot;&gt;&amp;lt;&amp;lt;API REST&amp;gt;&amp;gt;&lt;/div&gt;&lt;div style=&quot;font-size:15px;font-weight:700;&quot;&gt;API catégories&lt;/div&gt;&lt;div style=&quot;font-size:11px;margin-top:4px;&quot;&gt;Données externes avec cache local&lt;/div&gt;" vertex="1">
+        <mxCell id="_eQ7ZoswW0ZPBx46oW4y-0" parent="p4_layer" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0891B2;strokeColor=#0891B2;fontColor=#FFFFFF;align=center;verticalAlign=middle;spacing=6;arcSize=12;" value="&lt;div style=&quot;font-size:10px;&quot;&gt;&amp;lt;&amp;lt;API REST&amp;gt;&amp;gt;&lt;/div&gt;&lt;div style=&quot;font-size:15px;font-weight:700;&quot;&gt;API catégories&lt;/div&gt;&lt;div style=&quot;font-size:11px;margin-top:4px;&quot;&gt;Données externes lues directement&lt;/div&gt;" vertex="1">
           <mxGeometry height="78" width="330" x="123" y="973.15" as="geometry" />
         </mxCell>
         <mxCell id="_eQ7ZoswW0ZPBx46oW4y-2" edge="1" parent="p4_layer" source="p4_lc_header" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;endArrow=block;endFill=0;strokeColor=#64748B;strokeWidth=2;fontColor=#18103A;fontSize=11;labelBackgroundColor=#FFFF66;exitX=0.25;exitY=0;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;curved=0;" target="p4_controller_header" value="hérite de">
