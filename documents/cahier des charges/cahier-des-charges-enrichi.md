@@ -94,15 +94,16 @@ L’API permet :
 - d’obtenir la liste des catégories ;
 - de retrouver le libellé correspondant à un identifiant dans la liste reçue.
 
-Seul l’identifiant externe est enregistré dans l’attribut categorie_id de l’annonce. Le libellé est fourni par l’API ou par le cache local de sa dernière réponse valide. Aucune interface locale d’administration des catégories et aucune catégorie générique de remplacement ne sont créées.
+Seul l’identifiant externe est enregistré dans l’attribut categorie_id de l’annonce. Le libellé est demandé directement à l’API. Aucune interface locale d’administration des catégories et aucune catégorie générique de remplacement ne sont créées.
 
 Si l’API est indisponible ou retourne une réponse inexploitable :
 
-- la dernière liste valide présente dans le cache local peut continuer à être utilisée ;
-- sans cache exploitable, les annonces existantes restent consultables avec un libellé de catégorie indisponible ;
-- sans cache exploitable, la recherche reste disponible avec les autres critères, mais le filtre de catégorie est désactivé ;
-- sans cache exploitable, la création et la modification d’une annonce sont bloquées, car elles nécessitent une catégorie validée ;
+- les annonces existantes restent consultables avec un libellé de catégorie indisponible ;
+- la recherche reste disponible avec les autres critères, mais le filtre de catégorie est désactivé ;
+- la création et la modification d’une annonce sont bloquées, car elles nécessitent une catégorie validée ;
 - l’application affiche une erreur compréhensible sans bloquer les fonctions qui ne dépendent pas de l’API.
+
+Un petit cache local pourra être ajouté ultérieurement afin de limiter les appels répétés et de conserver temporairement les derniers libellés connus pendant une indisponibilité de l’API.
 
 ### 4.3 Création d’une annonce
 

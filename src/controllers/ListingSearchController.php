@@ -73,7 +73,14 @@ class ListingSearchController extends Controller
         $criteria = $validation['criteria'];
         $errors = $validation['errors'];
         $hasCustomCriteria = $validation['has_custom_criteria'];
-        $searchResult = $this->emptySearchResult();
+        $searchResult = [
+            'success' => true,
+            'listings' => [],
+            'total_items' => 0,
+            'current_page' => 1,
+            'total_pages' => 1,
+            'items_per_page' => self::ITEMS_PER_PAGE,
+        ];
         $stateKey = 'invalid_criteria';
         $message = 'Corrigez les champs signalés, puis relancez la recherche. Vos autres critères sont conservés.';
         $success = $errors === [];
@@ -154,10 +161,6 @@ class ListingSearchController extends Controller
 
         // JavaScript attend une structure JSON ; une navigation classique reçoit le template complet.
         if ($this->isJsonRequest()) {
-            if ($errors !== []) {
-                // NATIF PHP : http_response_code() définit le statut HTTP de la réponse ; il signale ici au client si la demande a réussi ou rencontré une erreur.
-                http_response_code(422);
-            }
 
             $this->json($response);
             return;
@@ -744,23 +747,6 @@ class ListingSearchController extends Controller
             'maximum_price' => $criteria['maximum_price_input'],
             'sale_state' => $criteria['sale_state'],
             'page' => $criteria['page'],
-        ];
-    }
-
-    /**
-     * Rôle : Fournir un résultat vide cohérent avant validation ou en cas d'erreur.
-     * Paramètres : Aucun.
-     * Retour : Structure vide de recherche et de pagination.
-     */
-    private function emptySearchResult(): array
-    {
-        return [
-            'success' => true,
-            'listings' => [],
-            'total_items' => 0,
-            'current_page' => 1,
-            'total_pages' => 1,
-            'items_per_page' => self::ITEMS_PER_PAGE,
         ];
     }
 

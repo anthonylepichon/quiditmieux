@@ -68,7 +68,16 @@ class ListingManagementController extends Controller
             $errors['form'] = 'La création ou la modification de l’annonce est impossible pour le moment.';
         }
 
-        $this->renderListingForm('create', $this->emptyListingFormValues(), $errors, $categories, []);
+        $values = [
+            'title' => '',
+            'category' => '',
+            'description' => '',
+            'item_state' => '',
+            'starting_price' => '',
+            'end_date' => '',
+            'end_time' => '',
+        ];
+        $this->renderListingForm('create', $values, $errors, $categories, []);
     }
 
     /**
@@ -467,23 +476,6 @@ class ListingManagementController extends Controller
         ];
     }
 
-    /**
-     * Rôle : Fournir les valeurs vides nécessaires au formulaire initial.
-     * Paramètres : Aucun.
-     * Retour : Valeurs vides indexées par champ.
-     */
-    private function emptyListingFormValues(): array
-    {
-        return [
-            'title' => '',
-            'category' => '',
-            'description' => '',
-            'item_state' => '',
-            'starting_price' => '',
-            'end_date' => '',
-            'end_time' => '',
-        ];
-    }
 
     /**
      * Rôle : Valider et normaliser toutes les données textuelles d'une annonce.

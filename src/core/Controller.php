@@ -38,14 +38,11 @@ class Controller
         exit;
     }
 
-    // Rôle : produire une réponse au format JSON avec le code HTTP demandé.
-    // Paramètres : $data contient les informations à convertir en JSON ;
-    // $statusCode représente le code HTTP de la réponse, 200 par défaut.
+    // Rôle : produire une réponse simple au format JSON.
+    // Paramètres : $data contient les informations à convertir en JSON.
     // Retour : Aucun. La réponse JSON est affichée puis le script est arrêté.
-    protected function json(array $data, int $statusCode = 200): void
+    protected function json(array $data): void
     {
-        // Le statut HTTP décrit le résultat de l'échange avant l'envoi du contenu JSON.
-        http_response_code($statusCode);
         // Le type de contenu permet au JavaScript d'interpréter correctement la réponse.
         header('Content-Type: application/json; charset=utf-8');
 
