@@ -224,6 +224,37 @@ class Controller
     }
 
     /**
+     * Rôle : Vérifier qu'un prix saisi contient uniquement un nombre entier d'euros compris dans la limite acceptée. Les contrôleurs de recherche et de gestion des annonces utilisent ainsi la même règle de validation.
+     * Paramètres : Valeur saisie, nom du champ, libellé affiché et tableau des erreurs à compléter.
+     * Retour : Prix converti en entier, ou null lorsque le champ est vide ou invalide.
+     */
+    protected function normalizePriceInEuros(
+        string $value,
+        string $field,
+        string $label,
+        array &$errors
+    ): ?int {
+        if ($value === '') {
+            return null;
+        }
+
+        // NATIF PHP : preg_match() vérifie ici que le prix contient uniquement des chiffres, sans signe ni décimale.
+        if (preg_match('/^[0-9]+$/D', $value) !== 1) {
+            $errors[$field] = $label . ' doit être un nombre entier d’euros, sans décimale.';
+            return null;
+        }
+
+        $priceInEuros = (int) $value;
+
+        if ($priceInEuros <= 0 || $priceInEuros > 99_999) {
+            $errors[$field] = $label . ' doit être strictement positif et rester dans la limite autorisée.';
+            return null;
+        }
+
+        return $priceInEuros;
+    }
+
+    /**
      * Rôle : Formater un montant exprimé en euros entiers. La vue reçoit ainsi une valeur cohérente et lisible sans reproduire ce formatage dans plusieurs templates.
      * Paramètres : Montant à afficher.
      * Retour : Montant lisible avec le symbole euro.

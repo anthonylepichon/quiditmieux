@@ -330,36 +330,6 @@ class ListingSearchController extends Controller
     }
 
     /**
-     * Rôle : Valider et convertir une limite de prix facultative en euros entiers. Les données transmises à l'étape suivante ont ainsi une forme cohérente et cette préparation n'est pas répétée ailleurs.
-     * Paramètres : Valeur reçue, nom du champ, libellé compréhensible et erreurs à compléter.
-     * Retour : Prix en euros ou null lorsque le champ est vide ou invalide.
-     */
-    private function normalizePriceInEuros(
-        string $value,
-        string $field,
-        string $label,
-        array &$errors
-    ): ?int {
-        if ($value === '') {
-            return null;
-        }
-
-        if (preg_match('/^[0-9]+$/D', $value) !== 1) {
-            $errors[$field] = $label . ' doit être un nombre entier d’euros, sans décimale.';
-            return null;
-        }
-
-        $priceInEuros = (int) $value;
-
-        if ($priceInEuros <= 0 || $priceInEuros > 99_999) {
-            $errors[$field] = $label . ' doit être strictement positif et rester dans la limite autorisée.';
-            return null;
-        }
-
-        return $priceInEuros;
-    }
-
-    /**
      * Rôle : Ajouter le prix courant, la photographie principale et les informations d'affichage aux annonces. Cela évite une référence sans fichier, un fichier orphelin ou l'association d'une photographie à la mauvaise annonce.
      * Paramètres : Annonces brutes, catégories fournies par l'API et instant de référence.
      * Retour : Annonces prêtes à afficher ou false en cas d'erreur SQL complémentaire.
