@@ -2,7 +2,7 @@
 
 /**
  * Description générale : Modèle des catégories fournies par l'API externe de l'application.
- * Rôle : Interroger l'API et fournir aux contrôleurs des catégories validées. Une réponse absente ou mal formée de l'API est ainsi empêchée de devenir une donnée exploitable par l'application.
+ * Rôle : Centraliser l'accès aux catégories externes afin que les contrôleurs reçoivent une liste exploitable sans connaître le fonctionnement de l'API.
  * Tâches : Charger et valider les catégories puis retrouver un libellé par identifiant.
  * Liens avec les autres fichiers : Est utilisé par les contrôleurs, n'étend pas le modèle SQL générique.
  */
@@ -22,7 +22,7 @@ class CategoryModel
     // ====================
 
     /**
-     * Rôle : Obtenir les catégories validées depuis l'API publique. Une réponse absente ou mal formée de l'API est ainsi empêchée de devenir une donnée exploitable par l'application.
+     * Rôle : Demander la liste complète des catégories à l'API et la transmettre aux contrôleurs. Ceux-ci peuvent ainsi remplir les formulaires, valider un choix et afficher les libellés disponibles.
      * Paramètres : Aucun.
      * Retour : Catégories indexées par identifiant ou null lorsque l'API est indisponible.
      */
@@ -33,7 +33,7 @@ class CategoryModel
     }
 
     /**
-     * Rôle : Retrouver le libellé d'une catégorie externe à partir de son identifiant. Une réponse absente ou mal formée de l'API est ainsi empêchée de devenir une donnée exploitable par l'application.
+     * Rôle : Retrouver le libellé correspondant à l'identifiant de catégorie enregistré avec une annonce. Cela permet d'afficher le nom de la catégorie sans le stocker dans la base de données.
      * Paramètres : Identifiant de la catégorie demandée.
      * Retour : Libellé de la catégorie ou null si les données sont indisponibles ou l'identifiant absent.
      */
@@ -54,7 +54,7 @@ class CategoryModel
     }
 
     /**
-     * Rôle : Interroger l'API externe avec des délais d'attente limités. Une réponse absente ou mal formée de l'API est ainsi empêchée de devenir une donnée exploitable par l'application.
+     * Rôle : Envoyer la demande HTTP à l'API puis convertir sa réponse JSON en tableau PHP. En cas d'échec de connexion, de statut HTTP incorrect ou de réponse inexploitable, la méthode retourne null au lieu de transmettre une donnée incorrecte.
      * Paramètres : Aucun.
      * Retour : Catégories validées ou null lorsque la requête échoue.
      */
@@ -111,7 +111,7 @@ class CategoryModel
     }
 
     /**
-     * Rôle : Contrôler et indexer une liste de catégories provenant de l'API. Une réponse absente ou mal formée de l'API est ainsi empêchée de devenir une donnée exploitable par l'application.
+     * Rôle : Vérifier que chaque catégorie reçue possède un identifiant entier positif et un libellé non vide, puis l'indexer par son identifiant. Une entrée incorrecte est ainsi refusée avant d'être utilisée dans un formulaire ou une recherche.
      * Paramètres : Tableau candidat associant un identifiant à un libellé.
      * Retour : Catégories normalisées ou null si une information est invalide.
      */
