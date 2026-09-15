@@ -2,7 +2,7 @@
 
 /**
  * Description générale : Modèle des enchères déposées sur les annonces.
- * Rôle : Valider et enregistrer les enchères puis fournir les prix courants des annonces. Cette règle évite d'afficher ou d'enregistrer un montant incompatible avec l'état réel de la vente.
+ * Rôle : Centraliser le calcul, la validation, l'enregistrement et la consultation des enchères. Les contrôleurs utilisent ainsi les mêmes règles et les mêmes données pour afficher le prix courant et accepter un nouveau montant.
  * Tâches : Déclarer la table ENCHERE, appliquer la progression minimale et calculer les meilleurs montants.
  * Liens avec les autres fichiers : Étend Model.php, complète les résultats fournis par ListingModel.php.
  */
@@ -33,7 +33,7 @@ class BidModel extends Model
     // ====================
 
     /**
-     * Rôle : Obtenir le montant courant d'une annonce en euros entiers. Cette règle évite d'afficher ou d'enregistrer un montant incompatible avec l'état réel de la vente.
+     * Rôle : Obtenir le prix courant d'une annonce en comparant son prix de départ avec sa meilleure enchère. Le montant retourné correspond ainsi toujours au prix le plus élevé enregistré pour cette vente.
      * Paramètres : Identifiant de l'annonce.
      * Retour : Montant courant en euros ou null si l'annonce est absente ou la requête échoue.
      */
@@ -59,7 +59,7 @@ class BidModel extends Model
     }
 
     /**
-     * Rôle : Obtenir le prochain montant minimal accepté pour une annonce. Cette règle évite d'afficher ou d'enregistrer un montant incompatible avec l'état réel de la vente.
+     * Rôle : Calculer le prochain montant accepté en ajoutant un euro au prix courant. Une nouvelle enchère ne peut ainsi pas être égale ou inférieure au montant déjà atteint.
      * Paramètres : Identifiant de l'annonce.
      * Retour : Montant minimal en euros ou null si le montant courant est indisponible.
      */
@@ -76,7 +76,7 @@ class BidModel extends Model
     }
 
     /**
-     * Rôle : Vérifier qu'une proposition atteint le prochain montant minimal de l'annonce. Cette règle évite d'afficher ou d'enregistrer un montant incompatible avec l'état réel de la vente.
+     * Rôle : Comparer le montant proposé avec le minimum actuellement exigé. Le contrôleur reçoit ainsi la décision et le minimum à afficher sans recalculer lui-même la règle d'enchère.
      * Paramètres : Identifiant de l'annonce et montant proposé en euros.
      * Retour : Décision métier et minimum attendu, ou null si le montant courant est indisponible.
      */
@@ -96,7 +96,7 @@ class BidModel extends Model
     }
 
     /**
-     * Rôle : Calculer en euros entiers le prix courant de chaque annonce demandée. Cette règle évite d'afficher ou d'enregistrer un montant incompatible avec l'état réel de la vente.
+     * Rôle : Calculer le prix courant de plusieurs annonces dans une seule requête. Cela évite d'interroger séparément la base pour chaque carte affichée dans une liste de résultats.
      * Paramètres : Liste d'identifiants d'annonces et prix de départ indexés par annonce.
      * Retour : Prix courants en euros indexés par annonce ou false en cas de donnée invalide ou d'erreur SQL.
      */
@@ -112,8 +112,6 @@ class BidModel extends Model
             }
 
             $startingAmountInEuros = (int) $startingPrices[$identifier];
-
-
 
             $currentAmountsInEuros[$identifier] = $startingAmountInEuros;
         }
@@ -152,8 +150,6 @@ class BidModel extends Model
             $identifier = (int) $row['annonce_id'];
             $bestBidInEuros = (int) $row['best_bid'];
 
-
-
             $currentAmountsInEuros[$identifier] = $bestBidInEuros;
         }
 
@@ -161,7 +157,7 @@ class BidModel extends Model
     }
 
     /**
-     * Rôle : Obtenir le nombre d'enchères, le meilleur montant et son auteur pour une annonce. Cette règle évite d'afficher ou d'enregistrer un montant incompatible avec l'état réel de la vente.
+     * Rôle : Regrouper le nombre d'enchères, le meilleur montant et l'identifiant du meilleur enchérisseur. Une seule lecture fournit ainsi au détail de l'annonce un résumé cohérent de la vente.
      * Paramètres : Identifiant de l'annonce.
      * Retour : Résumé des enchères ou false en cas d'erreur SQL.
      */
@@ -197,8 +193,6 @@ class BidModel extends Model
 
         if (isset($summary['best_bid'])) {
             $bestBidInEuros = (int) $summary['best_bid'];
-
-
         }
 
         if (isset($summary['best_bidder_id'])) {
@@ -213,7 +207,7 @@ class BidModel extends Model
     }
 
     /**
-     * Rôle : Indiquer si un utilisateur a déjà enchéri sur une annonce. L'appelant reçoit ainsi une donnée prévisible sans devoir connaître directement son mode de stockage.
+     * Rôle : Indiquer si un utilisateur a déjà déposé une enchère sur une annonce. Le contrôleur peut ainsi reconnaître sa participation et décider s'il est autorisé à consulter l'historique détaillé.
      * Paramètres : Identifiants de l'annonce et de l'utilisateur.
      * Retour : true si une enchère correspond, false sinon, ou null en cas d'erreur SQL.
      */
@@ -234,7 +228,7 @@ class BidModel extends Model
     }
 
     /**
-     * Rôle : Enregistrer une enchère validée par le modèle. Cette règle évite d'afficher ou d'enregistrer un montant incompatible avec l'état réel de la vente.
+     * Rôle : Enregistrer définitivement une enchère dont l'utilisateur, l'annonce et le montant ont déjà été validés. La date conservée permet ensuite de départager et de retracer les propositions.
      * Paramètres : Identifiants, montant proposé en euros et instant de référence.
      * Retour : true lorsque l'enchère est enregistrée, sinon false.
      */
@@ -254,7 +248,7 @@ class BidModel extends Model
     }
 
     /**
-     * Rôle : Récupérer l'historique détaillé et ordonné des enchères d'une annonce. Cette règle évite d'afficher ou d'enregistrer un montant incompatible avec l'état réel de la vente.
+     * Rôle : Récupérer l'historique des enchères d'une annonce avec le pseudo de chaque participant. L'ordre choisi affiche d'abord le meilleur montant et départage les montants identiques par leur date puis leur identifiant.
      * Paramètres : Identifiant de l'annonce.
      * Retour : Liste des enchères ou false en cas d'erreur SQL.
      */
