@@ -180,9 +180,7 @@ abstract class Model
     }
 
     /**
-     * Rôle : Préparer une liste fiable d'identifiants d'annonces avant de l'utiliser dans une
-     * requête SQL groupée. Ce contrôle évite de rechercher des identifiants nuls ou négatifs
-     * et d'interroger plusieurs fois la même annonce, ce qui produirait des traitements inutiles.
+     * Rôle : Préparer une liste fiable d'identifiants d'annonces avant de l'utiliser dans une requête SQL groupée. Ce contrôle évite de rechercher des identifiants nuls ou négatifs et d'interroger plusieurs fois la même annonce, ce qui produirait des traitements inutiles.
      * Paramètres : $identifiers contient les identifiants à contrôler.
      * Retour : Liste d'identifiants entiers, positifs et sans doublon.
      */
