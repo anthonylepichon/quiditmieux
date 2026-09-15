@@ -53,9 +53,9 @@ class ListingSearchController extends Controller
     }
 
     /**
-     * Rôle : Afficher l'accueil ou renvoyer les résultats actualisés d'une recherche paginée. Cela évite qu'un critère invalide produise une requête incohérente, une mauvaise page ou un résultat difficile à afficher.
+     * Rôle : Afficher l'accueil avec les résultats d'une recherche paginée. Cela évite qu'un critère invalide produise une requête incohérente, une mauvaise page ou un résultat difficile à afficher.
      * Paramètres : Aucun, les critères sont lus dans la requête GET.
-     * Retour : Aucun, une réponse HTML ou JSON est envoyée au navigateur.
+     * Retour : Aucun, la page HTML complète est envoyée au navigateur.
      */
     public function search(): void
     {
@@ -136,9 +136,7 @@ class ListingSearchController extends Controller
             $categories,
             $pagination
         );
-        $response = [
-            'success' => $success,
-            'message' => $message,
+        $pageData = [
             'state_key' => $stateKey,
             'criteria' => $publicCriteria,
             'errors' => $errors,
@@ -159,14 +157,8 @@ class ListingSearchController extends Controller
             'flash_notice' => $this->session->getFlashMessage('notice'),
         ];
 
-        // JavaScript attend une structure JSON ; une navigation classique reçoit le template complet.
-        if ($this->isJsonRequest()) {
-
-            $this->json($response);
-            return;
-        }
-
-        $this->render('pages/home.php', $response);
+        // Chaque recherche et chaque changement de page produisent une nouvelle page HTML complète.
+        $this->render('pages/home.php', $pageData);
     }
 
     /**
@@ -475,7 +467,7 @@ class ListingSearchController extends Controller
     /**
      * Rôle : Produire un message compréhensible adapté à l'état courant de l'accueil. L'utilisateur sait ainsi si la liste est vide, si ses critères sont invalides ou si la recherche a rencontré une erreur.
      * Paramètres : Clé d'état et résultat paginé.
-     * Retour : Message destiné à l'affichage ou à la réponse JSON.
+     * Retour : Message destiné à l'affichage dans la page d'accueil.
      */
     private function buildStateMessage(string $stateKey, array $searchResult): string
     {

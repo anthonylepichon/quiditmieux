@@ -545,10 +545,12 @@ JavaScript améliore l’interface, mais les fonctions essentielles restent orga
 AJAX permet d’envoyer une demande au serveur et de mettre à jour une partie de la page sans la recharger entièrement. Dans le projet, il est utilisé pour :
 
 - actualiser le tableau de bord ;
-- rechercher et paginer les annonces ;
 - suivre ou arrêter de suivre une annonce ;
-- déposer une enchère ;
-- faire fonctionner le carrousel de photographies.
+- déposer une enchère.
+
+La recherche et la pagination utilisent une requête GET classique. PHP reçoit les critères et le numéro de page, SQL récupère uniquement les annonces nécessaires avec `LIMIT` et `OFFSET`, puis la page HTML complète est rechargée. Cette solution est plus simple à expliquer et fonctionne sans JavaScript.
+
+Le carrousel de photographies utilise JavaScript uniquement dans le navigateur ; il n’envoie pas de requête AJAX au serveur.
 
 Les actualisations du tableau de bord respectent le besoin fonctionnel : les ventes sont actualisées toutes les 10 secondes et les annonces suivies ou enchéries toutes les 2 secondes.
 

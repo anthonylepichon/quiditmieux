@@ -4,7 +4,7 @@
  * Description générale : Page publique d'accueil et de recherche des annonces.
  * Rôle : Afficher le formulaire multicritère, les états de recherche, les cartes et la pagination. Le template reste ainsi consacré à la présentation des données déjà préparées, sans décider des règles métier.
  * Tâches : Présenter les données préparées par ListingSearchController et fournir une navigation sans JavaScript.
- * Liens avec les autres fichiers : Est affiché par ListingSearchController.php, inséré dans base.php et complété par home.js.
+ * Liens avec les autres fichiers : Est affiché par ListingSearchController.php et inséré dans base.php.
  */
 
 /** @var array<string, mixed> $data Données préparées par le contrôleur. */
@@ -29,7 +29,6 @@ $totalItems = (int) $data['total_items'];
 $currentPage = 'home';
 $pageTitle = 'Accueil — QUIDITMIEUX';
 $pageDescription = 'Consultez et recherchez les ventes aux enchères QUIDITMIEUX.';
-$pageScripts = ['public/assets/js/home.js'];
 $featuredListing = null;
 $paginationUrls = [];
 
