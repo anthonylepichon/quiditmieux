@@ -13,6 +13,9 @@ if (!headers_sent()) {
     header('Content-Type: text/html; charset=UTF-8');
 }
 
+// NATIF PHP : date_default_timezone_set() définit le fuseau utilisé par PHP pour créer, comparer et afficher les dates ; l’application utilise ici l’heure française pour toutes les échéances.
+date_default_timezone_set('Europe/Paris');
+
 // L’autoloader Composer permet de charger automatiquement les classes utilisées.
 require_once __DIR__ . '/vendor/autoload.php';
 
