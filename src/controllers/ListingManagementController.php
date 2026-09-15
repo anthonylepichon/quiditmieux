@@ -973,32 +973,6 @@ class ListingManagementController extends Controller
             $categoryPlaceholder = 'Indisponible';
         }
 
-        $bidCountLabel = $bidCount . ' enchère';
-        $hasBidAttribute = 'false';
-        $isBestBidderAttribute = 'false';
-        $actionsClass = 'listing-summary__actions';
-        $defaultParticipationLabel = $saleStatusLabel;
-
-        if ($bidCount > 1) {
-            $bidCountLabel .= 's';
-        }
-
-        if ($viewer['has_bid']) {
-            $hasBidAttribute = 'true';
-        }
-
-        if ($viewer['is_best_bidder']) {
-            $isBestBidderAttribute = 'true';
-        }
-
-        if ($isEnded) {
-            $actionsClass .= ' listing-summary__actions--ended';
-        }
-
-        if ($viewer['is_connected'] && !$viewer['is_owner']) {
-            $defaultParticipationLabel = 'Annonce non suivie';
-        }
-
         return [
             'is_edit_mode' => $isEditMode,
             'is_locked' => $isLocked,

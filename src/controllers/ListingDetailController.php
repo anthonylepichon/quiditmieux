@@ -484,6 +484,32 @@ class ListingDetailController extends Controller
             $visitorInvitation = 'Connectez-vous pour suivre cette annonce ou enchérir.';
         }
 
+        $bidCountLabel = $bidCount . ' enchère';
+        $hasBidAttribute = 'false';
+        $isBestBidderAttribute = 'false';
+        $actionsClass = 'listing-summary__actions';
+        $defaultParticipationLabel = $saleStatusLabel;
+
+        if ($bidCount > 1) {
+            $bidCountLabel .= 's';
+        }
+
+        if ($viewer['has_bid']) {
+            $hasBidAttribute = 'true';
+        }
+
+        if ($viewer['is_best_bidder']) {
+            $isBestBidderAttribute = 'true';
+        }
+
+        if ($isEnded) {
+            $actionsClass .= ' listing-summary__actions--ended';
+        }
+
+        if ($viewer['is_connected'] && !$viewer['is_owner']) {
+            $defaultParticipationLabel = 'Annonce non suivie';
+        }
+
         return [
             'sale_status_label' => $saleStatusLabel,
             'final_result_title' => $finalResultTitle,
