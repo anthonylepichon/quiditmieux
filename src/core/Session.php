@@ -112,7 +112,7 @@ class Session
     }
 
     /**
-     * Rôle : Enregistrer un message temporaire destiné à la prochaine page affichée.
+     * Rôle : Conserver temporairement dans la session un message préparé par un contrôleur avant une redirection. La page affichée après la redirection pourra ainsi récupérer ce message et informer l’utilisateur du résultat de l’action réalisée.
      * Paramètres : Type du message et texte à afficher.
      * Retour : Aucun.
      */
@@ -131,7 +131,7 @@ class Session
     }
 
     /**
-     * Rôle : Récupérer puis supprimer un message temporaire de la session.
+     * Rôle : Récupérer un message temporaire enregistré dans la session sous le type demandé, puis le supprimer immédiatement afin qu’il ne soit affiché qu’une seule fois après la redirection.
      * Paramètres : Type du message recherché.
      * Retour : Texte du message ou null lorsqu'il est absent.
      */

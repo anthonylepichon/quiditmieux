@@ -73,7 +73,7 @@ abstract class Model
             $parameters[':' . $field] = $value;
         }
 
-        // NATIF PHP : implode() assemble les noms de colonnes et les marqueurs validés pour construire la requête.
+        // NATIF PHP : implode() transforme un tableau en une chaîne de caractères. Ici, il sépare par des virgules les noms des colonnes et les emplacements comme :pseudo ou :email afin de construire la requête SQL.
         $sql = 'INSERT INTO ' . $this->tableName
             . ' (' . implode(', ', $fields) . ')'
             . ' VALUES (' . implode(', ', $placeholders) . ')';
@@ -165,7 +165,7 @@ abstract class Model
     }
 
     /**
-     * Rôle : Lire une valeur conservée après la création d'un enregistrement.
+     * Rôle : Récupérer l’identifiant attribué automatiquement par la base de données au dernier enregistrement ajouté.
      * Paramètres : Nom du champ à lire.
      * Retour : Valeur du champ ou null lorsque le champ est absent.
      */
@@ -180,35 +180,23 @@ abstract class Model
     }
 
     /**
-     * Rôle : Conserver uniquement les identifiants entiers strictement positifs et supprimer les doublons.
-     * Paramètres : Liste d'identifiants à contrôler.
-     * Retour : Liste des identifiants valides et uniques.
+     * Rôle : Préparer la liste des identifiants d'annonces utilisée dans les requêtes SQL groupées. La méthode transforme les valeurs en nombres entiers, ignore les identifiants inférieurs à 1 et retire les doublons.
+     * Paramètres : $identifiers contient les identifiants à contrôler.
+     * Retour : Liste d'identifiants entiers, positifs et sans doublon.
      */
     protected function normalizePositiveIdentifiers(array $identifiers): array
     {
-        $normalizedIdentifiers = [];
+        $validIdentifiers = [];
 
         foreach ($identifiers as $identifier) {
-            if (!is_int($identifier) && !is_string($identifier)) {
-                continue;
+            $identifier = (int) $identifier;
+
+            // NATIF PHP : in_array() vérifie si l'identifiant est déjà présent afin d'éviter les doublons.
+            if ($identifier > 0 && !in_array($identifier, $validIdentifiers, true)) {
+                $validIdentifiers[] = $identifier;
             }
-
-            // NATIF PHP : filter_var() avec FILTER_VALIDATE_INT vérifie que la valeur est un entier positif.
-            $normalizedIdentifier = filter_var(
-                $identifier,
-                FILTER_VALIDATE_INT,
-                ['options' => ['min_range' => 1]]
-            );
-
-            if ($normalizedIdentifier === false) {
-                continue;
-            }
-
-            // L'identifiant sert de clé afin qu'une même valeur ne puisse apparaître qu'une seule fois.
-            $normalizedIdentifiers[(int) $normalizedIdentifier] = (int) $normalizedIdentifier;
         }
 
-        // NATIF PHP : array_values() retire les clés techniques et retourne une liste simple.
-        return array_values($normalizedIdentifiers);
+        return $validIdentifiers;
     }
 }
