@@ -180,7 +180,9 @@ abstract class Model
     }
 
     /**
-     * Rôle : Préparer la liste des identifiants d'annonces utilisée dans les requêtes SQL groupées. La méthode transforme les valeurs en nombres entiers, ignore les identifiants inférieurs à 1 et retire les doublons.
+     * Rôle : Préparer une liste fiable d'identifiants d'annonces avant de l'utiliser dans une
+     * requête SQL groupée. Ce contrôle évite de rechercher des identifiants nuls ou négatifs
+     * et d'interroger plusieurs fois la même annonce, ce qui produirait des traitements inutiles.
      * Paramètres : $identifiers contient les identifiants à contrôler.
      * Retour : Liste d'identifiants entiers, positifs et sans doublon.
      */
