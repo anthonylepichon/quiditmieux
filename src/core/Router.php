@@ -47,18 +47,19 @@ class Router
         $this->routes = $routes;
     }
 
-    // Rôle : rechercher la route demandée, identifier le contrôleur et la méthode qui lui correspondent, puis exécuter cette méthode.
-    // Paramètres : Aucun paramètre dans la signature. Le nom de la route est récupéré dans l’adresse avec $_GET['route']. En son absence, la route home est utilisée.
-    // Retour : Aucun. La méthode exécute directement l’action du contrôleur, produit une réponse HTTP 404 si la route est absente
-    // ou une réponse HTTP 405 si la méthode GET ou POST reçue n’est pas autorisée.
+    /**
+     * Rôle : Rechercher la route demandée, vérifier sa configuration puis exécuter la méthode du contrôleur associé.
+     * Paramètres : Nom de la route transmis par App et méthode HTTP utilisée pour envoyer la demande.
+     * Retour : Aucun. La méthode exécute l'action prévue ou arrête le traitement avec une réponse 404 ou 405.
+     */
     public function dispatch(string $routeName, string $requestMethod): void
     {
         // La route provient d'App, qui a déjà refusé les structures inattendues de la requête.
         // Seules les routes enregistrées dans routes.php peuvent être exécutées.
-        // La page des recettes constitue la page d’accueil de l’application.
-        // La route home est utilisée lorsqu’aucune route n’est indiquée.
+        // App transmet déjà la route home lorsqu'aucun nom de route n'est présent dans l'adresse.
         // (SECURITE: "Seules les routes de la liste déclarée peuvent être exécutées, ce qui empêche de choisir librement une classe ou une méthode dans l'adresse.")
         // Le traitement doit s’arrêter si la route demandée n’a pas été enregistrée.
+        // NATIF PHP : isset() vérifie que le nom reçu correspond à une entrée présente dans le tableau des routes.
         if (!isset($this->routes[$routeName])) {
             $this->notFound('Route introuvable : ' . $routeName);
             return;
