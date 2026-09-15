@@ -1,6 +1,6 @@
 <mxfile host="65bd71144e">
     <diagram id="RTCrTQcJwAPzE6Jww3a0" name="Schéma ergonomique simplifié">
-        <mxGraphModel dx="-2703" dy="9" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+        <mxGraphModel dx="4040" dy="3220" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
@@ -3976,13 +3976,13 @@
                 <mxCell id="0FQZbP0Zo8suZgFqazNE-1" value="&lt;span style=&quot;color: rgb(18, 13, 52); font-family: Lato; font-size: 60px; font-weight: 700;&quot;&gt;AuthController&lt;/span&gt;&lt;br style=&quot;color: rgb(18, 13, 52); font-family: Lato; font-size: 60px;&quot;&gt;&lt;span style=&quot;color: rgb(18, 13, 52); font-family: Lato; font-size: 60px;&quot;&gt;- Afficher le formulaire d’inscription&lt;br&gt;- Inscrire un utilisateur&lt;br&gt;- Afficher le formulaire de connexion&lt;br&gt;- Connecter un utilisateur&lt;br&gt;- Déconnecter l’utilisateur&lt;/span&gt;" style="ellipse;whiteSpace=wrap;html=1;shapeInside=1;strokeWidth=10;" parent="1" vertex="1">
                     <mxGeometry x="11014" y="3590" width="1516" height="844" as="geometry"/>
                 </mxCell>
-                <mxCell id="0FQZbP0Zo8suZgFqazNE-5252" value="&lt;div style=&quot;font-family: Lato; font-size: 60px; line-height: 1.25; text-align: center; color: rgb(18, 13, 52);&quot;&gt;&lt;span style=&quot;font-weight:700;&quot;&gt;ListingController&lt;/span&gt;&lt;br&gt;&lt;span style=&quot;font-weight:400;&quot;&gt;- Afficher et rechercher les annonces&lt;br&gt;- Afficher le détail d’une annonce&lt;br&gt;- Afficher le formulaire de création d’une annonce&lt;br&gt;- Créer une annonce&lt;br&gt;- Afficher le formulaire de modification d’une annonce&lt;br&gt;- Modifier une annonce&lt;br&gt;- Supprimer une annonce&lt;/span&gt;&lt;/div&gt;" style="ellipse;whiteSpace=wrap;html=1;shapeInside=1;strokeWidth=10;" parent="1" controllerName="ListingController" controllerRole="controller" vertex="1">
-                    <mxGeometry x="10690" y="7780" width="1797" height="1097" as="geometry"/>
+                <mxCell id="0FQZbP0Zo8suZgFqazNE-5252" value="&lt;div style=&quot;font-family: Lato; font-size: 60px; line-height: 1.25; text-align: center; color: rgb(18, 13, 52);&quot;&gt;&lt;span style=&quot;font-weight:700;&quot;&gt;ListingSearchController&lt;/span&gt;&lt;/div&gt;&lt;div style=&quot;font-family: Lato; font-size: 60px; line-height: 1.25; text-align: center; color: rgb(18, 13, 52);&quot;&gt;&lt;b&gt;&lt;br&gt;&lt;/b&gt;&lt;span style=&quot;font-weight:400;&quot;&gt;- Afficher et rechercher les annonces&lt;br&gt;&lt;/span&gt;&lt;/div&gt;" style="ellipse;whiteSpace=wrap;html=1;shapeInside=1;strokeWidth=10;" parent="1" controllerName="ListingController" controllerRole="controller" vertex="1">
+                    <mxGeometry x="8759" y="7763" width="1450.9" height="775" as="geometry"/>
                 </mxCell>
                 <mxCell id="0FQZbP0Zo8suZgFqazNE-5253" value="&lt;div style=&quot;font-family:Lato;font-size:60px;line-height:1.25;text-align:center;color:#120d34;&quot;&gt;&lt;span style=&quot;font-weight:700;&quot;&gt;ParticipationController&lt;/span&gt;&lt;br&gt;&lt;span style=&quot;font-weight:400;&quot;&gt;- Enregistrer une enchère&lt;br&gt;- Suivre une annonce&lt;br&gt;- Arrêter de suivre une annonce&lt;/span&gt;&lt;/div&gt;" style="ellipse;whiteSpace=wrap;html=1;shapeInside=1;strokeWidth=10;" parent="1" controllerName="ParticipationController" controllerRole="controller" vertex="1">
                     <mxGeometry x="11038" y="12670" width="1236" height="591" as="geometry"/>
                 </mxCell>
-                <mxCell id="0FQZbP0Zo8suZgFqazNE-5254" value="&lt;div style=&quot;font-family:Lato;font-size:60px;line-height:1.25;text-align:center;color:#120d34;&quot;&gt;&lt;span style=&quot;font-weight:700;&quot;&gt;UserController&lt;/span&gt;&lt;br&gt;&lt;span style=&quot;font-weight:400;&quot;&gt;- Afficher le tableau de bord&lt;br&gt;- Actualiser les ventes actives du vendeur&lt;br&gt;- Actualiser les annonces suivies ou enchéries&lt;br&gt;- Afficher le formulaire de modification du compte&lt;br&gt;- Modifier le compte de l’utilisateur&lt;/span&gt;&lt;/div&gt;" style="ellipse;whiteSpace=wrap;html=1;shapeInside=1;strokeWidth=10;" parent="1" controllerName="UserController" controllerRole="controller" vertex="1">
+                <mxCell id="0FQZbP0Zo8suZgFqazNE-5254" value="&lt;div style=&quot;font-family: Lato; font-size: 60px; line-height: 1.25; text-align: center; color: rgb(18, 13, 52);&quot;&gt;&lt;span style=&quot;font-weight:700;&quot;&gt;DashboardController&lt;/span&gt;&lt;br&gt;&lt;span style=&quot;font-weight:400;&quot;&gt;- Afficher le tableau de bord&lt;br&gt;- Actualiser les ventes actives du vendeur&lt;br&gt;- Actualiser les annonces suivies ou enchéries&lt;br&gt;&lt;/span&gt;&lt;/div&gt;" style="ellipse;whiteSpace=wrap;html=1;shapeInside=1;strokeWidth=10;" parent="1" controllerName="UserController" controllerRole="controller" vertex="1">
                     <mxGeometry x="15590" y="10220" width="1549" height="744" as="geometry"/>
                 </mxCell>
                 <mxCell id="0FQZbP0Zo8suZgFqazNE-5255" value="Afficher le formulaire&lt;div&gt;d’inscription&lt;/div&gt;" style="rounded=0;jumpStyle=arc;jumpSize=24;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#3c1272;strokeWidth=10;align=center;verticalAlign=middle;fontFamily=Lato;fontSize=40;fontColor=#120d34;labelBackgroundColor=#FFFF00;endArrow=block;endFill=1;sourcePerimeterSpacing=0;targetPerimeterSpacing=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;startSize=6;curved=1;entryX=0;entryY=1;entryDx=0;entryDy=0;endSize=24;" parent="1" source="0FQZbP0Zo8suZgFqazNE-25" target="0FQZbP0Zo8suZgFqazNE-1" edge="1" routeController="TO3_byNrKNhWi6sV6EuF-2" routeRole="call">
@@ -4020,28 +4020,28 @@
                         <mxPoint x="14280" y="4664.000244140625" as="sourcePoint"/>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="0FQZbP0Zo8suZgFqazNE-5261" value="Afficher le détail&lt;div&gt;d’une annonce&lt;/div&gt;" style="shape=connector;rounded=0;jumpStyle=arc;jumpSize=24;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#3c1272;strokeWidth=10;align=center;verticalAlign=middle;fontFamily=Lato;fontSize=40;fontColor=#120d34;labelBackgroundColor=#FFFF00;endArrow=block;endFill=1;endSize=24;sourcePerimeterSpacing=0;targetPerimeterSpacing=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.2;entryDx=0;entryDy=0;curved=1;" parent="1" source="0FQZbP0Zo8suZgFqazNE-109" target="0FQZbP0Zo8suZgFqazNE-5252" edge="1" routeController="controller-listing" routeRole="call">
-                    <mxGeometry x="0.0288" y="198" relative="1" as="geometry">
-                        <mxPoint x="1" y="1" as="offset"/>
+                <mxCell id="0FQZbP0Zo8suZgFqazNE-5261" value="Afficher le détail&lt;div&gt;d’une annonce&lt;/div&gt;" style="shape=connector;rounded=0;jumpStyle=arc;jumpSize=24;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#3c1272;strokeWidth=10;align=center;verticalAlign=middle;fontFamily=Lato;fontSize=40;fontColor=#120d34;labelBackgroundColor=#FFFF00;endArrow=block;endFill=1;endSize=24;sourcePerimeterSpacing=0;targetPerimeterSpacing=0;exitX=0;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;curved=1;" parent="1" source="0FQZbP0Zo8suZgFqazNE-110" target="HPjl0tGnjJfdN4wa3_h5-1" edge="1" routeController="controller-listing" routeRole="call">
+                    <mxGeometry x="-0.2119" y="304" relative="1" as="geometry">
+                        <mxPoint x="3" y="-1" as="offset"/>
                         <Array as="points">
-                            <mxPoint x="8830" y="7460"/>
+                            <mxPoint x="6241" y="6496"/>
                         </Array>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="0FQZbP0Zo8suZgFqazNE-5262" value="Afficher le formulaire&lt;div&gt;de création&lt;/div&gt;" style="rounded=0;jumpStyle=arc;jumpSize=24;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#3c1272;strokeWidth=10;align=center;verticalAlign=middle;fontFamily=Lato;fontSize=40;fontColor=#120d34;labelBackgroundColor=#FFFF00;endArrow=block;endFill=1;sourcePerimeterSpacing=0;targetPerimeterSpacing=0;endSize=24;exitX=0.25;exitY=0;exitDx=0;exitDy=0;curved=1;" parent="1" source="0FQZbP0Zo8suZgFqazNE-20" target="0FQZbP0Zo8suZgFqazNE-5252" edge="1" routeController="controller-listing" routeRole="call">
-                    <mxGeometry x="0.1016" y="-113" relative="1" as="geometry">
-                        <mxPoint x="-1" y="1" as="offset"/>
+                <mxCell id="0FQZbP0Zo8suZgFqazNE-5262" value="Afficher le formulaire&lt;div&gt;de création&lt;/div&gt;" style="rounded=0;jumpStyle=arc;jumpSize=24;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#3c1272;strokeWidth=10;align=center;verticalAlign=middle;fontFamily=Lato;fontSize=40;fontColor=#120d34;labelBackgroundColor=#FFFF00;endArrow=block;endFill=1;sourcePerimeterSpacing=0;targetPerimeterSpacing=0;endSize=24;exitX=0.25;exitY=1;exitDx=0;exitDy=0;curved=1;entryX=0;entryY=0;entryDx=0;entryDy=0;" parent="1" source="0FQZbP0Zo8suZgFqazNE-212" target="HPjl0tGnjJfdN4wa3_h5-2" edge="1" routeController="controller-listing" routeRole="call">
+                    <mxGeometry x="0.4217" y="-157" relative="1" as="geometry">
+                        <mxPoint x="-1" y="-2" as="offset"/>
                         <Array as="points">
-                            <mxPoint x="10590" y="9330"/>
+                            <mxPoint x="11348" y="5708"/>
                         </Array>
                         <mxPoint x="10531.750000000002" y="10062" as="sourcePoint"/>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="0FQZbP0Zo8suZgFqazNE-5263" value="Créer une&amp;nbsp;&lt;div&gt;annonce&lt;/div&gt;" style="shape=connector;rounded=0;jumpStyle=arc;jumpSize=24;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#3c1272;strokeWidth=10;align=center;verticalAlign=middle;fontFamily=Lato;fontSize=40;fontColor=#120d34;labelBackgroundColor=#FFFF00;endArrow=block;endFill=1;endSize=24;sourcePerimeterSpacing=0;targetPerimeterSpacing=0;exitX=0;exitY=0.75;exitDx=0;exitDy=0;entryX=0.637;entryY=0.026;entryDx=0;entryDy=0;entryPerimeter=0;curved=1;" parent="1" source="0FQZbP0Zo8suZgFqazNE-3134" target="0FQZbP0Zo8suZgFqazNE-5252" edge="1" routeController="controller-listing" routeRole="call">
+                <mxCell id="0FQZbP0Zo8suZgFqazNE-5263" value="Créer une&amp;nbsp;&lt;div&gt;annonce&lt;/div&gt;" style="shape=connector;rounded=0;jumpStyle=arc;jumpSize=24;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#3c1272;strokeWidth=10;align=center;verticalAlign=middle;fontFamily=Lato;fontSize=40;fontColor=#120d34;labelBackgroundColor=#FFFF00;endArrow=block;endFill=1;endSize=24;sourcePerimeterSpacing=0;targetPerimeterSpacing=0;exitX=0;exitY=0.75;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;curved=1;" parent="1" source="0FQZbP0Zo8suZgFqazNE-3134" target="HPjl0tGnjJfdN4wa3_h5-2" edge="1" routeController="controller-listing" routeRole="call">
                     <mxGeometry x="-0.1373" y="169" relative="1" as="geometry">
                         <mxPoint x="-1" y="1" as="offset"/>
                         <Array as="points">
-                            <mxPoint x="12130" y="6790"/>
+                            <mxPoint x="12557" y="6932"/>
                         </Array>
                         <mxPoint x="11750" y="7590" as="targetPoint"/>
                     </mxGeometry>
@@ -4051,25 +4051,28 @@
                         <mxPoint x="-1" y="1" as="offset"/>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="0FQZbP0Zo8suZgFqazNE-5264" value="Afficher le formulaire&amp;nbsp;&lt;div&gt;de modification&lt;/div&gt;" style="shape=connector;rounded=0;jumpStyle=arc;jumpSize=24;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#3c1272;strokeWidth=10;align=center;verticalAlign=middle;fontFamily=Lato;fontSize=40;fontColor=#120d34;labelBackgroundColor=#FFFF00;endArrow=block;endFill=1;endSize=24;sourcePerimeterSpacing=0;targetPerimeterSpacing=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.806;entryY=0.896;entryDx=0;entryDy=0;entryPerimeter=0;curved=1;" parent="1" source="0FQZbP0Zo8suZgFqazNE-1453" target="0FQZbP0Zo8suZgFqazNE-5252" edge="1" routeController="controller-listing" routeRole="call">
-                    <mxGeometry x="0.2041" y="88" relative="1" as="geometry">
-                        <mxPoint as="offset"/>
+                <mxCell id="0FQZbP0Zo8suZgFqazNE-5264" value="Afficher le formulaire&amp;nbsp;&lt;div&gt;de modification&lt;/div&gt;" style="shape=connector;rounded=0;jumpStyle=arc;jumpSize=24;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#3c1272;strokeWidth=10;align=center;verticalAlign=middle;fontFamily=Lato;fontSize=40;fontColor=#120d34;labelBackgroundColor=#FFFF00;endArrow=block;endFill=1;endSize=24;sourcePerimeterSpacing=0;targetPerimeterSpacing=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0;entryY=1;entryDx=0;entryDy=0;curved=1;" parent="1" source="0FQZbP0Zo8suZgFqazNE-1453" target="HPjl0tGnjJfdN4wa3_h5-2" edge="1" routeController="controller-listing" routeRole="call">
+                    <mxGeometry x="0.0314" y="-288" relative="1" as="geometry">
+                        <mxPoint x="1" y="1" as="offset"/>
                         <Array as="points">
-                            <mxPoint x="12500" y="9680"/>
+                            <mxPoint x="11288" y="9324"/>
                         </Array>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="0FQZbP0Zo8suZgFqazNE-5265" value="Modifier&amp;nbsp;&lt;div&gt;une annonce&lt;/div&gt;" style="shape=connector;rounded=0;jumpStyle=arc;jumpSize=24;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#3c1272;strokeWidth=10;align=center;verticalAlign=middle;fontFamily=Lato;fontSize=40;fontColor=#120d34;labelBackgroundColor=#FFFF00;endArrow=block;endFill=1;endSize=24;sourcePerimeterSpacing=0;targetPerimeterSpacing=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;curved=1;entryX=0.898;entryY=0.201;entryDx=0;entryDy=0;entryPerimeter=0;" parent="1" source="0FQZbP0Zo8suZgFqazNE-3429" target="0FQZbP0Zo8suZgFqazNE-5252" edge="1" routeController="controller-listing" routeRole="call">
-                    <mxGeometry x="-0.0117" relative="1" as="geometry">
-                        <mxPoint x="-1" as="offset"/>
+                <mxCell id="0FQZbP0Zo8suZgFqazNE-5265" value="Modifier&amp;nbsp;&lt;div&gt;une annonce&lt;/div&gt;" style="shape=connector;rounded=0;jumpStyle=arc;jumpSize=24;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#3c1272;strokeWidth=10;align=center;verticalAlign=middle;fontFamily=Lato;fontSize=40;fontColor=#120d34;labelBackgroundColor=#FFFF00;endArrow=block;endFill=1;endSize=24;sourcePerimeterSpacing=0;targetPerimeterSpacing=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;curved=1;entryX=1;entryY=0;entryDx=0;entryDy=0;" parent="1" source="0FQZbP0Zo8suZgFqazNE-3429" target="HPjl0tGnjJfdN4wa3_h5-2" edge="1" routeController="controller-listing" routeRole="call">
+                    <mxGeometry x="-0.0635" y="-218" relative="1" as="geometry">
+                        <mxPoint as="offset"/>
+                        <Array as="points">
+                            <mxPoint x="14341" y="7556"/>
+                        </Array>
                         <mxPoint x="12470" y="7610" as="targetPoint"/>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="0FQZbP0Zo8suZgFqazNE-5266" value="Supprimer&lt;div&gt;&amp;nbsp;une annonce&lt;/div&gt;" style="shape=connector;rounded=0;jumpStyle=arc;jumpSize=24;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#3c1272;strokeWidth=10;align=center;verticalAlign=middle;fontFamily=Lato;fontSize=40;fontColor=#120d34;labelBackgroundColor=#FFFF00;endArrow=block;endFill=1;endSize=24;sourcePerimeterSpacing=0;targetPerimeterSpacing=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.978;entryY=0.359;entryDx=0;entryDy=0;entryPerimeter=0;curved=1;" parent="1" source="0FQZbP0Zo8suZgFqazNE-3432" target="0FQZbP0Zo8suZgFqazNE-5252" edge="1" routeController="controller-listing" routeRole="call">
-                    <mxGeometry x="0.0436" y="-187" relative="1" as="geometry">
-                        <mxPoint x="1" y="-1" as="offset"/>
+                <mxCell id="0FQZbP0Zo8suZgFqazNE-5266" value="Supprimer&lt;div&gt;&amp;nbsp;une annonce&lt;/div&gt;" style="shape=connector;rounded=0;jumpStyle=arc;jumpSize=24;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#3c1272;strokeWidth=10;align=center;verticalAlign=middle;fontFamily=Lato;fontSize=40;fontColor=#120d34;labelBackgroundColor=#FFFF00;endArrow=block;endFill=1;endSize=24;sourcePerimeterSpacing=0;targetPerimeterSpacing=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;curved=1;" parent="1" source="0FQZbP0Zo8suZgFqazNE-3432" target="HPjl0tGnjJfdN4wa3_h5-2" edge="1" routeController="controller-listing" routeRole="call">
+                    <mxGeometry x="0.0363" y="-243" relative="1" as="geometry">
+                        <mxPoint x="-2" as="offset"/>
                         <Array as="points">
-                            <mxPoint x="14030" y="7580"/>
+                            <mxPoint x="14849" y="7580"/>
                         </Array>
                         <mxPoint x="12660" y="7850" as="targetPoint"/>
                     </mxGeometry>
@@ -4122,28 +4125,28 @@
                         </Array>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="0FQZbP0Zo8suZgFqazNE-5273" value="Afficher le formulaire&amp;nbsp;&lt;div&gt;de modification du compte&lt;/div&gt;" style="shape=connector;rounded=0;jumpStyle=arc;jumpSize=24;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#3c1272;strokeWidth=10;align=center;verticalAlign=middle;fontFamily=Lato;fontSize=40;fontColor=#120d34;labelBackgroundColor=#FFFF00;endArrow=block;endFill=1;endSize=24;sourcePerimeterSpacing=0;targetPerimeterSpacing=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;curved=1;" parent="1" source="0FQZbP0Zo8suZgFqazNE-1408" target="0FQZbP0Zo8suZgFqazNE-5254" edge="1" routeController="controller-user" routeRole="call">
-                    <mxGeometry x="0.052" y="102" relative="1" as="geometry">
-                        <mxPoint x="-1" as="offset"/>
+                <mxCell id="0FQZbP0Zo8suZgFqazNE-5273" value="Afficher le formulaire&amp;nbsp;&lt;div&gt;de modification du compte&lt;/div&gt;" style="shape=connector;rounded=0;jumpStyle=arc;jumpSize=24;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#3c1272;strokeWidth=10;align=center;verticalAlign=middle;fontFamily=Lato;fontSize=40;fontColor=#120d34;labelBackgroundColor=#FFFF00;endArrow=block;endFill=1;endSize=24;sourcePerimeterSpacing=0;targetPerimeterSpacing=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;curved=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="1" source="0FQZbP0Zo8suZgFqazNE-1408" target="HPjl0tGnjJfdN4wa3_h5-3" edge="1" routeController="controller-user" routeRole="call">
+                    <mxGeometry x="0.0098" y="-98" relative="1" as="geometry">
+                        <mxPoint as="offset"/>
                         <Array as="points">
                             <mxPoint x="13880" y="10592"/>
                         </Array>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="0FQZbP0Zo8suZgFqazNE-5274" value="Modifier le compte&amp;nbsp;&lt;div&gt;de l’utilisateur&lt;/div&gt;" style="shape=connector;rounded=0;jumpStyle=arc;jumpSize=24;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#3c1272;strokeWidth=10;align=center;verticalAlign=middle;fontFamily=Lato;fontSize=40;fontColor=#120d34;labelBackgroundColor=#FFFF00;endArrow=block;endFill=1;endSize=24;sourcePerimeterSpacing=0;targetPerimeterSpacing=0;entryX=0;entryY=0.7666666666666666;entryDx=0;entryDy=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;curved=1;" parent="1" source="0FQZbP0Zo8suZgFqazNE-4807" target="0FQZbP0Zo8suZgFqazNE-5254" edge="1" routeController="controller-user" routeRole="call">
-                    <mxGeometry x="-0.2637" y="-309" relative="1" as="geometry">
-                        <mxPoint as="offset"/>
+                <mxCell id="0FQZbP0Zo8suZgFqazNE-5274" value="Modifier le compte&amp;nbsp;&lt;div&gt;de l’utilisateur&lt;/div&gt;" style="shape=connector;rounded=0;jumpStyle=arc;jumpSize=24;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#3c1272;strokeWidth=10;align=center;verticalAlign=middle;fontFamily=Lato;fontSize=40;fontColor=#120d34;labelBackgroundColor=#FFFF00;endArrow=block;endFill=1;endSize=24;sourcePerimeterSpacing=0;targetPerimeterSpacing=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;curved=1;" parent="1" source="0FQZbP0Zo8suZgFqazNE-4807" target="HPjl0tGnjJfdN4wa3_h5-3" edge="1" routeController="controller-user" routeRole="call">
+                    <mxGeometry x="-0.0861" y="-172" relative="1" as="geometry">
+                        <mxPoint x="-2" y="-1" as="offset"/>
                         <Array as="points">
-                            <mxPoint x="14660" y="11760"/>
+                            <mxPoint x="14375.2" y="12646.4"/>
                         </Array>
                         <mxPoint x="15440" y="12770" as="sourcePoint"/>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="0FQZbP0Zo8suZgFqazNE-5281" value="Afficher le détail&amp;nbsp;&lt;div&gt;d&#39;une annonce&lt;/div&gt;" style="shape=connector;rounded=0;jumpStyle=arc;jumpSize=24;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#a1438f;strokeWidth=10;align=center;verticalAlign=middle;fontFamily=Lato;fontSize=40;fontColor=#120d34;labelBackgroundColor=#FFFF00;endArrow=block;endFill=1;endSize=24;sourcePerimeterSpacing=0;targetPerimeterSpacing=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0.639;entryY=0.017;entryDx=0;entryDy=0;entryPerimeter=0;curved=1;" parent="1" source="0FQZbP0Zo8suZgFqazNE-5252" target="0FQZbP0Zo8suZgFqazNE-964" edge="1" routeController="controller-listing" routeRole="return">
-                    <mxGeometry x="0.0089" y="232" relative="1" as="geometry">
+                <mxCell id="0FQZbP0Zo8suZgFqazNE-5281" value="Afficher le détail&amp;nbsp;&lt;div&gt;d&#39;une annonce&lt;/div&gt;" style="shape=connector;rounded=0;jumpStyle=arc;jumpSize=24;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#a1438f;strokeWidth=10;align=center;verticalAlign=middle;fontFamily=Lato;fontSize=40;fontColor=#120d34;labelBackgroundColor=#FFFF00;endArrow=block;endFill=1;endSize=24;sourcePerimeterSpacing=0;targetPerimeterSpacing=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.639;entryY=0.017;entryDx=0;entryDy=0;entryPerimeter=0;curved=1;" parent="1" source="HPjl0tGnjJfdN4wa3_h5-1" target="0FQZbP0Zo8suZgFqazNE-964" edge="1" routeController="controller-listing" routeRole="return">
+                    <mxGeometry x="0.0143" y="169" relative="1" as="geometry">
                         <mxPoint x="1" as="offset"/>
                         <Array as="points">
-                            <mxPoint x="8830" y="8780"/>
+                            <mxPoint x="6294.33" y="9376"/>
                         </Array>
                     </mxGeometry>
                 </mxCell>
@@ -4157,20 +4160,20 @@
                         <mxPoint x="9016" y="2080" as="targetPoint"/>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="0FQZbP0Zo8suZgFqazNE-5304" value="Afficher le formulaire&lt;div&gt;de création&lt;/div&gt;" style="shape=connector;rounded=0;jumpStyle=arc;jumpSize=24;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#a1438f;strokeWidth=10;align=center;verticalAlign=middle;fontFamily=Lato;fontSize=40;fontColor=#120d34;labelBackgroundColor=#FFFF00;endArrow=block;endFill=1;endSize=24;sourcePerimeterSpacing=0;targetPerimeterSpacing=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;curved=1;" parent="1" source="0FQZbP0Zo8suZgFqazNE-5252" target="0FQZbP0Zo8suZgFqazNE-3051" edge="1" routeController="controller-listing" routeRole="return">
-                    <mxGeometry x="0.1074" y="-313" relative="1" as="geometry">
-                        <mxPoint as="offset"/>
+                <mxCell id="0FQZbP0Zo8suZgFqazNE-5304" value="Afficher le formulaire&lt;div&gt;de création&lt;/div&gt;" style="shape=connector;rounded=0;jumpStyle=arc;jumpSize=24;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#a1438f;strokeWidth=10;align=center;verticalAlign=middle;fontFamily=Lato;fontSize=40;fontColor=#120d34;labelBackgroundColor=#FFFF00;endArrow=block;endFill=1;endSize=24;sourcePerimeterSpacing=0;targetPerimeterSpacing=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;curved=1;" parent="1" source="HPjl0tGnjJfdN4wa3_h5-2" target="0FQZbP0Zo8suZgFqazNE-3051" edge="1" routeController="controller-listing" routeRole="return">
+                    <mxGeometry x="-0.3422" y="-292" relative="1" as="geometry">
+                        <mxPoint x="1" y="1" as="offset"/>
                         <Array as="points">
-                            <mxPoint x="11440" y="6460"/>
+                            <mxPoint x="11681" y="6684"/>
                         </Array>
                         <mxPoint x="11370" y="7650" as="sourcePoint"/>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="0FQZbP0Zo8suZgFqazNE-5307" value="Afficher le formulaire&lt;div&gt;de modification&lt;/div&gt;" style="shape=connector;rounded=0;jumpStyle=arc;jumpSize=24;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#a1438f;strokeWidth=10;align=center;verticalAlign=middle;fontFamily=Lato;fontSize=40;fontColor=#120d34;labelBackgroundColor=#FFFF00;endArrow=block;endFill=1;endSize=24;sourcePerimeterSpacing=0;targetPerimeterSpacing=0;entryX=0;entryY=0.75;entryDx=0;entryDy=0;exitX=0.763;exitY=0.076;exitDx=0;exitDy=0;exitPerimeter=0;curved=1;" parent="1" source="0FQZbP0Zo8suZgFqazNE-5252" target="0FQZbP0Zo8suZgFqazNE-3342" edge="1" routeController="controller-listing" routeRole="return">
-                    <mxGeometry x="-0.0128" y="-185" relative="1" as="geometry">
-                        <mxPoint as="offset"/>
+                <mxCell id="0FQZbP0Zo8suZgFqazNE-5307" value="Afficher le formulaire&lt;div&gt;de modification&lt;/div&gt;" style="shape=connector;rounded=0;jumpStyle=arc;jumpSize=24;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#a1438f;strokeWidth=10;align=center;verticalAlign=middle;fontFamily=Lato;fontSize=40;fontColor=#120d34;labelBackgroundColor=#FFFF00;endArrow=block;endFill=1;endSize=24;sourcePerimeterSpacing=0;targetPerimeterSpacing=0;entryX=0;entryY=0.75;entryDx=0;entryDy=0;exitX=0.723;exitY=0.05;exitDx=0;exitDy=0;exitPerimeter=0;curved=1;" parent="1" source="HPjl0tGnjJfdN4wa3_h5-2" target="0FQZbP0Zo8suZgFqazNE-3342" edge="1" routeController="controller-listing" routeRole="return">
+                    <mxGeometry x="-0.0526" y="-126" relative="1" as="geometry">
+                        <mxPoint x="-2" y="1" as="offset"/>
                         <Array as="points">
-                            <mxPoint x="12910" y="6750"/>
+                            <mxPoint x="13473" y="6972"/>
                         </Array>
                         <mxPoint x="12080" y="7670" as="sourcePoint"/>
                     </mxGeometry>
@@ -4184,11 +4187,11 @@
                         <mxPoint x="16220" y="10100" as="sourcePoint"/>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="0FQZbP0Zo8suZgFqazNE-5322" value="Afficher le formulaire de&amp;nbsp;&lt;div&gt;modification du compte&lt;/div&gt;" style="shape=connector;rounded=0;jumpStyle=arc;jumpSize=24;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#a1438f;strokeWidth=10;align=center;verticalAlign=middle;fontFamily=Lato;fontSize=40;fontColor=#120d34;labelBackgroundColor=#FFFF00;endArrow=block;endFill=1;endSize=24;sourcePerimeterSpacing=0;targetPerimeterSpacing=0;exitX=1;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;curved=1;" parent="1" source="0FQZbP0Zo8suZgFqazNE-5254" target="0FQZbP0Zo8suZgFqazNE-4747" edge="1" routeController="controller-user" routeRole="return">
-                    <mxGeometry x="-0.18" y="-149" relative="1" as="geometry">
-                        <mxPoint y="2" as="offset"/>
+                <mxCell id="0FQZbP0Zo8suZgFqazNE-5322" value="Afficher le formulaire de&amp;nbsp;&lt;div&gt;modification du compte&lt;/div&gt;" style="shape=connector;rounded=0;jumpStyle=arc;jumpSize=24;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#a1438f;strokeWidth=10;align=center;verticalAlign=middle;fontFamily=Lato;fontSize=40;fontColor=#120d34;labelBackgroundColor=#FFFF00;endArrow=block;endFill=1;endSize=24;sourcePerimeterSpacing=0;targetPerimeterSpacing=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;curved=1;" parent="1" source="HPjl0tGnjJfdN4wa3_h5-3" target="0FQZbP0Zo8suZgFqazNE-4747" edge="1" routeController="controller-user" routeRole="return">
+                    <mxGeometry x="-0.0106" y="-120" relative="1" as="geometry">
+                        <mxPoint x="1" as="offset"/>
                         <Array as="points">
-                            <mxPoint x="16990" y="11570"/>
+                            <mxPoint x="15668" y="11507.2"/>
                         </Array>
                         <mxPoint x="16470" y="11750" as="targetPoint"/>
                     </mxGeometry>
@@ -4213,8 +4216,8 @@
                     </mxGeometry>
                 </mxCell>
                 <mxCell id="yAZEg4Ish2BRNmcBwhYL-11" value="Afficher et rechercher&amp;nbsp;&lt;div&gt;les annonces&lt;/div&gt;" style="shape=connector;rounded=0;jumpStyle=arc;jumpSize=24;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#a1438f;strokeWidth=10;align=center;verticalAlign=middle;fontFamily=Lato;fontSize=40;fontColor=#120d34;labelBackgroundColor=#FFFF00;endArrow=block;endFill=1;endSize=24;sourcePerimeterSpacing=0;targetPerimeterSpacing=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;curved=1;" parent="1" source="0FQZbP0Zo8suZgFqazNE-5252" target="0FQZbP0Zo8suZgFqazNE-334" edge="1" routeController="controller-listing" routeRole="return">
-                    <mxGeometry x="0.1095" y="-85" relative="1" as="geometry">
-                        <mxPoint x="-1" y="-1" as="offset"/>
+                    <mxGeometry x="0.0104" y="73" relative="1" as="geometry">
+                        <mxPoint x="1" y="1" as="offset"/>
                         <Array as="points">
                             <mxPoint x="10080" y="7500"/>
                         </Array>
@@ -4223,10 +4226,10 @@
                     </mxGeometry>
                 </mxCell>
                 <mxCell id="yAZEg4Ish2BRNmcBwhYL-12" value="Afficher et rechercher&lt;div&gt;&amp;nbsp;les annonces&lt;/div&gt;" style="shape=connector;rounded=0;jumpStyle=arc;jumpSize=24;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#3c1272;strokeWidth=10;align=center;verticalAlign=middle;fontFamily=Lato;fontSize=40;fontColor=#120d34;labelBackgroundColor=#FFFF00;endArrow=block;endFill=1;endSize=24;sourcePerimeterSpacing=0;targetPerimeterSpacing=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;curved=1;" parent="1" source="0FQZbP0Zo8suZgFqazNE-104" target="0FQZbP0Zo8suZgFqazNE-5252" edge="1" routeController="controller-listing" routeRole="call">
-                    <mxGeometry x="0.2532" y="-91" relative="1" as="geometry">
+                    <mxGeometry x="0.4035" y="147" relative="1" as="geometry">
                         <mxPoint as="offset"/>
                         <Array as="points">
-                            <mxPoint x="9910" y="6590"/>
+                            <mxPoint x="7888" y="7204"/>
                         </Array>
                         <mxPoint x="10749" y="6380" as="sourcePoint"/>
                         <mxPoint x="10500" y="7930" as="targetPoint"/>
@@ -4258,7 +4261,7 @@
                         <mxPoint x="16551" y="9930" as="targetPoint"/>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="yAZEg4Ish2BRNmcBwhYL-23" value="Actualiser les annonces&amp;nbsp;&lt;div&gt;&lt;span style=&quot;background-color: light-dark(rgb(255, 255, 0), rgb(50, 50, 0)); color: light-dark(rgb(18, 13, 52), rgb(223, 219, 253));&quot;&gt;suivies ou enchéries&lt;/span&gt;&lt;br&gt;&lt;/div&gt;" style="shape=connector;rounded=0;jumpStyle=arc;jumpSize=24;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#a1438f;strokeWidth=10;align=center;verticalAlign=middle;fontFamily=Lato;fontSize=40;fontColor=#120d34;labelBackgroundColor=#FFFF00;endArrow=block;endFill=1;endSize=24;sourcePerimeterSpacing=0;targetPerimeterSpacing=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;exitX=0.783;exitY=0.084;exitDx=0;exitDy=0;exitPerimeter=0;curved=1;" parent="1" source="0FQZbP0Zo8suZgFqazNE-5254" target="0FQZbP0Zo8suZgFqazNE-4215" edge="1" routeController="controller-user" routeRole="return">
+                <mxCell id="yAZEg4Ish2BRNmcBwhYL-23" value="Actualiser les annonces&amp;nbsp;&lt;div&gt;&lt;span style=&quot;background-color: light-dark(rgb(255, 255, 0), rgb(50, 50, 0)); color: light-dark(rgb(18, 13, 52), rgb(223, 219, 253));&quot;&gt;suivies ou enchéries&lt;/span&gt;&lt;br&gt;&lt;/div&gt;" style="shape=connector;rounded=0;jumpStyle=arc;jumpSize=24;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#a1438f;strokeWidth=10;align=center;verticalAlign=middle;fontFamily=Lato;fontSize=40;fontColor=#120d34;labelBackgroundColor=#FFFF00;endArrow=block;endFill=1;endSize=24;sourcePerimeterSpacing=0;targetPerimeterSpacing=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;exitX=0.783;exitY=0.084;exitDx=0;exitDy=0;exitPerimeter=0;curved=1;" parent="1" source="0FQZbP0Zo8suZgFqazNE-5254" target="0FQZbP0Zo8suZgFqazNE-4113" edge="1" routeController="controller-user" routeRole="return">
                     <mxGeometry x="0.1238" y="106" relative="1" as="geometry">
                         <mxPoint y="-1" as="offset"/>
                         <Array as="points">
@@ -4267,6 +4270,15 @@
                         <mxPoint x="16440" y="10722" as="sourcePoint"/>
                         <mxPoint x="16581" y="9560" as="targetPoint"/>
                     </mxGeometry>
+                </mxCell>
+                <mxCell id="HPjl0tGnjJfdN4wa3_h5-1" value="&lt;div style=&quot;font-family: Lato; font-size: 60px; line-height: 1.25; text-align: center; color: rgb(18, 13, 52);&quot;&gt;&lt;span style=&quot;font-weight:700;&quot;&gt;ListingDetailController&lt;/span&gt;&lt;br&gt;&lt;span style=&quot;font-weight:400;&quot;&gt;&lt;br&gt;- Afficher le détail d’une annonce&lt;br&gt;&lt;br&gt;&lt;/span&gt;&lt;/div&gt;" style="ellipse;whiteSpace=wrap;html=1;shapeInside=1;strokeWidth=10;" parent="1" controllerName="ListingController" controllerRole="controller" vertex="1">
+                    <mxGeometry x="5726" y="7763" width="1263" height="787" as="geometry"/>
+                </mxCell>
+                <mxCell id="HPjl0tGnjJfdN4wa3_h5-2" value="&lt;div style=&quot;font-family: Lato; font-size: 60px; line-height: 1.25; text-align: center; color: rgb(18, 13, 52);&quot;&gt;&lt;span style=&quot;font-weight:700;&quot;&gt;ListingManagementController&lt;/span&gt;&lt;br&gt;&lt;span style=&quot;font-weight:400;&quot;&gt;&lt;br&gt;- Afficher le formulaire de création d’une annonce&lt;br&gt;- Créer une annonce&lt;br&gt;- Afficher le formulaire de modification d’une annonce&lt;br&gt;- Modifier une annonce&lt;br&gt;- Supprimer une annonce&lt;/span&gt;&lt;/div&gt;" style="ellipse;whiteSpace=wrap;html=1;shapeInside=1;strokeWidth=10;" parent="1" controllerName="ListingController" controllerRole="controller" vertex="1">
+                    <mxGeometry x="11633" y="7604" width="1609" height="793" as="geometry"/>
+                </mxCell>
+                <mxCell id="HPjl0tGnjJfdN4wa3_h5-3" value="&lt;div style=&quot;font-family: Lato; font-size: 60px; line-height: 1.25; text-align: center; color: rgb(18, 13, 52);&quot;&gt;&lt;span style=&quot;font-weight:700;&quot;&gt;AccountController&lt;/span&gt;&lt;br&gt;&lt;span style=&quot;font-weight:400;&quot;&gt;&lt;br&gt;- Afficher le formulaire de modification du compte&lt;br&gt;- Modifier le compte de l’utilisateur&lt;/span&gt;&lt;/div&gt;" style="ellipse;whiteSpace=wrap;html=1;shapeInside=1;strokeWidth=10;" parent="1" controllerName="UserController" controllerRole="controller" vertex="1">
+                    <mxGeometry x="13350" y="11224" width="1384" height="514" as="geometry"/>
                 </mxCell>
             </root>
         </mxGraphModel>
