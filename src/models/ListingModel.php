@@ -122,11 +122,8 @@ class ListingModel extends Model
      */
     public function isOwnedBy(int $listingId, int $userId): ?bool
     {
-        // La requête lit uniquement le propriétaire nécessaire à la comparaison.
-        $listing = $this->database->fetchOne(
-            'SELECT utilisateur_id FROM `ANNONCE` WHERE id = :listing_id LIMIT 1',
-            ['listing_id' => $listingId]
-        );
+        // La lecture simple par identifiant réutilise la méthode héritée du modèle parent.
+        $listing = $this->findById($listingId);
 
         if ($listing === false) {
             // Une erreur de lecture reste distincte d'une annonce absente.

@@ -2,8 +2,8 @@
 
 /**
  * Description générale : Modèle parent abstrait commun aux modèles qui utilisent une table SQL.
- * Rôle : Regrouper les opérations simples de création, de modification et de suppression partagées par les modèles enfants.
- * Tâches : Conserver Database, contrôler les champs autorisés, exécuter les écritures SQL et normaliser les listes d'identifiants.
+ * Rôle : Regrouper les opérations CRUD simples partagées par les modèles enfants.
+ * Tâches : Conserver Database, lire un enregistrement par son identifiant, contrôler les champs autorisés, exécuter les écritures SQL et normaliser les listes d'identifiants.
  * Liens avec les autres fichiers : Est étendu par les modèles SQL et reçoit Database depuis les contrôleurs.
  */
 
@@ -88,6 +88,25 @@ abstract class Model
         $this->data[$this->primaryKeyName] = $this->database->getLastInsertId();
 
         return true;
+    }
+
+    /**
+     * Rôle : Rechercher un enregistrement de la table du modèle enfant à partir de son identifiant.
+     * Paramètres : Identifiant de l'enregistrement recherché.
+     * Retour : Données trouvées, null si l'enregistrement est absent ou l'identifiant invalide, false en cas d'erreur SQL.
+     */
+    public function findById(int $id): array|false|null
+    {
+        if ($id <= 0) {
+            return null;
+        }
+
+        // Le nom de la table et celui de la clé primaire sont définis dans le modèle enfant.
+        $sql = 'SELECT * FROM ' . $this->tableName
+            . ' WHERE ' . $this->primaryKeyName . ' = :id LIMIT 1';
+
+        // L'identifiant reste séparé du texte SQL grâce à la requête préparée exécutée par Database.
+        return $this->database->fetchOne($sql, [':id' => $id]);
     }
 
     /**
