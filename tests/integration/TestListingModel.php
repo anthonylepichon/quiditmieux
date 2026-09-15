@@ -173,8 +173,21 @@ if ($connexionReussie) {
 
                 /*
                  * TEST 3
-                 * Vérification du propriétaire de l'annonce.
+                 * Lecture de l'annonce par la méthode héritée, puis vérification de son propriétaire.
                  */
+
+                $annonceLue = $modeleAnnonce->findById($identifiantAnnonce);
+
+                $titreAnnonceLue = null;
+                if (is_array($annonceLue) && isset($annonceLue['titre'])) {
+                    $titreAnnonceLue = $annonceLue['titre'];
+                }
+
+                $lanceurTests->verifierEgalite(
+                    $titreTest,
+                    $titreAnnonceLue,
+                    "La méthode findById héritée doit retrouver l'annonce créée"
+                );
 
                 $estProprietaire = $modeleAnnonce->isOwnedBy(
                     $identifiantAnnonce,
