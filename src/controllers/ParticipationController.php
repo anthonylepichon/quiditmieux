@@ -52,8 +52,8 @@ class ParticipationController extends Controller
             return;
         }
 
-        // NATIF PHP : DateTimeImmutable est la classe native de gestion des dates sans modification de l’objet original ; elle fiabilise ici les comparaisons et les formats.
-        $currentTime = new \DateTimeImmutable();
+        // NATIF PHP : DateTime est la classe native de gestion des dates et des heures ; elle fournit ici l’instant utilisé pour contrôler et enregistrer la participation.
+        $currentTime = new \DateTime();
         $listingModel = new ListingModel($this->database);
         $canParticipate = $listingModel->canReceiveParticipationFrom(
             $listingId,
@@ -174,7 +174,7 @@ class ParticipationController extends Controller
             return;
         }
 
-        $currentTime = new \DateTimeImmutable();
+        $currentTime = new \DateTime();
         $listingModel = new ListingModel($this->database);
         $canParticipate = $listingModel->canReceiveParticipationFrom(
             $listingId,

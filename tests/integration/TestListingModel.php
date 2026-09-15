@@ -116,10 +116,11 @@ if ($connexionReussie) {
          * Date actuelle et date de fin future.
          */
 
-        // NATIF PHP : DateTimeImmutable est la classe native de gestion des dates sans modification de l’objet original ; elle fiabilise ici les comparaisons et les formats.
-        $dateActuelle = new DateTimeImmutable();
+        // NATIF PHP : DateTime est la classe native de gestion des dates et des heures ; elle fournit ici les instants utilisés par le scénario de test.
+        $dateActuelle = new DateTime();
 
-        $dateFin = $dateActuelle->modify('+2 days');
+        // Une seconde date est créée car modify() modifierait directement l'objet DateTime sur lequel elle est appelée.
+        $dateFin = new DateTime('+2 days');
 
         $dateFinBaseDeDonnees = $dateFin->format('Y-m-d H:i:s');
 

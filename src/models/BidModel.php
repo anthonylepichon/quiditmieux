@@ -10,8 +10,8 @@
 namespace App\models;
 
 use App\core\Model;
-// NATIF PHP : DateTimeImmutable est la classe native de gestion des dates sans modification de l’objet original ; elle fiabilise ici les comparaisons et les formats.
-use DateTimeImmutable;
+// NATIF PHP : DateTime est la classe native de gestion des dates et des heures ; elle permet ici de formater l’instant d’une enchère pour MySQL.
+use DateTime;
 
 class BidModel extends Model
 {
@@ -242,7 +242,7 @@ class BidModel extends Model
         int $userId,
         int $listingId,
         int $amountInEuros,
-        DateTimeImmutable $placedAt
+        DateTime $placedAt
     ): bool
     {
         return $this->create([

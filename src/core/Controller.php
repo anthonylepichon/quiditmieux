@@ -242,7 +242,8 @@ class Controller
      * Paramètres : Date et indication de présence de l'année.
      * Retour : Date lisible.
      */
-    protected function formatFrenchDate(\DateTimeImmutable $date, bool $includeYear): string
+    // NATIF PHP : DateTime représente une date et une heure ; le contrôleur l’utilise ici pour produire un libellé français destiné à l’affichage.
+    protected function formatFrenchDate(\DateTime $date, bool $includeYear): string
     {
         // Les mois sont explicitement traduits pour ne pas dépendre de la configuration régionale du serveur.
         $months = [1 => 'janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
@@ -258,7 +259,7 @@ class Controller
      * Paramètres : Date, présence de l'année et séparateur médian.
      * Retour : Date et heure lisibles.
      */
-    protected function formatFrenchDateTime(\DateTimeImmutable $date, bool $includeYear, bool $useMiddleDot): string
+    protected function formatFrenchDateTime(\DateTime $date, bool $includeYear, bool $useMiddleDot): string
     {
         // Le séparateur dépend du composant visuel qui affiche la date et l'heure.
         return $this->formatFrenchDate($date, $includeYear) . ($useMiddleDot ? ' · ' : ' à ') . $date->format('H:i');

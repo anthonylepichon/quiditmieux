@@ -18,8 +18,8 @@ use App\models\CategoryModel;
 use App\models\FollowModel;
 use App\models\ListingModel;
 use App\models\PhotoModel;
-// NATIF PHP : DateTimeImmutable est la classe native de gestion des dates sans modification de l’objet original ; elle fiabilise ici les comparaisons et les formats.
-use DateTimeImmutable;
+// NATIF PHP : DateTime est la classe native de gestion des dates et des heures ; elle permet ici de les créer, les comparer et les formater.
+use DateTime;
 
 class ListingController extends Controller
 {
@@ -61,7 +61,7 @@ class ListingController extends Controller
     public function search(): void
     {
         // Les catégories servent à valider le filtre et à afficher les libellés de chaque annonce.
-        $currentTime = new DateTimeImmutable();
+        $currentTime = new DateTime();
         $categories = (new CategoryModel($this->database))->getAllCategories();
         $categoriesAvailable = $categories !== null;
 
@@ -175,7 +175,7 @@ class ListingController extends Controller
     public function showDetail(): void
     {
         // L'instant de référence est partagé par tous les calculs d'état de l'annonce affichée.
-        $currentTime = new DateTimeImmutable();
+        $currentTime = new DateTime();
         // L'identifiant est contrôlé avant tout accès à l'annonce ou à ses informations associées.
         $listingId = $this->readPositiveGetIdentifier('id');
 
@@ -238,12 +238,12 @@ class ListingController extends Controller
             }
         }
 
-        $deadline = DateTimeImmutable::createFromFormat(
+        $deadline = DateTime::createFromFormat(
             'Y-m-d H:i:s',
             (string) $listing['date_heure_fin']
         );
 
-        if (!$deadline instanceof DateTimeImmutable) {
+        if (!$deadline instanceof DateTime) {
             $this->session->setFlashMessage('notice', 'Cette annonce ne peut pas être affichée.');
             $this->redirect('home');
         }
@@ -489,7 +489,7 @@ class ListingController extends Controller
             $this->redirect('dashboard');
         }
 
-        $currentTime = new DateTimeImmutable();
+        $currentTime = new DateTime();
         $canModify = $listingModel->canBeModifiedBy($listingId, $userId, $currentTime);
         $lockedState = $listingModel->getLastManagementRestriction();
 
@@ -607,7 +607,7 @@ class ListingController extends Controller
             return;
         }
 
-        $currentTime = new DateTimeImmutable();
+        $currentTime = new DateTime();
         $canModify = $listingModel->canBeModifiedBy($listingId, $userId, $currentTime);
 
         if ($canModify === null) {
@@ -700,7 +700,7 @@ class ListingController extends Controller
             'Cette annonce ne peut plus être supprimée.'
         );
 
-        $currentTime = new DateTimeImmutable();
+        $currentTime = new DateTime();
         $canDelete = $listingModel->canBeDeletedBy($listingId, $userId, $currentTime);
 
         if ($canDelete === null) {
@@ -885,11 +885,11 @@ class ListingController extends Controller
      */
     private function normalizeDeadline(string $date, string $time, array &$errors): ?string
     {
-        $deadline = DateTimeImmutable::createFromFormat('!Y-m-d H:i', $date . ' ' . $time);
-        $dateErrors = DateTimeImmutable::getLastErrors();
+        $deadline = DateTime::createFromFormat('!Y-m-d H:i', $date . ' ' . $time);
+        $dateErrors = DateTime::getLastErrors();
 
         if (
-            !$deadline instanceof DateTimeImmutable
+            !$deadline instanceof DateTime
             || ($dateErrors !== false && ($dateErrors['warning_count'] > 0 || $dateErrors['error_count'] > 0))
             || $deadline->format('Y-m-d H:i') !== $date . ' ' . $time
         ) {
@@ -898,7 +898,7 @@ class ListingController extends Controller
             return null;
         }
 
-        if ($deadline <= new DateTimeImmutable()) {
+        if ($deadline <= new DateTime()) {
             $errors['end_date'] = 'La date doit être future.';
             $errors['end_time'] = 'L’heure doit être future.';
             return null;
@@ -1089,14 +1089,14 @@ class ListingController extends Controller
      */
     private function listingToFormValues(array $listing): array
     {
-        $deadline = DateTimeImmutable::createFromFormat(
+        $deadline = DateTime::createFromFormat(
             'Y-m-d H:i:s',
             (string) $listing['date_heure_fin']
         );
         $date = '';
         $time = '';
 
-        if ($deadline instanceof DateTimeImmutable) {
+        if ($deadline instanceof DateTime) {
             $date = $deadline->format('Y-m-d');
             $time = $deadline->format('H:i');
         }
@@ -1394,12 +1394,12 @@ class ListingController extends Controller
                 continue;
             }
 
-            $date = DateTimeImmutable::createFromFormat(
+            $date = DateTime::createFromFormat(
                 'Y-m-d H:i:s',
                 (string) $row['date_heure_enchere']
             );
 
-            if (!$date instanceof DateTimeImmutable) {
+            if (!$date instanceof DateTime) {
                 continue;
             }
 
@@ -1807,7 +1807,7 @@ class ListingController extends Controller
     private function enrichListings(
         array $listings,
         array $categories,
-        DateTimeImmutable $currentTime
+        DateTime $currentTime
     ): array|false {
         $listingIds = [];
         $startingPrices = [];
@@ -1844,12 +1844,12 @@ class ListingController extends Controller
             }
 
             $identifier = (int) $listing['id'];
-            $deadline = DateTimeImmutable::createFromFormat(
+            $deadline = DateTime::createFromFormat(
                 'Y-m-d H:i:s',
                 (string) $listing['date_heure_fin']
             );
 
-            if (!$deadline instanceof DateTimeImmutable) {
+            if (!$deadline instanceof DateTime) {
                 continue;
             }
 

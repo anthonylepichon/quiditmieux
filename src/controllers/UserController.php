@@ -17,8 +17,8 @@ use App\models\CategoryModel;
 use App\models\ListingModel;
 use App\models\PhotoModel;
 use App\models\UserModel;
-// NATIF PHP : DateTimeImmutable est la classe native de gestion des dates sans modification de l’objet original ; elle fiabilise ici les comparaisons et les formats.
-use DateTimeImmutable;
+// NATIF PHP : DateTime est la classe native de gestion des dates et des heures ; elle permet ici de les créer, les comparer et les formater.
+use DateTime;
 
 class UserController extends Controller
 {
@@ -233,7 +233,7 @@ class UserController extends Controller
             return;
         }
 
-        $currentTime = new DateTimeImmutable();
+        $currentTime = new DateTime();
         $model = new ListingModel($this->database);
         $rows = $model->getDashboardSales($userId, $currentTime);
 
@@ -267,7 +267,7 @@ class UserController extends Controller
             return;
         }
 
-        $currentTime = new DateTimeImmutable();
+        $currentTime = new DateTime();
         $model = new ListingModel($this->database);
         $rows = $model->getDashboardParticipations($userId, $currentTime);
 
@@ -298,7 +298,7 @@ class UserController extends Controller
      */
     private function buildDashboard(int $userId): array
     {
-        $currentTime = new DateTimeImmutable();
+        $currentTime = new DateTime();
         $model = new ListingModel($this->database);
         $participationRows = $model->getDashboardParticipations($userId, $currentTime);
         $salesRows = $model->getDashboardSales($userId, $currentTime);
@@ -381,7 +381,7 @@ class UserController extends Controller
     private function formatListings(
         array $rows,
         array $categories,
-        DateTimeImmutable $currentTime
+        DateTime $currentTime
     ): array|false
     {
         $ids = [];
@@ -410,8 +410,8 @@ class UserController extends Controller
             )) {
                 continue;
             }
-            $deadline = DateTimeImmutable::createFromFormat('Y-m-d H:i:s', (string) $row['date_heure_fin']);
-            if (!$deadline instanceof DateTimeImmutable) {
+            $deadline = DateTime::createFromFormat('Y-m-d H:i:s', (string) $row['date_heure_fin']);
+            if (!$deadline instanceof DateTime) {
                 continue;
             }
 

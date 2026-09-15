@@ -10,8 +10,8 @@
 namespace App\models;
 
 use App\core\Model;
-// NATIF PHP : DateTimeImmutable est la classe native de gestion des dates sans modification de l’objet original ; elle fiabilise ici les comparaisons et les formats.
-use DateTimeImmutable;
+// NATIF PHP : DateTime est la classe native de gestion des dates et des heures ; elle permet ici de comparer les échéances avec l’instant reçu.
+use DateTime;
 
 class ListingModel extends Model
 {
@@ -150,7 +150,7 @@ class ListingModel extends Model
     public function canBeModifiedBy(
         int $listingId,
         int $userId,
-        DateTimeImmutable $currentTime
+        DateTime $currentTime
     ): ?bool
     {
         // Les règles de modification et de suppression sont volontairement communes.
@@ -165,7 +165,7 @@ class ListingModel extends Model
     public function canBeDeletedBy(
         int $listingId,
         int $userId,
-        DateTimeImmutable $currentTime
+        DateTime $currentTime
     ): ?bool
     {
         // Les règles de modification et de suppression sont volontairement communes.
@@ -191,7 +191,7 @@ class ListingModel extends Model
     public function canReceiveParticipationFrom(
         int $listingId,
         int $userId,
-        DateTimeImmutable $currentTime
+        DateTime $currentTime
     ): ?bool
     {
         // Le motif par défaut couvre une éventuelle erreur pendant la vérification.
@@ -254,7 +254,7 @@ class ListingModel extends Model
         array $criteria,
         int $requestedPage,
         int $itemsPerPage,
-        DateTimeImmutable $currentTime
+        DateTime $currentTime
     ): array
     {
         // Les conditions et paramètres sont construits progressivement selon les critères reçus.
@@ -366,7 +366,7 @@ class ListingModel extends Model
      * Paramètres : Identifiant de l'utilisateur connecté et instant de référence.
      * Retour : Liste des ventes ou false en cas d'erreur SQL.
      */
-    public function getDashboardSales(int $userId, DateTimeImmutable $currentTime): array|false
+    public function getDashboardSales(int $userId, DateTime $currentTime): array|false
     {
         // Les enchères sont agrégées afin d'afficher leur nombre et la meilleure offre.
         $sql = 'SELECT listing.id, listing.titre, listing.etat_objet, listing.prix_depart,'
@@ -391,7 +391,7 @@ class ListingModel extends Model
      * Paramètres : Identifiant de l'utilisateur connecté et instant de référence.
      * Retour : Participations de l'utilisateur ou false en cas d'erreur SQL.
      */
-    public function getDashboardParticipations(int $userId, DateTimeImmutable $currentTime): array|false
+    public function getDashboardParticipations(int $userId, DateTime $currentTime): array|false
     {
         // Cette sous-requête identifie le gagnant d'une vente terminée.
         $winnerSql = '(SELECT winning_bid.utilisateur_id FROM `ENCHERE` winning_bid'
@@ -593,7 +593,7 @@ class ListingModel extends Model
     private function canBeManagedBy(
         int $listingId,
         int $userId,
-        DateTimeImmutable $currentTime
+        DateTime $currentTime
     ): ?bool
     {
         // Le motif par défaut couvre une éventuelle erreur pendant la vérification.
