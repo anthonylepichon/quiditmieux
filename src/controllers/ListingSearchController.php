@@ -61,7 +61,7 @@ class ListingSearchController extends Controller
     {
         // Les catégories servent à valider le filtre et à afficher les libellés de chaque annonce.
         $currentTime = new DateTime();
-        $categories = (new CategoryModel($this->database))->getAllCategories();
+        $categories = (new CategoryModel())->getAllCategories();
         $categoriesAvailable = $categories !== null;
 
         if ($categories === null) {

@@ -570,7 +570,9 @@ Les validations JavaScript améliorent le confort de l’utilisateur, mais les c
 
 Les catégories ne sont pas stockées dans une table locale. `CategoryModel` appelle une API externe qui fournit la liste et le libellé des catégories.
 
-Un cache temporaire est conservé. Il limite les appels répétés à l’API et permet encore d’afficher les catégories connues lors d’une indisponibilité temporaire du service externe.
+Dans la version présentée, `CategoryModel` interroge directement l’API à chaque demande. Ce choix garde le code proche du niveau étudié et part du principe que l’API est disponible.
+
+L’ajout d’un petit cache local constitue une piste d’amélioration future. Il permettrait de limiter les appels répétés à l’API et de conserver temporairement les derniers libellés connus si le service externe devient indisponible.
 
 ## Tests automatisés
 

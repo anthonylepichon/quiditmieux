@@ -78,7 +78,7 @@ Les contrôleurs héritent de Controller, qui fournit les opérations communes d
 6. Vérifier que public/uploads/annonces existe et que PHP possède le droit d’y écrire.
 7. Ouvrir l’application, par exemple à l’adresse http://localhost/quiditmieux/.
 
-Le fichier private/database-secret.php, les photographies téléversées et le cache local ne sont pas versionnés.
+Le fichier private/database-secret.php et les photographies téléversées ne sont pas versionnés.
 
 ## Création de la base de données
 
@@ -351,7 +351,9 @@ Le projet utilise les entités suivantes :
 - ENCHERE pour les offres déposées ;
 - ASSOC_UTILISATEUR_ANNONCE pour le suivi des annonces.
 
-La catégorie est identifiée dans ANNONCE par categorie_id. Son libellé provient de l’API externe et peut être servi depuis un cache local afin de limiter les appels et de conserver un fonctionnement raisonnable pendant une panne temporaire.
+La catégorie est identifiée dans ANNONCE par categorie_id. Son libellé est demandé directement à l’API externe par CategoryModel.
+
+Une évolution future pourrait ajouter un petit cache local des catégories afin de limiter les appels répétés et de conserver les derniers libellés connus pendant une indisponibilité temporaire de l’API.
 
 ## Sécurité et confidentialité
 

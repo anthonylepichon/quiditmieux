@@ -50,7 +50,7 @@ class Router
     /**
      * Rôle : Rechercher la route demandée, vérifier sa configuration puis exécuter la méthode du contrôleur associé.
      * Paramètres : Nom de la route transmis par App et méthode HTTP utilisée pour envoyer la demande.
-     * Retour : Aucun. La méthode exécute l'action prévue ou arrête le traitement avec une réponse 404 ou 405.
+     * Retour : Aucun. La méthode exécute l'action prévue ou affiche un message si la demande ne peut pas être traitée.
      */
     public function dispatch(string $routeName, string $requestMethod): void
     {
@@ -61,21 +61,21 @@ class Router
         // Le traitement doit s’arrêter si la route demandée n’a pas été enregistrée.
         // NATIF PHP : isset() vérifie que le nom reçu correspond à une entrée présente dans le tableau des routes.
         if (!isset($this->routes[$routeName])) {
-            $this->notFound('Route introuvable : ' . $routeName);
+            $this->showError('Page introuvable.');
             return;
         }
 
         // (SECURITE: "La méthode HTTP doit correspondre à la route afin qu'une action POST qui modifie des données ne puisse pas être déclenchée par une simple adresse GET.")
         // La méthode HTTP reçue doit correspondre à celle autorisée dans la configuration de la route.
         if (!isset($this->routes[$routeName]['http_method'], $this->routes[$routeName]['controller'], $this->routes[$routeName]['method'])) {
-            $this->notFound('Route invalide.');
+            $this->showError('La route est mal configurée.');
             return;
         }
         // La définition de route est complète : on peut comparer le verbe HTTP demandé avec celui autorisé.
         $allowedHttpMethod = $this->routes[$routeName]['http_method'];
 
         if ($requestMethod !== $allowedHttpMethod) {
-            $this->methodNotAllowed($allowedHttpMethod);
+            $this->showError('Cette action n’est pas autorisée.');
             return;
         }
 
@@ -86,13 +86,13 @@ class Router
 
         // Le contrôleur doit exister avant de pouvoir créer un objet à partir de son nom.
         if (!class_exists($controllerName)) {
-            $this->notFound('Contrôleur introuvable : ' . $controllerName);
+            $this->showError('Le contrôleur demandé est introuvable.');
             return;
         }
 
         // Le nom de la classe étant contenu dans une variable, PHP crée dynamiquement un objet correspondant au contrôleur associé à la route.
         if (!is_subclass_of($controllerName, Controller::class)) {
-            $this->notFound('Contrôleur invalide.');
+            $this->showError('Le contrôleur demandé est invalide.');
             return;
         }
         // Le contrôleur sélectionné reçoit les mêmes services communs que tous les autres contrôleurs de la demande.
@@ -100,7 +100,7 @@ class Router
 
         // La méthode indiquée par la route doit exister dans le contrôleur créé.
         if (!method_exists($controller, $methodName)) {
-            $this->notFound('Méthode introuvable : ' . $methodName);
+            $this->showError('L’action demandée est introuvable.');
             return;
         }
 
@@ -108,24 +108,13 @@ class Router
         $controller->$methodName();
     }
 
-    // Rôle : produire une réponse HTTP 404 accompagnée d’un message d’erreur sécurisé.
-    // Paramètres : $message représente le message décrivant l’erreur rencontrée.
+    // Rôle : afficher un message simple lorsqu’une demande ne peut pas être traitée.
+    // Paramètres : $message représente le message compréhensible à afficher au visiteur.
     // Retour : Aucun.
-    private function notFound(string $message): void
+    private function showError(string $message): void
     {
-        http_response_code(404);
         // (SECURITE: "Le message variable est échappé avant affichage afin qu'il ne puisse pas injecter du HTML ou du JavaScript.")
+        // NATIF PHP : htmlspecialchars() transforme les caractères HTML spéciaux ; le message est ainsi affiché comme du texte simple.
         echo htmlspecialchars($message, ENT_QUOTES, 'UTF-8');
     }
-
-    // Rôle : refuser une demande envoyée avec une méthode HTTP différente de celle prévue pour la route.
-    // Paramètres : $allowedHttpMethod représente la méthode GET ou POST acceptée par la route.
-    // Retour : Aucun. La méthode produit une réponse HTTP 405 et indique la méthode autorisée.
-    private function methodNotAllowed(string $allowedHttpMethod): void
-    {
-        http_response_code(405);
-        header('Allow: ' . $allowedHttpMethod);
-        echo 'Méthode HTTP non autorisée pour cette route.';
-    }
-
 }

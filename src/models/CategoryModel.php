@@ -3,12 +3,11 @@
 /**
  * Description générale : Modèle des catégories fournies par l'API externe de l'application.
  * Rôle : Interroger l'API et fournir aux contrôleurs des catégories validées.
- * Tâches : Charger, valider et mettre en cache les catégories puis retrouver un libellé par identifiant.
+ * Tâches : Charger et valider les catégories puis retrouver un libellé par identifiant.
  * Liens avec les autres fichiers : Est utilisé par les contrôleurs, n'étend pas le modèle SQL générique.
  */
 
 namespace App\models;
-
 
 class CategoryModel
 {
@@ -17,55 +16,20 @@ class CategoryModel
     // ====================
 
     private const API_URL = 'https://api.mywebecom.ovh/play/qdm/categ.php';
-    private const CACHE_LIFETIME_SECONDS = 3600;
-    private const CACHE_RELATIVE_PATH = '/cache/categories.json';
-
-    // ====================
-    // ATTRIBUTS
-    // ====================
-
-    private bool $categoriesLoaded = false;
-    private ?array $categories = null;
 
     // ====================
     // MÉTHODES
     // ====================
 
     /**
-     * Rôle : Obtenir les catégories validées depuis le cache ou l'API publique.
+     * Rôle : Obtenir les catégories validées depuis l'API publique.
      * Paramètres : Aucun.
-     * Retour : Catégories indexées par identifiant ou null lorsqu'aucune source n'est disponible.
+     * Retour : Catégories indexées par identifiant ou null lorsque l'API est indisponible.
      */
     public function getAllCategories(): ?array
     {
-        // Les catégories déjà chargées pendant la demande sont réutilisées sans nouvel accès au cache ou à l'API.
-        if ($this->categoriesLoaded) {
-            return $this->categories;
-        }
-
-        $this->categoriesLoaded = true;
-        // Le cache local est consulté avant l'API afin de réduire les appels externes.
-        $cachedData = $this->readCachedData();
-
-        if ($cachedData !== null && $this->cacheIsFresh($cachedData['saved_at'])) {
-            $this->categories = $cachedData['categories'];
-            return $this->categories;
-        }
-
-        $apiCategories = $this->requestApiCategories();
-
-        if ($apiCategories !== null) {
-            $this->categories = $apiCategories;
-            $this->writeCache($apiCategories);
-            return $this->categories;
-        }
-
-        if ($cachedData !== null) {
-            $this->categories = $cachedData['categories'];
-            return $this->categories;
-        }
-
-        return null;
+        // Le modèle interroge directement l'API chaque fois qu'un contrôleur demande les catégories.
+        return $this->requestApiCategories();
     }
 
     /**
@@ -121,6 +85,7 @@ class CategoryModel
             // NATIF PHP : CURLOPT_HTTPHEADER fournit les en-têtes envoyés par cURL ; elle précise ici le format de réponse accepté.
             CURLOPT_HTTPHEADER => ['Accept: application/json'],
         ]);
+
         // NATIF PHP : curl_exec() exécute la requête cURL ; il récupère ici la réponse envoyée par l’API.
         $response = curl_exec($curl);
         // NATIF PHP : curl_getinfo() retourne une information sur la requête cURL ; il contrôle ici le statut HTTP reçu.
@@ -146,97 +111,7 @@ class CategoryModel
     }
 
     /**
-     * Rôle : Lire et contrôler le dernier cache local des catégories.
-     * Paramètres : Aucun.
-     * Retour : Date d'enregistrement et catégories validées, ou null si le cache est inexploitable.
-     */
-    private function readCachedData(): ?array
-    {
-        // Le cache est facultatif : son absence ne doit pas empêcher la tentative d'accès à l'API.
-        $cachePath = $this->getCachePath();
-
-        // NATIF PHP : is_file() vérifie que le chemin désigne un fichier existant ; il évite ici de charger un fichier absent ou invalide.
-        // NATIF PHP : is_readable() vérifie qu’un fichier peut être lu ; il évite ici une tentative de lecture impossible.
-        if (!is_file($cachePath) || !is_readable($cachePath)) {
-            return null;
-        }
-
-        // NATIF PHP : file_get_contents() lit l’intégralité d’un fichier dans une chaîne ; il récupère ici le contenu du cache.
-        $encodedData = file_get_contents($cachePath);
-
-        if (!is_string($encodedData) || $encodedData === '') {
-            return null;
-        }
-
-        $cachedData = json_decode($encodedData, true);
-
-        if (!is_array($cachedData)
-            || !isset($cachedData['saved_at'], $cachedData['categories'])
-            // NATIF PHP : is_int() vérifie qu’une valeur est un entier ; il évite ici d’utiliser un autre type dans un traitement numérique.
-            || !is_int($cachedData['saved_at'])
-            || !is_array($cachedData['categories'])
-        ) {
-            return null;
-        }
-
-        $categories = $this->normalizeCategories($cachedData['categories']);
-
-        if ($categories === null) {
-            return null;
-        }
-
-        return [
-            'saved_at' => $cachedData['saved_at'],
-            'categories' => $categories,
-        ];
-    }
-
-    /**
-     * Rôle : Indiquer si un cache peut être utilisé sans nouvel appel à l'API.
-     * Paramètres : Horodatage Unix de l'enregistrement du cache.
-     * Retour : true pendant l'heure suivant l'enregistrement, sinon false.
-     */
-    private function cacheIsFresh(int $savedAt): bool
-    {
-        // NATIF PHP : time() retourne l’heure Unix actuelle en secondes ; il sert ici à calculer une expiration ou la validité du cache.
-        return $savedAt >= time() - self::CACHE_LIFETIME_SECONDS;
-    }
-
-    /**
-     * Rôle : Enregistrer un résultat valide afin de limiter les futurs appels à l'API.
-     * Paramètres : Catégories validées à conserver.
-     * Retour : true lorsque le cache est enregistré, sinon false sans bloquer l'affichage.
-     */
-    private function writeCache(array $categories): bool
-    {
-        $cachePath = $this->getCachePath();
-        // NATIF PHP : dirname() retourne le dossier parent d’un chemin ; il permet ici de remonter dans l’arborescence du projet.
-        $cacheDirectory = dirname($cachePath);
-
-        // NATIF PHP : is_dir() vérifie qu’un chemin correspond à un dossier ; il permet ici de savoir si le répertoire doit être créé.
-        // NATIF PHP : mkdir() crée un dossier ; il prépare ici l’emplacement nécessaire au cache ou aux photographies.
-        if (!is_dir($cacheDirectory) && !mkdir($cacheDirectory, 0775, true) && !is_dir($cacheDirectory)) {
-            return false;
-        }
-
-        // NATIF PHP : json_encode() convertit une donnée PHP en JSON ; il prépare ici une réponse destinée au JavaScript ou un contenu à enregistrer.
-        $encodedData = json_encode([
-            'saved_at' => time(),
-            'categories' => $categories,
-        // NATIF PHP : JSON_UNESCAPED_UNICODE conserve les caractères Unicode lisibles dans le JSON ; elle évite ici de transformer les accents en codes.
-        ], JSON_UNESCAPED_UNICODE);
-
-        if (!is_string($encodedData)) {
-            return false;
-        }
-
-        // NATIF PHP : file_put_contents() écrit une chaîne dans un fichier ; il enregistre ici le contenu du cache.
-        // NATIF PHP : LOCK_EX demande un verrou exclusif pendant l’écriture du fichier ; elle évite ici deux écritures simultanées du cache.
-        return file_put_contents($cachePath, $encodedData, LOCK_EX) !== false;
-    }
-
-    /**
-     * Rôle : Contrôler et indexer une liste de catégories provenant de l'API ou du cache.
+     * Rôle : Contrôler et indexer une liste de catégories provenant de l'API.
      * Paramètres : Tableau candidat associant un identifiant à un libellé.
      * Retour : Catégories normalisées ou null si une information est invalide.
      */
@@ -267,17 +142,7 @@ class CategoryModel
         // NATIF PHP : ksort() trie un tableau selon ses clés ; il garantit ici un ordre stable des catégories.
         // NATIF PHP : SORT_NUMERIC demande un tri numérique ; elle ordonne ici les identifiants selon leur valeur et non comme du texte.
         ksort($categories, SORT_NUMERIC);
-        return $categories;
-    }
 
-    /**
-     * Rôle : Construire le chemin interne du fichier de cache ignoré par Git.
-     * Paramètres : Aucun.
-     * Retour : Chemin absolu du cache des catégories.
-     */
-    private function getCachePath(): string
-    {
-        // NATIF PHP : __DIR__ contient le chemin absolu du dossier du fichier courant ; elle permet ici de construire un chemin indépendant du poste utilisé.
-        return dirname(__DIR__, 2) . self::CACHE_RELATIVE_PATH;
+        return $categories;
     }
 }

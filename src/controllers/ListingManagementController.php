@@ -60,7 +60,7 @@ class ListingManagementController extends Controller
             return;
         }
 
-        $categories = (new CategoryModel($this->database))->getAllCategories();
+        $categories = (new CategoryModel())->getAllCategories();
         $errors = [];
 
         if ($categories === null) {
@@ -84,7 +84,7 @@ class ListingManagementController extends Controller
         }
 
         // Les valeurs et les fichiers sont contrôlés avant toute écriture en base ou sur le disque.
-        $categories = (new CategoryModel($this->database))->getAllCategories();
+        $categories = (new CategoryModel())->getAllCategories();
         $values = $this->readListingFormValues();
         $errors = [];
 
@@ -186,7 +186,7 @@ class ListingManagementController extends Controller
             $this->redirect('dashboard');
         }
 
-        $categories = (new CategoryModel($this->database))->getAllCategories();
+        $categories = (new CategoryModel())->getAllCategories();
         $errors = [];
 
         if ($categories === null) {
@@ -236,7 +236,7 @@ class ListingManagementController extends Controller
         $listingModel = $this->requireListingOwner($listingId, $userId, 'Modification verrouillée');
         $values = $this->readListingFormValues();
         $values['id'] = $listingId;
-        $categories = (new CategoryModel($this->database))->getAllCategories();
+        $categories = (new CategoryModel())->getAllCategories();
         $errors = [];
 
         if (!$csrfIsValid) {

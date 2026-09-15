@@ -8,7 +8,6 @@
 *.tmp
 *.temp
 /tmp/
-/cache/
 .DS_Store
 Thumbs.db
 Desktop.ini

@@ -47,7 +47,7 @@ class PhotoStorage
         $directory = $this->getStorageDirectory();
 
         // NATIF PHP : is_dir() vérifie qu’un chemin correspond à un dossier ; il permet ici de savoir si le répertoire doit être créé.
-        // NATIF PHP : mkdir() crée un dossier ; il prépare ici l’emplacement nécessaire au cache ou aux photographies.
+        // NATIF PHP : mkdir() crée un dossier ; il prépare ici l’emplacement nécessaire aux photographies.
         if (!is_dir($directory) && !mkdir($directory, 0775, true)) {
             // L'écriture s'arrête si le dossier permanent ne peut pas être préparé.
             return false;

@@ -79,7 +79,7 @@ class ListingDetailController extends Controller
             $this->redirect('home');
         }
 
-        $categoryLabel = (new CategoryModel($this->database))->getCategoryLabel((int) $listing['categorie_id']);
+        $categoryLabel = (new CategoryModel())->getCategoryLabel((int) $listing['categorie_id']);
 
         if ($categoryLabel === null) {
             $categoryLabel = 'Catégorie indisponible';

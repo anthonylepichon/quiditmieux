@@ -189,7 +189,7 @@ class DashboardController extends Controller
      */
     private function getDashboardCategories(): array
     {
-        $categories = (new CategoryModel($this->database))->getAllCategories();
+        $categories = (new CategoryModel())->getAllCategories();
 
         if ($categories === null) {
             return [];
