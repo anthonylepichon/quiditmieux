@@ -197,10 +197,10 @@ class ListingModel extends Model
         // Le motif par défaut couvre une éventuelle erreur pendant la vérification.
         $this->lastParticipationRestriction = 'error';
 
-        // FOR UPDATE protège la vérification lorsqu'elle précède une participation.
+        // Lit les informations nécessaires pour vérifier les règles de participation.
         $listing = $this->database->fetchOne(
             'SELECT utilisateur_id, date_heure_fin FROM `ANNONCE`'
-            . ' WHERE id = :listing_id LIMIT 1 FOR UPDATE',
+            . ' WHERE id = :listing_id LIMIT 1',
             ['listing_id' => $listingId]
         );
 
@@ -603,7 +603,7 @@ class ListingModel extends Model
         $listing = $this->database->fetchOne(
             'SELECT listing.utilisateur_id, listing.date_heure_fin,'
             . ' EXISTS(SELECT 1 FROM `ENCHERE` bid WHERE bid.annonce_id = listing.id) AS has_bid'
-            . ' FROM `ANNONCE` listing WHERE listing.id = :listing_id LIMIT 1 FOR UPDATE',
+            . ' FROM `ANNONCE` listing WHERE listing.id = :listing_id LIMIT 1',
             ['listing_id' => $listingId]
         );
 
