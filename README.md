@@ -56,7 +56,7 @@ Les contrôleurs héritent de Controller, qui fournit les opérations communes d
 
 ### Prérequis
 
-- PHP 8.1 avec les extensions PDO MySQL, cURL, mbstring et fileinfo ;
+- PHP 8.1 avec les extensions PDO MySQL, mbstring et fileinfo, ainsi que l'option `allow_url_fopen` activée pour lire l'API des catégories ;
 - MySQL ou MariaDB ;
 - Composer ;
 - un serveur Web local tel que Laragon ;
