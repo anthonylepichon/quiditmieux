@@ -2,7 +2,7 @@
 
 /**
  * Description générale : Contrôleur du détail d'une annonce proposée aux enchères.
- * Rôle : Afficher une annonce et préparer les informations utiles à sa consultation. Les données transmises à l'étape suivante ont ainsi une forme cohérente et cette préparation n'est pas répétée ailleurs.
+ * Rôle : Réunir l'annonce, sa catégorie, ses photographies, son prix et les droits du visiteur avant d'afficher le détail. L'historique complet n'est chargé que pour le vendeur ou un enchérisseur.
  * Tâches : Charger l'annonce, ses photographies, ses enchères et son état de suivi, puis préparer la vue de détail.
  * Liens avec les autres fichiers : Étend Controller.php et utilise les modèles liés au détail ainsi que PhotoStorage.php.
  */
@@ -34,7 +34,7 @@ class ListingDetailController extends Controller
     // ====================
 
     /**
-     * Rôle : Conserver les dépendances communes et préparer le gestionnaire des fichiers photographiques. Cela évite une référence sans fichier, un fichier orphelin ou l'association d'une photographie à la mauvaise annonce.
+     * Rôle : Conserver Database et Session puis créer PhotoStorage afin de convertir les références enregistrées en adresses utilisables par la galerie.
      * Paramètres : Gestionnaires de base de données et de session partagés avec l'application.
      * Retour : Aucun.
      */
@@ -46,7 +46,7 @@ class ListingDetailController extends Controller
     }
 
     /**
-     * Rôle : Afficher le détail complet d'une annonce selon son état et les droits du visiteur. Le traitement est ainsi interrompu avant qu'un utilisateur non autorisé puisse consulter ou modifier la ressource.
+     * Rôle : Charger le détail public puis adapter les actions et l'historique à l'identité du visiteur. Le vendeur et les enchérisseurs voient l'historique, tandis que les autres visiteurs conservent uniquement les informations publiques.
      * Paramètres : Aucun, l'identifiant est lu dans la requête GET.
      * Retour : Aucun, le template de détail ou une redirection sûre est envoyé.
      */
@@ -324,7 +324,7 @@ class ListingDetailController extends Controller
     }
 
     /**
-     * Rôle : Déterminer le libellé final public d'une vente terminée. Les données transmises à l'étape suivante ont ainsi une forme cohérente et cette préparation n'est pas répétée ailleurs.
+     * Rôle : Distinguer une vente encore active, une vente terminée sans enchère et une vente adjugée. Le détail affiche ainsi un résultat final cohérent avec le nombre d'enchères.
      * Paramètres : Indication de fin et nombre d'enchères.
      * Retour : Libellé final ou chaîne vide tant que la vente est active.
      */
@@ -342,7 +342,7 @@ class ListingDetailController extends Controller
     }
 
     /**
-     * Rôle : Préparer les libellés et messages du détail d'une annonce selon son état et les droits du visiteur. Le traitement est ainsi interrompu avant qu'un utilisateur non autorisé puisse consulter ou modifier la ressource.
+     * Rôle : Choisir les libellés, alertes et actions visibles selon l'état de la vente et le rôle du visiteur. Le template n'a ainsi pas à recalculer les autorisations métier.
      * Paramètres : État de la vente, nombre d'enchères, résultat final, droits du visiteur, refus éventuel et prix affiché.
      * Retour : Données d'affichage prêtes à présenter dans le template de détail.
      */

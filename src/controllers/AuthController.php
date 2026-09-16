@@ -2,7 +2,7 @@
 
 /**
  * Description générale : Contrôleur public de l'inscription et de l'authentification.
- * Rôle : Préparer les formulaires, coordonner le modèle de compte et gérer la session utilisateur. Cela empêche qu'une donnée de compte invalide ou sensible soit enregistrée, exposée ou utilisée pour ouvrir une session.
+ * Rôle : Traiter l'inscription, la connexion et la déconnexion en coordonnant la validation, UserModel et Session. Les mots de passe ne sont jamais renvoyés aux templates et une session n'est ouverte qu'après authentification.
  * Tâches : Afficher et traiter l'inscription, la connexion et la déconnexion.
  * Liens avec les autres fichiers : Étend Controller.php, utilise UserModel.php, Session.php et les templates register.php et login.php.
  */
@@ -19,7 +19,7 @@ class AuthController extends Controller
     // ====================
 
     /**
-     * Rôle : Préparer et afficher le formulaire public d'inscription. Les données transmises à l'étape suivante ont ainsi une forme cohérente et cette préparation n'est pas répétée ailleurs.
+     * Rôle : Afficher un formulaire d'inscription vide ou le message temporaire laissé après une création réussie. La préparation commune du template reste centralisée dans renderRegisterForm.
      * Paramètres : Aucun.
      * Retour : Aucun, le template d'inscription est affiché.
      */
@@ -30,7 +30,7 @@ class AuthController extends Controller
     }
 
     /**
-     * Rôle : Valider une demande d'inscription et créer le compte lorsqu'elle est conforme. Cela empêche qu'une donnée de compte invalide ou sensible soit enregistrée, exposée ou utilisée pour ouvrir une session.
+     * Rôle : Contrôler le jeton, le champ anti-robot, les formats, l'unicité et le mot de passe avant de demander la création du compte. Aucune donnée invalide ni mot de passe en clair n'est envoyé directement à la base.
      * Paramètres : Aucun, les informations sont lues dans la requête POST.
      * Retour : Aucun, le formulaire est réaffiché ou une redirection est envoyée.
      */
@@ -269,7 +269,7 @@ class AuthController extends Controller
     }
 
     /**
-     * Rôle : Préparer le message de synthèse adapté à l'état du formulaire d'inscription. Les données transmises à l'étape suivante ont ainsi une forme cohérente et cette préparation n'est pas répétée ailleurs.
+     * Rôle : Choisir le titre et le texte de l'alerte d'inscription à partir des erreurs rencontrées ou du succès précédent. Le template peut ainsi afficher le bon état sans analyser lui-même les erreurs.
      * Paramètres : Erreurs de validation et message temporaire d'inscription éventuel.
      * Retour : Variante, titre, contenu et rôle ARIA de l'alerte à afficher.
      */
@@ -389,7 +389,7 @@ class AuthController extends Controller
             $errors['password'] = 'Le mot de passe ne respecte pas les règles.';
         }
 
-        // NATIF PHP : hash_equals() compare deux chaînes en limitant les attaques basées sur le temps de réponse ; il sécurise ici la vérification du jeton.
+        // NATIF PHP : hash_equals() compare ici le mot de passe et sa confirmation sans accepter une différence entre les deux chaînes.
         if ($confirmation === '' || !hash_equals($password, $confirmation)) {
             $errors['password_confirmation'] = 'La confirmation ne correspond pas.';
         }

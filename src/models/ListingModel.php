@@ -549,7 +549,7 @@ class ListingModel extends Model
     }
 
     /**
-     * Rôle : Définir un ordre déterministe adapté à l'état des ventes recherché. Les données transmises à l'étape suivante ont ainsi une forme cohérente et cette préparation n'est pas répétée ailleurs.
+     * Rôle : Choisir l'ordre SQL adapté au filtre de vente afin d'afficher d'abord les échéances pertinentes et de départager deux annonces avec leur identifiant.
      * Paramètres : État de vente normalisé, paramètres SQL et instant formaté.
      * Retour : Fragment SQL contenant uniquement l'ordre interne prévu par le modèle.
      */

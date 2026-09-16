@@ -2,7 +2,7 @@
 
 /**
  * Description générale : Modèle des comptes utilisateurs de l'application.
- * Rôle : Créer, authentifier et modifier les comptes utilisateurs. Cela empêche qu'une donnée de compte invalide ou sensible soit enregistrée, exposée ou utilisée pour ouvrir une session.
+ * Rôle : Centraliser les lectures et écritures des comptes ainsi que le hachage des mots de passe. Les contrôleurs n'accèdent jamais directement aux empreintes conservées en base.
  * Tâches : Déclarer la table UTILISATEUR, gérer les mots de passe et vérifier l'unicité des comptes.
  * Liens avec les autres fichiers : Étend Model.php et est utilisé par AuthController.php et AccountController.php.
  */
@@ -41,7 +41,7 @@ class UserModel extends Model
     }
 
     /**
-     * Rôle : Créer un compte en produisant l'empreinte du mot de passe dans le modèle utilisateur. Cela empêche qu'une donnée de compte invalide ou sensible soit enregistrée, exposée ou utilisée pour ouvrir une session.
+     * Rôle : Hacher le mot de passe déjà validé puis créer le compte avec le pseudo et l'adresse reçus. Le mot de passe en clair n'est ainsi jamais enregistré dans la base.
      * Paramètres : Pseudo, adresse électronique et mot de passe déjà validés par le contrôleur.
      * Retour : true lorsque le compte est créé, sinon false.
      */
@@ -64,7 +64,7 @@ class UserModel extends Model
     }
 
     /**
-     * Rôle : Vérifier les identifiants d'un utilisateur sans exposer l'empreinte du mot de passe au contrôleur. Cela empêche qu'une donnée de compte invalide ou sensible soit enregistrée, exposée ou utilisée pour ouvrir une session.
+     * Rôle : Rechercher le compte par pseudo ou adresse puis comparer le mot de passe avec son empreinte. Seules les informations publiques du compte authentifié sont renvoyées au contrôleur.
      * Paramètres : Identifiant saisi et mot de passe en clair reçu par le formulaire.
      * Retour : Compte authentifié, null si les identifiants sont incorrects ou false en cas d'erreur SQL.
      */
@@ -97,7 +97,7 @@ class UserModel extends Model
     }
 
     /**
-     * Rôle : Vérifier le mot de passe actuel d'un compte sans exposer son empreinte au contrôleur. Cela empêche qu'une donnée de compte invalide ou sensible soit enregistrée, exposée ou utilisée pour ouvrir une session.
+     * Rôle : Comparer le mot de passe actuel saisi avec l'empreinte du compte. Cette vérification autorise ou refuse la modification des informations personnelles.
      * Paramètres : Identifiant du compte et mot de passe en clair reçu par le formulaire.
      * Retour : true si le mot de passe correspond, false s'il est incorrect ou null en cas d'erreur SQL.
      */
@@ -127,7 +127,7 @@ class UserModel extends Model
     }
 
     /**
-     * Rôle : Enregistrer les informations de compte déjà validées par le contrôleur. Cela empêche qu'une donnée de compte invalide ou sensible soit enregistrée, exposée ou utilisée pour ouvrir une session.
+     * Rôle : Modifier le pseudo, l'adresse et, lorsqu'il est fourni, le mot de passe préalablement haché. Les champs autorisés restent limités par le modèle parent.
      * Paramètres : Identifiant du compte, pseudo, adresse et nouveau mot de passe facultatif déjà validés.
      * Retour : true si la mise à jour réussit, false en cas d'échec SQL ou null si l'empreinte ne peut pas être créée.
      */
@@ -153,7 +153,7 @@ class UserModel extends Model
     }
 
     /**
-     * Rôle : Vérifier si un pseudo est déjà enregistré sans tenir compte de la casse. Cela empêche qu'une donnée de compte invalide ou sensible soit enregistrée, exposée ou utilisée pour ouvrir une session.
+     * Rôle : Vérifier si un pseudo appartient déjà à un autre compte afin d'éviter l'échec de la contrainte d'unicité lors de l'inscription ou de la modification.
      * Paramètres : Pseudo recherché et éventuel identifiant de compte à exclure.
      * Retour : true si le pseudo existe, false s'il est disponible ou null en cas d'erreur SQL.
      */
@@ -164,7 +164,7 @@ class UserModel extends Model
     }
 
     /**
-     * Rôle : Vérifier si une adresse électronique est déjà enregistrée sans tenir compte de la casse. Cela empêche qu'une donnée de compte invalide ou sensible soit enregistrée, exposée ou utilisée pour ouvrir une session.
+     * Rôle : Vérifier si une adresse électronique appartient déjà à un autre compte afin que deux utilisateurs ne puissent pas partager le même identifiant de connexion.
      * Paramètres : Adresse recherchée et éventuel identifiant de compte à exclure.
      * Retour : true si l'adresse existe, false si elle est disponible ou null en cas d'erreur SQL.
      */
@@ -211,7 +211,7 @@ class UserModel extends Model
     }
 
     /**
-     * Rôle : Produire une empreinte sécurisée pour un mot de passe déjà validé. Cela empêche qu'une donnée de compte invalide ou sensible soit enregistrée, exposée ou utilisée pour ouvrir une session.
+     * Rôle : Transformer un mot de passe en empreinte avec l'algorithme recommandé par PHP. Seule cette empreinte peut ensuite être transmise à la méthode d'enregistrement.
      * Paramètres : Mot de passe en clair.
      * Retour : Empreinte créée ou null lorsque sa création échoue.
      */

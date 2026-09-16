@@ -38,7 +38,7 @@ class ListingManagementController extends Controller
     // ====================
 
     /**
-     * Rôle : Conserver les dépendances communes et préparer le gestionnaire des fichiers photographiques. Cela évite une référence sans fichier, un fichier orphelin ou l'association d'une photographie à la mauvaise annonce.
+     * Rôle : Conserver Database et Session puis créer PhotoStorage afin de coordonner les références SQL avec les fichiers physiques pendant la gestion d'une annonce.
      * Paramètres : Gestionnaires de base de données et de session partagés avec l'application.
      * Retour : Aucun.
      */
@@ -50,7 +50,7 @@ class ListingManagementController extends Controller
     }
 
     /**
-     * Rôle : Préparer le formulaire protégé de création d'une annonce. Les données transmises à l'étape suivante ont ainsi une forme cohérente et cette préparation n'est pas répétée ailleurs.
+     * Rôle : Vérifier la connexion, charger les catégories et afficher un formulaire de création vide. La publication est bloquée si l'API ne permet pas de valider une catégorie.
      * Paramètres : Aucun.
      * Retour : Aucun, le formulaire ou une redirection vers la connexion est envoyé.
      */
@@ -81,7 +81,7 @@ class ListingManagementController extends Controller
     }
 
     /**
-     * Rôle : Valider les informations et photographies puis créer une annonce pour l'utilisateur connecté. Cela évite une référence sans fichier, un fichier orphelin ou l'association d'une photographie à la mauvaise annonce.
+     * Rôle : Contrôler les droits, le jeton, les champs et les photographies avant de créer l'annonce puis d'enregistrer ses fichiers et leurs références.
      * Paramètres : Aucun, les données sont lues dans la requête POST et les fichiers téléversés.
      * Retour : Aucun, le formulaire est réaffiché ou le détail créé est ouvert.
      */
@@ -223,7 +223,7 @@ class ListingManagementController extends Controller
     }
 
     /**
-     * Rôle : Revalider les droits, les données et les photographies puis modifier l'annonce. Cela évite une référence sans fichier, un fichier orphelin ou l'association d'une photographie à la mauvaise annonce.
+     * Rôle : Vérifier de nouveau le propriétaire et l'absence de verrouillage avant d'enregistrer les champs, les suppressions et les nouvelles photographies demandées.
      * Paramètres : Aucun, les données sont lues dans la requête POST.
      * Retour : Aucun, le formulaire est réaffiché ou le détail mis à jour est ouvert.
      */
@@ -459,7 +459,7 @@ class ListingManagementController extends Controller
     }
 
     /**
-     * Rôle : Rassembler les valeurs publiques du formulaire d'annonce. Les données transmises à l'étape suivante ont ainsi une forme cohérente et cette préparation n'est pas répétée ailleurs.
+     * Rôle : Lire dans POST uniquement les sept champs textuels attendus par le formulaire. La validation reçoit ainsi toujours les mêmes clés, même lorsqu'un champ est absent.
      * Paramètres : Aucun.
      * Retour : Valeurs réaffichables indexées par champ.
      */
@@ -580,7 +580,7 @@ class ListingManagementController extends Controller
     }
 
     /**
-     * Rôle : Contrôler les fichiers reçus sans encore les déplacer dans le dossier public. Cela évite une référence sans fichier, un fichier orphelin ou l'association d'une photographie à la mauvaise annonce.
+     * Rôle : Vérifier l'état du téléversement, la taille, le type MIME et le contenu de chaque image avant tout déplacement. Un fichier invalide ne peut ainsi pas atteindre le dossier public.
      * Paramètres : Erreurs à compléter et mode du formulaire.
      * Retour : Photographies validées avec leur fichier temporaire et leur extension sûre.
      */
@@ -671,7 +671,7 @@ class ListingManagementController extends Controller
     }
 
     /**
-     * Rôle : Déplacer les photographies validées et enregistrer leurs références ordonnées. Cela évite une référence sans fichier, un fichier orphelin ou l'association d'une photographie à la mauvaise annonce.
+     * Rôle : Déplacer chaque image validée puis créer sa référence avec la position suivante dans l'annonce. L'opération s'arrête dès qu'un fichier ou une référence ne peut pas être enregistré.
      * Paramètres : Identifiant de l'annonce, photographies et noms de fichiers stockés à compléter.
      * Retour : true lorsque toutes les photographies sont enregistrées, sinon false.
      */
@@ -709,7 +709,7 @@ class ListingManagementController extends Controller
     }
 
     /**
-     * Rôle : Supprimer les nouveaux fichiers déplacés lorsqu'une création échoue. Cela évite une référence sans fichier, un fichier orphelin ou l'association d'une photographie à la mauvaise annonce.
+     * Rôle : Retirer les fichiers créés pendant la demande lorsque la suite de l'enregistrement échoue. Ce nettoyage limite les photographies laissées inutilement sur le disque.
      * Paramètres : Liste des noms de fichiers créés pendant la demande.
      * Retour : Aucun.
      */
@@ -723,7 +723,7 @@ class ListingManagementController extends Controller
     }
 
     /**
-     * Rôle : Lire et normaliser les identifiants de photographies demandées en suppression. Cela évite une référence sans fichier, un fichier orphelin ou l'association d'une photographie à la mauvaise annonce.
+     * Rôle : Conserver uniquement les identifiants de photographies entiers, positifs et uniques reçus dans le formulaire. Les autres valeurs sont ignorées avant la comparaison avec les photographies de l'annonce.
      * Paramètres : Aucun.
      * Retour : Liste unique d'identifiants strictement positifs.
      */
@@ -755,7 +755,7 @@ class ListingManagementController extends Controller
     }
 
     /**
-     * Rôle : Transformer une annonce enregistrée en valeurs adaptées au formulaire de modification. Les données transmises à l'étape suivante ont ainsi une forme cohérente et cette préparation n'est pas répétée ailleurs.
+     * Rôle : Convertir les noms de colonnes et l'échéance enregistrée vers les champs attendus par le formulaire. L'annonce peut ainsi être réaffichée sans logique de conversion dans le template.
      * Paramètres : Annonce enregistrée.
      * Retour : Valeurs réaffichables du formulaire.
      */
@@ -789,7 +789,7 @@ class ListingManagementController extends Controller
     }
 
     /**
-     * Rôle : Ajouter une URL publique sûre à chaque photographie préparée par le modèle. Cela évite une référence sans fichier, un fichier orphelin ou l'association d'une photographie à la mauvaise annonce.
+     * Rôle : Transformer le nom stocké de chaque photographie en adresse publique encodée. Le template n'a ainsi jamais besoin de connaître le dossier physique des fichiers.
      * Paramètres : Photographies ordonnées.
      * Retour : Photographies complétées avec leur URL.
      */
@@ -804,7 +804,7 @@ class ListingManagementController extends Controller
     }
 
     /**
-     * Rôle : Supprimer du stockage les fichiers de photographies devenus inutiles après validation en base. Cela évite une référence sans fichier, un fichier orphelin ou l'association d'une photographie à la mauvaise annonce.
+     * Rôle : Supprimer du disque les photographies dont les références ne sont plus utilisées après une modification ou la suppression d'une annonce.
      * Paramètres : Photographies contenant des noms de fichiers sûrs.
      * Retour : Aucun.
      */
@@ -852,7 +852,7 @@ class ListingManagementController extends Controller
     }
 
     /**
-     * Rôle : Préparer les textes et états visuels du formulaire de création ou de modification d'une annonce. Les données transmises à l'étape suivante ont ainsi une forme cohérente et cette préparation n'est pas répétée ailleurs.
+     * Rôle : Choisir les titres, messages, boutons et états désactivés selon le mode, les erreurs et le verrouillage. Le template partagé reste ainsi limité à l'affichage de ces décisions.
      * Paramètres : Mode, valeurs réaffichables, erreurs, catégories disponibles et état de verrouillage.
      * Retour : Données de présentation prêtes à afficher sans décision métier dans le template.
      */

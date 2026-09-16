@@ -2,7 +2,7 @@
 
 /**
  * Description générale : Contrôleur du compte de l'utilisateur connecté.
- * Rôle : Afficher et traiter la modification sécurisée du compte utilisateur. Cela empêche qu'une donnée de compte invalide ou sensible soit enregistrée, exposée ou utilisée pour ouvrir une session.
+ * Rôle : Afficher et traiter la modification du compte authentifié après contrôle du mot de passe actuel. L'identifiant du compte vient exclusivement de la session et non du formulaire.
  * Tâches : Protéger l'accès, valider le formulaire et demander au modèle de modifier le compte.
  * Liens avec les autres fichiers : Étend Controller.php, utilise UserModel.php et affiche account.php.
  */
@@ -55,7 +55,7 @@ class AccountController extends Controller
     }
 
     /**
-     * Rôle : Valider puis modifier l'identité et éventuellement le mot de passe du compte connecté. Cela empêche qu'une donnée de compte invalide ou sensible soit enregistrée, exposée ou utilisée pour ouvrir une session.
+     * Rôle : Vérifier le jeton, les formats, l'unicité et le mot de passe actuel avant de modifier le pseudo, l'adresse ou le mot de passe du compte connecté.
      * Paramètres : Aucun, les informations sont lues dans la requête POST.
      * Retour : Aucun, le formulaire est réaffiché ou une redirection est envoyée.
      */
@@ -165,7 +165,7 @@ class AccountController extends Controller
     }
 
     /**
-     * Rôle : Afficher le formulaire de compte sans réafficher les mots de passe reçus. Cela empêche qu'une donnée de compte invalide ou sensible soit enregistrée, exposée ou utilisée pour ouvrir une session.
+     * Rôle : Préparer le formulaire avec le pseudo, l'adresse et les messages utiles, sans jamais retransmettre les mots de passe saisis au template.
      * Paramètres : Valeurs publiques, erreurs et message de réussite éventuel.
      * Retour : Aucun.
      */
@@ -246,7 +246,7 @@ class AccountController extends Controller
     }
 
     /**
-     * Rôle : Appliquer les règles de validation des informations modifiables du compte. Cela empêche qu'une donnée de compte invalide ou sensible soit enregistrée, exposée ou utilisée pour ouvrir une session.
+     * Rôle : Regrouper les contrôles du jeton, du pseudo, de l'adresse et des mots de passe avant toute recherche d'unicité ou écriture en base.
      * Paramètres : Valeurs publiques, mot de passe actuel, nouveau mot de passe et confirmation.
      * Retour : Erreurs indexées par champ, éventuellement vides.
      */
@@ -279,7 +279,7 @@ class AccountController extends Controller
                 $errors['new_password'] = 'Le nouveau mot de passe ne respecte pas les règles requises.';
             }
 
-            // NATIF PHP : hash_equals() compare deux chaînes en limitant les attaques basées sur le temps de réponse ; il sécurise ici la vérification du jeton.
+            // NATIF PHP : hash_equals() compare ici le nouveau mot de passe et sa confirmation sans accepter une différence entre les deux chaînes.
             if ($confirmation === '' || !hash_equals($newPassword, $confirmation)) {
                 $errors['new_password_confirmation'] = 'La confirmation ne correspond pas au nouveau mot de passe.';
             }

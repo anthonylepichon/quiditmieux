@@ -2,7 +2,7 @@
 
 /**
  * Description générale : Contrôleur des pages d'information légale de l'application.
- * Rôle : Préparer et afficher les informations publiques relatives à la confidentialité. Les données transmises à l'étape suivante ont ainsi une forme cohérente et cette préparation n'est pas répétée ailleurs.
+ * Rôle : Afficher la politique de confidentialité publique avec les informations de session nécessaires au layout commun. Aucun traitement de compte ni modification de données n'est réalisé sur cette page.
  * Tâches : Afficher la politique de confidentialité avec l'état de connexion courant.
  * Liens avec les autres fichiers : Étend Controller.php et affiche le template privacy.php.
  */

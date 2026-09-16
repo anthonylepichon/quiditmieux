@@ -2,7 +2,7 @@
 
 /**
  * Description générale : Routeur central de l'application.
- * Rôle : Associer chaque demande au contrôleur et à la méthode prévus par la configuration. Cela évite qu'une demande incomplète ou inconnue démarre un contrôleur qui ne lui correspond pas.
+ * Rôle : Associer chaque route au contrôleur et à l'action déclarés, après vérification de la méthode HTTP. Seuls les traitements explicitement enregistrés dans routes.php peuvent ainsi être exécutés.
  * Tâches : Enregistrer les routes, contrôler la méthode HTTP et appeler le traitement correspondant.
  * Liens avec les autres fichiers : Est utilisé par App.php, reçoit les routes de routes.php et lance les contrôleurs enfants.
  */
@@ -27,7 +27,7 @@ class Router
     // ====================
 
     /**
-     * Rôle : Conserver les services communs de la requête. Cela évite qu'une demande incomplète ou inconnue démarre un contrôleur qui ne lui correspond pas.
+     * Rôle : Conserver la base de données et la session reçues d'App afin de transmettre les mêmes objets au contrôleur sélectionné pour la requête.
      * Paramètres : Gestionnaires Database et Session initialisés par App.
      * Retour : Aucun.
      */
@@ -38,7 +38,7 @@ class Router
     }
 
     /**
-     * Rôle : Enregistrer les routes disponibles. Cela évite qu'une demande incomplète ou inconnue démarre un contrôleur qui ne lui correspond pas.
+     * Rôle : Mémoriser la liste des routes chargée par App afin que dispatch puisse refuser tout nom qui n'y figure pas.
      * Paramètres : Tableau associatif des définitions de route.
      * Retour : Aucun.
      */
@@ -48,7 +48,7 @@ class Router
     }
 
     /**
-     * Rôle : Rechercher la route demandée, vérifier sa configuration puis exécuter la méthode du contrôleur associé. Cela évite qu'une demande incomplète ou inconnue démarre un contrôleur qui ne lui correspond pas.
+     * Rôle : Vérifier l'existence de la route, sa méthode HTTP, son contrôleur et son action avant d'exécuter le traitement associé. Une configuration incorrecte produit ainsi une réponse HTTP explicite au lieu d'un appel PHP invalide.
      * Paramètres : Nom de la route transmis par App et méthode HTTP utilisée pour envoyer la demande.
      * Retour : Aucun. La méthode exécute l'action prévue ou affiche un message si la demande ne peut pas être traitée.
      */

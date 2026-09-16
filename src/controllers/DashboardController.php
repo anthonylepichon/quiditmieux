@@ -32,7 +32,7 @@ class DashboardController extends Controller
     // ====================
 
     /**
-     * Rôle : Conserver les dépendances communes et préparer le gestionnaire des fichiers photographiques. Cela évite une référence sans fichier, un fichier orphelin ou l'association d'une photographie à la mauvaise annonce.
+     * Rôle : Conserver Database et Session puis créer PhotoStorage afin d'ajouter l'adresse de la photographie principale aux cartes du tableau de bord.
      * Paramètres : Gestionnaires de base de données et de session partagés avec l'application.
      * Retour : Aucun.
      */
@@ -145,7 +145,7 @@ class DashboardController extends Controller
     }
 
     /**
-     * Rôle : Construire toutes les zones du tableau de bord. Les données transmises à l'étape suivante ont ainsi une forme cohérente et cette préparation n'est pas répétée ailleurs.
+     * Rôle : Charger les ventes et les participations de l'utilisateur, les enrichir puis séparer les enchères remportées. Un seul résultat alimente ainsi les trois sections du tableau de bord.
      * Paramètres : Identifiant de l'utilisateur connecté.
      * Retour : Données prêtes à afficher.
      */
@@ -199,7 +199,7 @@ class DashboardController extends Controller
     }
 
     /**
-     * Rôle : Construire l'état vide commun utilisé lorsque le tableau de bord ne peut pas être chargé. Les données transmises à l'étape suivante ont ainsi une forme cohérente et cette préparation n'est pas répétée ailleurs.
+     * Rôle : Retourner les trois listes vides accompagnées d'un indicateur d'échec. La page et les actualisations AJAX peuvent ainsi traiter une erreur sans accéder à des données absentes.
      * Paramètres : Aucun.
      * Retour : Zones vides accompagnées de l'indicateur d'erreur.
      */
@@ -227,7 +227,7 @@ class DashboardController extends Controller
     }
 
     /**
-     * Rôle : Enrichir les lignes de la base avec leurs photos et libellés d'affichage. Les données transmises à l'étape suivante ont ainsi une forme cohérente et cette préparation n'est pas répétée ailleurs.
+     * Rôle : Compléter les lignes du tableau de bord avec leur catégorie, leur photographie, leur date, leur prix et leur état. Le template et le JavaScript reçoivent la même structure prête à afficher.
      * Paramètres : Lignes du tableau de bord, catégories de l'API et instant de référence.
      * Retour : Cartes limitées aux données utiles ou false en cas d'erreur SQL.
      */
@@ -351,7 +351,7 @@ class DashboardController extends Controller
     }
 
     /**
-     * Rôle : Construire l'adresse de la photographie principale. Cela évite une référence sans fichier, un fichier orphelin ou l'association d'une photographie à la mauvaise annonce.
+     * Rôle : Transformer le nom de la photographie principale en adresse publique lorsqu'elle existe. Une annonce sans photographie conserve simplement une valeur nulle.
      * Paramètres : Photographies indexées et identifiant d'annonce.
      * Retour : Adresse publique de l'image ou null lorsqu'elle est absente.
      */
@@ -474,7 +474,7 @@ class DashboardController extends Controller
     }
 
     /**
-     * Rôle : Déterminer les textes d'état d'une carte de tableau de bord. Les données transmises à l'étape suivante ont ainsi une forme cohérente et cette préparation n'est pas répétée ailleurs.
+     * Rôle : Choisir les libellés de date, de statut et d'actualisation selon la section et l'état de la vente. Chaque carte peut ainsi être affichée sans reproduire ces décisions dans le template ou le JavaScript.
      * Paramètres : Données d'une annonce et zone du tableau de bord qui la présente.
      * Retour : Libellés de date, d'état, d'actualisation et de lien de la carte.
      */

@@ -2,7 +2,7 @@
 
 /**
  * Description générale : Modèle des suivis volontaires d'annonces.
- * Rôle : Consulter et modifier les associations entre utilisateurs et annonces suivies. Cela évite les doublons et empêche de modifier la participation d'un autre utilisateur.
+ * Rôle : Lire, créer et supprimer les associations représentant les annonces suivies. L'autorisation est vérifiée par le contrôleur et l'unicité en base empêche deux suivis identiques.
  * Tâches : Déclarer ASSOC_UTILISATEUR_ANNONCE et fournir l'état de suivi nécessaire au détail.
  * Liens avec les autres fichiers : Étend Model.php et est utilisé par ListingDetailController.php et ParticipationController.php.
  */
@@ -19,7 +19,7 @@ class FollowModel extends Model
     protected array $writableFields = ['utilisateur_id', 'annonce_id'];
 
     /**
-     * Rôle : Indiquer si un utilisateur suit volontairement une annonce. L'appelant reçoit ainsi une donnée prévisible sans devoir connaître directement son mode de stockage.
+     * Rôle : Vérifier si l'association entre un utilisateur et une annonce existe afin d'afficher le bon état du bouton de suivi.
      * Paramètres : Identifiants de l'utilisateur et de l'annonce.
      * Retour : true si le suivi existe, false sinon, ou null en cas d'erreur SQL.
      */
@@ -45,7 +45,7 @@ class FollowModel extends Model
     }
 
     /**
-     * Rôle : Créer un suivi volontaire lorsqu'il n'existe pas encore. Cela évite les doublons et empêche de modifier la participation d'un autre utilisateur.
+     * Rôle : Créer l'association de suivi seulement si elle n'existe pas déjà. Une deuxième demande identique conserve donc simplement l'état obtenu.
      * Paramètres : Identifiants de l'utilisateur et de l'annonce.
      * Retour : true si le suivi existe après l'opération, sinon false.
      */
@@ -69,7 +69,7 @@ class FollowModel extends Model
     }
 
     /**
-     * Rôle : Retirer uniquement le suivi volontaire d'un utilisateur sur une annonce. Cela évite les doublons et empêche de modifier la participation d'un autre utilisateur.
+     * Rôle : Supprimer l'association correspondant exactement à l'utilisateur et à l'annonce reçus, sans toucher aux enchères déjà enregistrées.
      * Paramètres : Identifiants de l'utilisateur et de l'annonce.
      * Retour : true lorsque la requête de retrait est exécutée, sinon false.
      */

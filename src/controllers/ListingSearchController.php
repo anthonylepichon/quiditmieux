@@ -41,7 +41,7 @@ class ListingSearchController extends Controller
     // ====================
 
     /**
-     * Rôle : Conserver les dépendances communes et préparer le gestionnaire des fichiers photographiques. Cela évite une référence sans fichier, un fichier orphelin ou l'association d'une photographie à la mauvaise annonce.
+     * Rôle : Conserver Database et Session puis créer PhotoStorage afin de transformer les noms de photographies trouvés en adresses publiques pour les cartes de résultats.
      * Paramètres : Gestionnaires de base de données et de session partagés avec l'application.
      * Retour : Aucun.
      */
@@ -322,7 +322,7 @@ class ListingSearchController extends Controller
     }
 
     /**
-     * Rôle : Ajouter le prix courant, la photographie principale et les informations d'affichage aux annonces. Cela évite une référence sans fichier, un fichier orphelin ou l'association d'une photographie à la mauvaise annonce.
+     * Rôle : Compléter les lignes SQL avec leur prix courant, leur photographie principale, leur catégorie et leurs dates formatées. La page d'accueil reçoit ainsi des cartes prêtes à afficher sans requête supplémentaire.
      * Paramètres : Annonces brutes, catégories fournies par l'API et instant de référence.
      * Retour : Annonces prêtes à afficher ou false en cas d'erreur SQL complémentaire.
      */
@@ -655,7 +655,7 @@ class ListingSearchController extends Controller
     }
 
     /**
-     * Rôle : Construire une adresse GET partageable pour une page de résultats. Les données transmises à l'étape suivante ont ainsi une forme cohérente et cette préparation n'est pas répétée ailleurs.
+     * Rôle : Construire l'adresse d'une page de résultats en conservant uniquement les filtres actifs. Un changement de page ne fait ainsi pas perdre la recherche de l'utilisateur.
      * Paramètres : Critères normalisés et numéro de page à intégrer.
      * Retour : Adresse interne de la recherche.
      */

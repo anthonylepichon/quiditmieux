@@ -132,7 +132,7 @@ class ParticipationController extends Controller
     }
 
     /**
-     * Rôle : Ajouter le suivi volontaire d'une annonce active appartenant à un autre utilisateur. Cela évite les doublons et empêche de modifier la participation d'un autre utilisateur.
+     * Rôle : Demander l'ajout du suivi d'une annonce après les contrôles communs de connexion, de jeton, d'échéance et de propriétaire.
      * Paramètres : Aucun, l'annonce et le jeton sont lus dans la requête POST.
      * Retour : Aucun, une réponse JSON ou une redirection vers le détail est envoyée.
      */
@@ -154,7 +154,7 @@ class ParticipationController extends Controller
     }
 
     /**
-     * Rôle : Appliquer l'ajout ou le retrait du suivi après tous les contrôles serveur. Cela évite les doublons et empêche de modifier la participation d'un autre utilisateur.
+     * Rôle : Vérifier la demande de suivi puis appeler FollowModel pour l'utilisateur connecté et l'annonce reçue. L'identité ne provient jamais du formulaire.
      * Paramètres : État de suivi demandé.
      * Retour : Aucun.
      */
@@ -258,7 +258,7 @@ class ParticipationController extends Controller
     }
 
     /**
-     * Rôle : Envoyer le résultat d'une enchère en JSON ou appliquer le repli POST-Redirect-GET. Cette règle évite d'afficher ou d'enregistrer un montant incompatible avec l'état réel de la vente.
+     * Rôle : Présenter le résultat déjà calculé d'une enchère en JSON pour JavaScript ou par redirection pour un formulaire classique. L'action n'est ainsi pas répétée lors du rechargement de la page.
      * Paramètres : Succès, message, annonce, résumé, minimum et montant refusé en euros éventuels.
      * Retour : Aucun.
      */
@@ -333,7 +333,7 @@ class ParticipationController extends Controller
     }
 
     /**
-     * Rôle : Construire l'adresse canonique du détail sans accepter de donnée extérieure. Les données transmises à l'étape suivante ont ainsi une forme cohérente et cette préparation n'est pas répétée ailleurs.
+     * Rôle : Construire l'adresse interne du détail à partir d'un identifiant déjà contrôlé, ou revenir à l'accueil s'il est absent. Les réponses JSON disposent ainsi toujours d'une destination sûre.
      * Paramètres : Identifiant éventuel de l'annonce.
      * Retour : Adresse interne du détail ou de l'accueil.
      */
