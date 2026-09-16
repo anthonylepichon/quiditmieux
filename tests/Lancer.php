@@ -31,6 +31,11 @@
  */
 
 // NATIF PHP : ob_start() démarre la mise en mémoire de la sortie PHP ; il capture ici le HTML produit avant de l’insérer dans le layout.
+// Le terminal utilise son dossier temporaire accessible pour stocker les sessions créées pendant les tests.
+// NATIF PHP : session_save_path() choisit le dossier des fichiers de session avant leur démarrage.
+// NATIF PHP : sys_get_temp_dir() retourne le dossier temporaire du système utilisable par le processus courant.
+session_save_path(sys_get_temp_dir());
+
 ob_start();
 
 
@@ -115,6 +120,15 @@ require_once __DIR__ . '/integration/TestDatabase.php';
 $lanceurTests->commencerItem('ListingModel.php');
 
 require_once __DIR__ . '/integration/TestListingModel.php';
+
+
+/*
+ * Tests des scénarios prioritaires pour la présentation au jury.
+ */
+
+$lanceurTests->commencerItem('Scénarios prioritaires du jury');
+
+require_once __DIR__ . '/integration/TestScenariosJury.php';
 
 
 /*
