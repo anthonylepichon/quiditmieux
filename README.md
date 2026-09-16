@@ -460,33 +460,16 @@ Les diagrammes suivants présentent l’architecture de l’application sous plu
 
 ## Travaux restants et pistes d’amélioration
 
-La version actuelle répond au périmètre pédagogique et permet de présenter les principaux parcours de l’application. Quelques limites restent toutefois à traiter avant d’envisager une utilisation publique avec de nombreux utilisateurs. Le routeur renvoie déjà les statuts HTTP adaptés aux erreurs rencontrées : 404 pour une route inconnue, 405 pour une méthode HTTP interdite et 500 pour une configuration interne invalide.
-
 ### Priorités fonctionnelles
 
 #### Sécuriser les enchères simultanées
 
 Le dépôt d’une enchère nécessite actuellement plusieurs opérations successives : lecture de l’annonce, lecture du prix courant, validation du montant puis insertion. Si deux utilisateurs enchérissent exactement au même instant, les deux demandes peuvent être validées à partir du même prix courant.
 
-Une évolution devra regrouper ces opérations dans une transaction et verrouiller temporairement les données concernées. Cette protection devra également couvrir la concurrence entre une première enchère et la modification ou la suppression de l’annonce.
-
 #### Garantir la cohérence entre les annonces et leurs photographies
 
 La création ou la modification d’une annonce combine des écritures en base de données et des opérations sur les fichiers. Ces opérations ne sont pas encore atomiques : si une étape échoue, les étapes précédentes ne sont pas toutes annulées automatiquement.
 
-Une première amélioration consisterait à mémoriser les identifiants et les fichiers créés pendant le traitement afin de les supprimer en cas d’échec. Une solution plus complète utiliserait une transaction pour les données et un mécanisme de compensation pour les fichiers. L’objectif est d’éviter une annonce incomplète ou une référence en base pointant vers une image supprimée.
-
-### Sécurité et préparation à la production
-
-Les améliorations suivantes seraient nécessaires pour renforcer une future version publique :
-
-- limiter les tentatives répétées de connexion au moyen d’un délai progressif ou d’un blocage temporaire ;
-- supprimer explicitement le cookie de session lors de la déconnexion et définir un délai d’inactivité propre à l’application ;
-- désactiver l’émulation des requêtes préparées avec `PDO::ATTR_EMULATE_PREPARES => false` ;
-- journaliser les erreurs techniques côté serveur sans enregistrer de mot de passe ni de donnée personnelle ;
-- imposer des dimensions maximales aux photographies, les redimensionner et les réencoder afin de retirer les métadonnées EXIF ;
-- vérifier dans la configuration du serveur que le dossier des photographies téléversées ne peut jamais exécuter de fichier PHP ;
-- transmettre les échéances au JavaScript au format ISO 8601 avec un décalage horaire explicite afin que les comptes à rebours restent corrects hors du fuseau français.
 
 ### Confidentialité et RGPD
 
@@ -503,13 +486,6 @@ Le contrôle actuel empêche bien une inscription sans acceptation de la politiq
 ### Maintenabilité et évolution du code
 
 Plusieurs fichiers restent volumineux, notamment `ListingManagementController.php`, `ListingSearchController.php`, `ListingModel.php`, `DashboardController.php`, `ListingDetailController.php`, `listing-detail.js` et `main.css`. Leur taille vient en partie des validations, des nombreux états d’affichage, des variantes avec ou sans JavaScript et des commentaires pédagogiques.
-
-Les améliorations possibles sont :
-
-- retirer progressivement les commentaires qui répètent directement le code et conserver ceux qui expliquent une règle importante ;
-- regrouper les messages similaires et raccourcir les blocs consacrés uniquement à la préparation de l’affichage ;
-- découper les sources SCSS par composant pour faciliter la maintenance des styles ;
-- conserver l’architecture MVC actuelle sans ajouter prématurément des couches complexes telles que des Repository, DTO ou conteneurs de dépendances.
 
 ### Performances et montée en charge
 
