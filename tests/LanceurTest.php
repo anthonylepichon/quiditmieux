@@ -5,7 +5,7 @@
  * Classe utilitaire permettant d'exécuter et de comptabiliser
  * les résultats des tests automatisés de l'application.
  *
- * Rôle : Fournir les méthodes communes permettant d'organiser les vérifications et d'afficher leurs résultats. Cette vérification permet de détecter une régression avant la présentation ou la livraison du projet.
+ * Rôle : Fournir les méthodes communes permettant d'organiser les vérifications et d'afficher leurs résultats pendant le développement.
  * Centraliser les vérifications effectuées par les différents
  * fichiers de tests unitaires et d'intégration.
  *
@@ -42,7 +42,7 @@ class LanceurTest
     // ====================
 
     /**
-     * Rôle : Définir l'élément dont les tests vont être exécutés. Cette vérification permet de détecter une régression avant la présentation ou la livraison du projet.
+     * Rôle : Définir l'élément dont les tests vont être exécutés afin de regrouper clairement ses résultats.
      * Paramètres : Nom de l'élément testé.
      * Retour : Aucun.
      */
@@ -65,7 +65,7 @@ class LanceurTest
 
 
     /**
-     * Rôle : Comparer une valeur obtenue avec la valeur attendue. Cette vérification permet de détecter une régression avant la présentation ou la livraison du projet.
+     * Rôle : Comparer une valeur obtenue avec la valeur attendue afin de signaler immédiatement un comportement incorrect.
      * Paramètres : Valeur attendue, valeur obtenue et message du test.
      * Retour : Aucun.
      */
@@ -105,7 +105,7 @@ class LanceurTest
 
 
     /**
-     * Rôle : Afficher les résultats de chaque élément testé. Cette vérification permet de détecter une régression avant la présentation ou la livraison du projet.
+     * Rôle : Afficher les résultats de chaque élément testé afin d'identifier rapidement les vérifications réussies ou échouées.
      * ainsi que le résultat total de la campagne de tests.
      * Paramètres : Aucun.
      * Retour : Aucun.

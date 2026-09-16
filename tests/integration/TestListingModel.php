@@ -4,7 +4,7 @@
  * Description générale :
  * Tests d'intégration du modèle des annonces.
  *
- * Rôle : Vérifier les principales opérations et règles métier appliquées aux annonces. Cette vérification permet de détecter une régression avant la présentation ou la livraison du projet.
+ * Rôle : Vérifier les principales opérations et règles métier appliquées aux annonces afin de détecter une régression après une modification du code.
  * Vérifier que ListingModel communique correctement avec la base de données et applique les principales règles métier des annonces.
  *
  * Tâches :

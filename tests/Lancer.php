@@ -5,7 +5,7 @@
  * Point d'entrée permettant de lancer l'ensemble des tests
  * automatisés de l'application.
  *
- * Rôle : Charger puis exécuter l'ensemble des tests unitaires et d'intégration du projet. Cette vérification permet de détecter une régression avant la présentation ou la livraison du projet.
+ * Rôle : Charger puis exécuter l'ensemble des tests unitaires et d'intégration du projet. Cette vérification permet de détecter une régression après une modification du code.
  * Charger le lanceur de tests, exécuter les tests unitaires
  * et les tests d'intégration, puis afficher le résumé des résultats.
  *
@@ -123,12 +123,33 @@ require_once __DIR__ . '/integration/TestListingModel.php';
 
 
 /*
- * Tests des scénarios prioritaires pour la présentation au jury.
+ * Tests des règles fonctionnelles ajoutés progressivement.
+ * Chaque fichier vérifie une seule responsabilité principale.
  */
 
-$lanceurTests->commencerItem('Scénarios prioritaires du jury');
+$lanceurTests->commencerItem('Montant minimum d\'une enchère');
+require_once __DIR__ . '/integration/TestBidMinimum.php';
 
-require_once __DIR__ . '/integration/TestScenariosJury.php';
+$lanceurTests->commencerItem('Propriétaire et participation');
+require_once __DIR__ . '/integration/TestOwnerCannotBid.php';
+
+$lanceurTests->commencerItem('Échéance d\'une vente');
+require_once __DIR__ . '/integration/TestExpiredListing.php';
+
+$lanceurTests->commencerItem('Modification après une enchère');
+require_once __DIR__ . '/integration/TestListingEditAfterBid.php';
+
+$lanceurTests->commencerItem('Consentement de confidentialité');
+require_once __DIR__ . '/integration/TestPrivacyConsent.php';
+
+$lanceurTests->commencerItem('Accès à l\'historique des enchères');
+require_once __DIR__ . '/integration/TestBidHistoryAccess.php';
+
+$lanceurTests->commencerItem('Photographies d\'une annonce');
+require_once __DIR__ . '/integration/TestPhotoModel.php';
+
+$lanceurTests->commencerItem('Erreurs du routeur');
+require_once __DIR__ . '/integration/TestRouter.php';
 
 
 /*
