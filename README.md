@@ -1,6 +1,6 @@
 # QUIDITMIEUX
 
-QUIDITMIEUX est une application Web d’enchères entre particuliers réalisée en PHP dans le cadre de la certification Développeur Web Full Stack, niveau 5 (Bac+2). Le projet met en œuvre une architecture MVC simple, la programmation orientée objet, l’héritage, PDO, une API externe et des interactions JavaScript.
+QUIDITMIEUX est une application Web d’enchères entre particuliers réalisée en PHP dans le cadre de la certification Développeur Web Full Stack, niveau 5 (Bac+2). Le projet met en œuvre une architecture MVC simple, la programmation orientée objet, l’héritage, PDO, et une API externe.
 
 Le dépôt GitHub du projet est disponible à l’adresse suivante : [anthonylepichon/quiditmieux](https://github.com/anthonylepichon/quiditmieux).
 
@@ -51,6 +51,28 @@ Le point d’entrée unique [index.php](index.php) démarre l’application. La 
     documents/           Cahier des charges, conceptualisation et supports
 
 Les contrôleurs héritent de Controller, qui fournit les opérations communes de rendu, de redirection, de validation et de réponse JSON. Les modèles SQL héritent de Model. CategoryModel reste indépendant, car les catégories viennent d’une API externe et non d’une table MySQL. Le service PhotoStorage centralise le stockage et la suppression des fichiers photographiques.
+
+Les responsabilités principales sont réparties entre huit contrôleurs :
+
+- `ListingSearchController` affiche l’accueil, traite la recherche et prépare la pagination côté PHP ;
+- `ListingDetailController` affiche le détail d’une annonce et les informations autorisées ;
+- `ListingManagementController` gère la création, la modification et la suppression des annonces et de leurs photographies ;
+- `ParticipationController` gère les enchères ainsi que le suivi et l’arrêt du suivi ;
+- `AuthController` gère l’inscription, la connexion et la déconnexion ;
+- `AccountController` gère la consultation et la modification du compte ;
+- `DashboardController` affiche et actualise les ventes et les participations de l’utilisateur ;
+- `LegalController` affiche la politique de confidentialité.
+
+La recherche et la pagination produisent des pages HTML complètes. JavaScript est utilisé uniquement pour améliorer l’interface :
+
+- `main.js` actualise les comptes à rebours et gère le menu compact partagé ;
+- `listing-detail.js` gère le carrousel et les actions AJAX de suivi et d’enchère ;
+- `listing-form.js` prépare les aperçus et la gestion locale des photographies avant l’envoi du formulaire ;
+- `dashboard.js` actualise périodiquement les ventes et les participations ;
+- `login.js` effectue la redirection différée après une connexion réussie ;
+- `register.js` active le bouton d’inscription après l’acceptation de la politique de confidentialité.
+
+Les formulaires de suivi, d’enchère et de gestion des annonces conservent un envoi classique sans JavaScript. JavaScript reste nécessaire pour activer le bouton d’inscription après que la case d’acceptation de la politique de confidentialité a été cochée.
 
 ## Installation locale
 
@@ -341,6 +363,19 @@ Le lanceur fourni exécute les tests unitaires puis les tests d’intégration :
 
 Les tests d’intégration utilisent la configuration locale de la base. Ils doivent donc être lancés avec une base disponible et cohérente avec le MPD.
 
+Les tests couvrent notamment :
+
+- le fonctionnement de `Session` et de `CategoryModel` ;
+- la connexion à la base de données et les opérations principales de `ListingModel` ;
+- le refus d’une enchère insuffisante ;
+- le refus d’une enchère du propriétaire sur sa propre annonce ;
+- le refus d’une enchère après l’échéance ;
+- l’impossibilité de modifier une annonce après une première enchère ;
+- le refus d’une inscription sans acceptation de la politique de confidentialité ;
+- la protection de l’historique des enchères pour un simple visiteur ;
+- l’ajout et la suppression d’une photographie ;
+- le statut HTTP 404 retourné pour une route inconnue.
+
 ## Base de données
 
 Le projet utilise les entités suivantes :
@@ -385,6 +420,8 @@ Les livrables validés qui ont guidé le développement sont conservés dans doc
 
 [Télécharger le tableau des spécifications](<documents/conceptualisation/Spécifications/Specifications-QDM.xlsx>)
 
+[Consulter le tableau de spécifications en ligne](https://docs.google.com/spreadsheets/d/1KKeHw_S9T6Vgzl_YefA6m-wzEWJty-mtGY1JRMnOZHI/edit)
+
 ### Modèle conceptuel de données
 
 [Ouvrir le MCD](<documents/conceptualisation/Modèles de données/MCD.jpg>)
@@ -423,7 +460,7 @@ Les diagrammes suivants présentent l’architecture de l’application sous plu
 
 ### 6. Templates et vues
 
-[![Diagramme UML — Templates et vues](<documents/readme/06 - Templates - QDM.png>)](<documents/readme/06 - Templates - QDM.png>)
+[![Diagramme UML — Templates et vues](<documents/readme/Diagramme de classe UML - QDM-6 - Templates et vues.drawio.png>)](<documents/readme/Diagramme de classe UML - QDM-6 - Templates et vues.drawio.png>)
 
 ## Limites du périmètre
 
@@ -431,4 +468,4 @@ Le projet ne prend pas en charge le paiement, la livraison, la messagerie, la mo
 
 ## Auteur
 
-Projet conçu et développé par Anthony Lepichon.
+Projet conçu et développé par Anthony LE PICHON.
