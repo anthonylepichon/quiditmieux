@@ -61,6 +61,8 @@ class Router
         // Le traitement doit s’arrêter si la route demandée n’a pas été enregistrée.
         // NATIF PHP : isset() vérifie que le nom reçu correspond à une entrée présente dans le tableau des routes.
         if (!isset($this->routes[$routeName])) {
+            // HTTP 404 signifie que la page demandée n'existe pas dans l'application.
+            // Cette erreur peut par exemple provenir d'une adresse incorrecte ou d'un ancien lien.
             $this->showError(404, 'Page introuvable.');
             return;
         }
@@ -68,6 +70,8 @@ class Router
         // (SECURITE: "La méthode HTTP doit correspondre à la route afin qu'une action POST qui modifie des données ne puisse pas être déclenchée par une simple adresse GET.")
         // La méthode HTTP reçue doit correspondre à celle autorisée dans la configuration de la route.
         if (!isset($this->routes[$routeName]['http_method'], $this->routes[$routeName]['controller'], $this->routes[$routeName]['method'])) {
+            // HTTP 500 indique ici une erreur interne : la route existe, mais il lui manque
+            // la méthode HTTP, le contrôleur ou la méthode PHP nécessaire à son exécution.
             $this->showError(500, 'La route est mal configurée.');
             return;
         }
@@ -75,6 +79,8 @@ class Router
         $allowedHttpMethod = $this->routes[$routeName]['http_method'];
 
         if ($requestMethod !== $allowedHttpMethod) {
+            // HTTP 405 signifie que la page existe, mais qu'elle n'accepte pas la méthode utilisée.
+            // Par exemple, une action enregistrée en POST ne peut pas être lancée avec une adresse GET.
             $this->showError(405, 'Cette action n’est pas autorisée.');
             return;
         }
@@ -86,12 +92,16 @@ class Router
 
         // Le contrôleur doit exister avant de pouvoir créer un objet à partir de son nom.
         if (!class_exists($controllerName)) {
+            // HTTP 500 indique ici que routes.php désigne une classe de contrôleur inexistante.
+            // Il s'agit d'une erreur de programmation ou de configuration, et non d'une erreur du visiteur.
             $this->showError(500, 'Le contrôleur demandé est introuvable.');
             return;
         }
 
         // Le nom de la classe étant contenu dans une variable, PHP crée dynamiquement un objet correspondant au contrôleur associé à la route.
         if (!is_subclass_of($controllerName, Controller::class)) {
+            // HTTP 500 indique ici que la classe existe, mais qu'elle n'hérite pas du contrôleur parent.
+            // Le routeur la refuse car elle ne possède pas la structure commune attendue par l'application.
             $this->showError(500, 'Le contrôleur demandé est invalide.');
             return;
         }
@@ -100,6 +110,8 @@ class Router
 
         // La méthode indiquée par la route doit exister dans le contrôleur créé.
         if (!method_exists($controller, $methodName)) {
+            // HTTP 500 indique ici que le contrôleur existe, mais que l'action déclarée dans routes.php
+            // ne correspond à aucune méthode PHP de ce contrôleur.
             $this->showError(500, 'L’action demandée est introuvable.');
             return;
         }
