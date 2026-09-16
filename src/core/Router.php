@@ -61,21 +61,21 @@ class Router
         // Le traitement doit s’arrêter si la route demandée n’a pas été enregistrée.
         // NATIF PHP : isset() vérifie que le nom reçu correspond à une entrée présente dans le tableau des routes.
         if (!isset($this->routes[$routeName])) {
-            $this->showError('Page introuvable.');
+            $this->showError(404, 'Page introuvable.');
             return;
         }
 
         // (SECURITE: "La méthode HTTP doit correspondre à la route afin qu'une action POST qui modifie des données ne puisse pas être déclenchée par une simple adresse GET.")
         // La méthode HTTP reçue doit correspondre à celle autorisée dans la configuration de la route.
         if (!isset($this->routes[$routeName]['http_method'], $this->routes[$routeName]['controller'], $this->routes[$routeName]['method'])) {
-            $this->showError('La route est mal configurée.');
+            $this->showError(500, 'La route est mal configurée.');
             return;
         }
         // La définition de route est complète : on peut comparer le verbe HTTP demandé avec celui autorisé.
         $allowedHttpMethod = $this->routes[$routeName]['http_method'];
 
         if ($requestMethod !== $allowedHttpMethod) {
-            $this->showError('Cette action n’est pas autorisée.');
+            $this->showError(405, 'Cette action n’est pas autorisée.');
             return;
         }
 
@@ -86,13 +86,13 @@ class Router
 
         // Le contrôleur doit exister avant de pouvoir créer un objet à partir de son nom.
         if (!class_exists($controllerName)) {
-            $this->showError('Le contrôleur demandé est introuvable.');
+            $this->showError(500, 'Le contrôleur demandé est introuvable.');
             return;
         }
 
         // Le nom de la classe étant contenu dans une variable, PHP crée dynamiquement un objet correspondant au contrôleur associé à la route.
         if (!is_subclass_of($controllerName, Controller::class)) {
-            $this->showError('Le contrôleur demandé est invalide.');
+            $this->showError(500, 'Le contrôleur demandé est invalide.');
             return;
         }
         // Le contrôleur sélectionné reçoit les mêmes services communs que tous les autres contrôleurs de la demande.
@@ -100,7 +100,7 @@ class Router
 
         // La méthode indiquée par la route doit exister dans le contrôleur créé.
         if (!method_exists($controller, $methodName)) {
-            $this->showError('L’action demandée est introuvable.');
+            $this->showError(500, 'L’action demandée est introuvable.');
             return;
         }
 
@@ -108,11 +108,16 @@ class Router
         $controller->$methodName();
     }
 
-    // Rôle : afficher un message simple lorsqu’une demande ne peut pas être traitée. Cela évite qu'une demande incomplète ou inconnue démarre un contrôleur qui ne lui correspond pas.
-    // Paramètres : $message représente le message compréhensible à afficher au visiteur.
-    // Retour : Aucun.
-    private function showError(string $message): void
+    /**
+     * Rôle : Envoyer le code HTTP correspondant à l'erreur puis afficher un message simple et sécurisé. Le navigateur et les outils techniques peuvent ainsi reconnaître la nature réelle du problème au lieu de recevoir systématiquement une réponse 200 OK.
+     * Paramètres : Code HTTP à envoyer et message compréhensible à afficher.
+     * Retour : Aucun.
+     */
+    private function showError(int $statusCode, string $message): void
     {
+        // NATIF PHP : http_response_code() définit le code HTTP de la réponse ; il distingue ici une page introuvable, une méthode interdite ou une erreur interne.
+        http_response_code($statusCode);
+
         // (SECURITE: "Le message variable est échappé avant affichage afin qu'il ne puisse pas injecter du HTML ou du JavaScript.")
         // NATIF PHP : htmlspecialchars() transforme les caractères HTML spéciaux ; le message est ainsi affiché comme du texte simple.
         echo htmlspecialchars($message, ENT_QUOTES, 'UTF-8');
