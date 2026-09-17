@@ -26,6 +26,32 @@ Exemple : pour déposer une enchère, le contrôleur reçoit le formulaire. Il v
 
 Le routeur lit les routes définies dans `src/config/routes.php`. Il vérifie notamment la méthode HTTP, puis appelle le contrôleur et la méthode correspondants. Ainsi, `index.php` ne choisit pas lui-même quelle page doit être exécutée.
 
+## Autoload Composer, namespaces et `use`
+
+Le projet utilise l’autoload PSR-4 configuré dans `composer.json` :
+
+```json
+"App\\": "src/"
+```
+
+Cette règle indique à Composer que les classes dont le nom commence par `App\` se trouvent dans le dossier `src`. Le fichier `index.php` charge une seule fois `vendor/autoload.php`. Composer peut ensuite retrouver automatiquement le fichier d’une classe lorsqu’elle est utilisée ; il n’est donc pas nécessaire d’écrire un `require_once` pour chaque contrôleur ou modèle.
+
+Un namespace donne une adresse logique à une classe :
+
+```php
+namespace App\controllers;
+```
+
+La classe `ListingDetailController` possède alors le nom complet `App\controllers\ListingDetailController`. L’instruction `use` permet d’employer un nom plus court dans le fichier courant :
+
+```php
+use App\core\Controller;
+```
+
+La règle simple à retenir est :
+
+> **Le namespace identifie la classe, `use` permet d’utiliser son nom court et l’autoloader Composer charge automatiquement son fichier.**
+
 ## Différence entre GET et POST
 
 GET et POST sont deux méthodes HTTP utilisées par le navigateur pour envoyer une demande au serveur. La différence essentielle concerne le but de la demande :
@@ -189,13 +215,11 @@ PHP
 Application
 ```
 
-Les informations sont rangées sous différentes clés :
+Les deux informations de `$_SERVER` utilisées par le projet sont rangées sous ces clés :
 
 ```php
 $_SERVER['REQUEST_METHOD'];
 $_SERVER['HTTPS'];
-$_SERVER['REQUEST_URI'];
-$_SERVER['SERVER_NAME'];
 ```
 
 Toutes les clés ne sont pas obligatoirement présentes. Leur disponibilité dépend notamment du serveur, de sa configuration et de la manière dont PHP est exécuté. Il faut donc vérifier une clé avec `isset()` avant de l’utiliser.
@@ -258,18 +282,12 @@ Le traitement se déroule ainsi :
 4. la méthode retourne par exemple `GET` ou `POST` ;
 5. si l’information est absente ou invalide, `GET` est utilisé par défaut.
 
-### Quelques clés courantes de $_SERVER
+### Les clés de $_SERVER utilisées dans le projet
 
-| Clé | Information généralement fournie |
+| Clé | Utilisation dans QUIDITMIEUX |
 |---|---|
-| `REQUEST_METHOD` | Méthode HTTP utilisée, par exemple `GET` ou `POST` |
-| `REQUEST_URI` | Partie de l’adresse demandée après le domaine |
-| `SERVER_NAME` | Nom du serveur, par exemple `localhost` |
-| `SERVER_PORT` | Port utilisé, généralement `80` ou `443` |
-| `REMOTE_ADDR` | Adresse IP avec laquelle le serveur voit le client |
-| `HTTP_USER_AGENT` | Description déclarée par le navigateur |
-| `SCRIPT_FILENAME` | Chemin du fichier PHP exécuté |
-| `HTTPS` | Information indiquant si HTTPS est actif |
+| `REQUEST_METHOD` | Permet à `App` de savoir si la demande utilise GET ou POST. |
+| `HTTPS` | Permet à `Session` d’ajouter l’attribut `Secure` au cookie lorsque le site utilise HTTPS. |
 
 ### Différence entre $_SERVER, $_GET et $_POST
 
@@ -291,25 +309,13 @@ $_POST['email'] = 'anthony@example.com';
 
 Ainsi, `$_SERVER` indique comment la demande est envoyée, `$_GET` indique le traitement demandé et `$_POST` contient les champs du formulaire.
 
-### Fiabilité des informations
-
-Certaines valeurs, comme `REQUEST_METHOD`, sont établies par le serveur dans le contexte de la requête. D’autres reprennent des informations déclarées par le navigateur et peuvent être modifiées par l’utilisateur :
-
-```php
-$_SERVER['HTTP_USER_AGENT'];
-$_SERVER['HTTP_REFERER'];
-$_SERVER['HTTP_HOST'];
-```
-
-Elles ne doivent pas être considérées seules comme des preuves pour une décision de sécurité.
-
 Lorsque PHP est lancé depuis le terminal avec `php tests/Lancer.php`, il ne reçoit pas une requête Web classique. Des clés comme `REQUEST_METHOD` ou `HTTPS` peuvent alors être absentes, ce qui justifie également leur vérification avec `isset()`.
 
 La règle simple à retenir est :
 
 > **`$_SERVER` est un tableau automatiquement créé par PHP qui contient les informations techniques concernant le serveur et la demande en cours.**
 
-Dans QUIDITMIEUX, `$_SERVER['REQUEST_METHOD']` indique si l’application a été appelée avec GET ou POST. Les autres clés présentées dans ce chapitre sont des exemples généraux fournis par PHP, mais elles ne sont pas toutes utilisées par le projet.
+Dans QUIDITMIEUX, seules les clés `REQUEST_METHOD` et `HTTPS` de `$_SERVER` sont utilisées directement.
 
 ### À quoi sert strtoupper() ?
 
@@ -494,7 +500,7 @@ if (!$database->isConnected()) {
 
 La programmation orientée objet consiste à regrouper les données et les traitements qui ont le même rôle dans des classes.
 
-- `Controller` est la classe parent des contrôleurs. Elle fournit le rendu d’une vue, la redirection, les messages flash et les réponses JSON.
+- `Controller` est la classe parent des contrôleurs. Elle fournit le rendu d’une vue, la redirection, la lecture des données GET et POST, ainsi que les réponses JSON.
 - `Model` est la classe parent des modèles SQL. Elle centralise PDO et les opérations CRUD simples : créer, lire par identifiant, modifier et supprimer.
 - `ListingModel`, `BidModel`, `PhotoModel` et `UserModel` sont des modèles enfants spécialisés dans leurs propres données.
 
@@ -504,6 +510,32 @@ L’héritage évite de recopier les mêmes méthodes dans chaque modèle ou cha
 
 `CategoryModel` n’hérite pas de `Model`, car il ne communique pas avec une table MySQL : il récupère les catégories depuis une API externe. L’héritage est donc utilisé seulement lorsque les responsabilités sont réellement communes.
 
+## Visibilité, typage et valeurs de retour
+
+Les mots-clés de visibilité indiquent depuis quel endroit un élément peut être utilisé :
+
+- `public` : accessible depuis les autres objets ;
+- `protected` : accessible dans la classe et ses classes enfants ;
+- `private` : accessible uniquement à l’intérieur de la classe qui le déclare.
+
+Par exemple, les actions appelées par le routeur sont publiques, les outils partagés par les contrôleurs enfants sont protégés et les méthodes internes à une seule classe sont privées.
+
+PHP permet aussi d’indiquer le type attendu d’un paramètre ou d’un retour :
+
+```php
+public function findById(int $id): array|false|null
+```
+
+Ici, `$id` doit être un entier. La méthode retourne un tableau si l’enregistrement existe, `null` s’il est absent et `false` si la requête SQL échoue. Le symbole `|` signifie « ou » dans un type composé. Une écriture comme `?int` signifie « un entier ou `null` ».
+
+Le projet utilise également l’opérateur `??`, appelé opérateur de fusion avec `null` :
+
+```php
+$pageTitle = $data['page_title'] ?? 'QUIDITMIEUX';
+```
+
+Cette ligne utilise `page_title` si cette entrée existe et ne vaut pas `null` ; sinon elle emploie la valeur par défaut `QUIDITMIEUX`.
+
 ## Accès à la base de données
 
 La classe `Database` crée une connexion PDO. Les modèles utilisent cette connexion pour exécuter des requêtes préparées.
@@ -512,13 +544,7 @@ Une requête préparée sépare la requête SQL des valeurs envoyées par l’ut
 
 Les modèles regroupent aussi les règles proches des données. Par exemple, le modèle des annonces contrôle le propriétaire d’une annonce avant une modification ou une suppression.
 
-## Transactions pour les actions importantes
-
-Une transaction permet de considérer plusieurs opérations comme un seul ensemble : soit toutes les opérations réussissent, soit aucune n’est conservée.
-
-Dans le projet, cette logique est utilisée notamment pour les enchères et le suivi d’annonce. Cela évite de laisser la base dans un état incomplet si une erreur survient entre deux requêtes.
-
-Pour une enchère, l’annonce est aussi verrouillée pendant le contrôle. Deux utilisateurs ne peuvent donc pas valider simultanément une enchère à partir du même ancien montant.
+La classe `Database` utilise aussi `try` et `catch`. Le code placé dans `try` tente la connexion ou la requête PDO. Si PDO lance une `PDOException`, le bloc `catch` intercepte l’erreur et retourne une valeur simple, sans afficher au visiteur le message technique contenant éventuellement des informations sensibles.
 
 ## Gestion des photographies
 
@@ -537,7 +563,10 @@ Pour l’affichage, la méthode `formatEuros()` de `Controller` utilise `number_
 
 L’application étant destinée à la France, le fuseau `Europe/Paris` est défini une seule fois dans `index.php`. Les dates sont donc saisies, enregistrées, comparées et affichées dans ce même fuseau.
 
-`DateTime` reste utilisé pour valider, comparer et formater les dates. Le code ne modifie pas les objets après leur création. Le compte à rebours reçoit une date ISO avec le décalage Paris : son calcul reste donc exact, y compris lors du passage à l’heure d’été ou d’hiver.
+`DateTime` est une classe native de PHP : elle est fournie par le langage et ne demande ni fichier à créer ni chargement par Composer. Dans le projet, elle sert à valider une date de fin saisie, comparer une échéance avec l’heure actuelle et préparer l’affichage des dates. Le code ne modifie pas les objets après leur création.
+
+Les contrôleurs transmettent les échéances à JavaScript au format ISO 8601 grâce à `DATE_ATOM`. Ce format contient le décalage horaire et permet au navigateur de calculer correctement le compte à rebours, y compris lors du passage à l’heure d’été ou d’hiver.
+
 ## JavaScript et AJAX
 
 JavaScript améliore l’interface, mais les fonctions essentielles restent organisées autour des routes PHP.
@@ -553,6 +582,34 @@ La recherche et la pagination utilisent une requête GET classique. PHP reçoit 
 Le carrousel de photographies utilise JavaScript uniquement dans le navigateur ; il n’envoie pas de requête AJAX au serveur.
 
 Les actualisations du tableau de bord respectent le besoin fonctionnel : les ventes sont actualisées toutes les 10 secondes et les annonces suivies ou enchéries toutes les 2 secondes.
+
+## JSON et codes de réponse HTTP
+
+Lorsqu’une action AJAX est exécutée, PHP renvoie des données JSON plutôt qu’une page HTML complète. La fonction native `json_encode()` transforme un tableau PHP en texte JSON ; JavaScript peut ensuite lire ce texte avec `response.json()`.
+
+Le routeur utilise `http_response_code()` pour indiquer techniquement le résultat de certaines demandes :
+
+- `404` lorsque la route demandée est inconnue ;
+- `405` lorsque la route existe mais n’accepte pas la méthode GET ou POST reçue ;
+- `500` lorsque la configuration interne d’une route, d’un contrôleur ou d’une méthode est invalide.
+
+Le message explique le problème à l’utilisateur, tandis que le code HTTP permet au navigateur et aux outils techniques de reconnaître le type d’erreur.
+
+## Session, authentification et messages temporaires
+
+Une session PHP conserve certaines informations entre plusieurs pages. La classe `Session` centralise cette gestion afin que les contrôleurs ne manipulent pas directement toute la variable `$_SESSION`.
+
+Dans le projet, la session conserve principalement :
+
+- l’identifiant de l’utilisateur connecté ;
+- le jeton CSRF utilisé par les formulaires ;
+- les messages temporaires, appelés messages flash.
+
+Un message flash est créé avant une redirection, puis lu et supprimé sur la page suivante. Par exemple, après la suppression d’une annonce, le contrôleur enregistre le message de réussite dans la session, redirige vers le tableau de bord, puis le tableau de bord affiche ce message une seule fois.
+
+`session_regenerate_id(true)` renouvelle l’identifiant technique de la session après la connexion. Cela limite le risque qu’un ancien identifiant de session continue à être utilisé.
+
+Le jeton CSRF est une valeur aléatoire conservée dans la session et ajoutée aux formulaires POST. Le serveur compare le jeton reçu avec celui de la session avant d’accepter l’action. Cela empêche qu’un autre site envoie à la place de l’utilisateur connecté un formulaire qui modifierait ses données.
 
 ## Sécurité mise en œuvre
 
@@ -590,17 +647,8 @@ Les tests unitaires vérifient une classe isolée. Les tests d’intégration v�
 
 Le projet ne gère pas le paiement, la livraison, la messagerie, la modération, la récupération de mot de passe ni la suppression autonome d’un compte. Ces éléments sont volontairement hors périmètre du cahier des charges.
 
+La version actuelle n’utilise pas de transaction SQL ni de verrouillage de ligne pour les enchères simultanées. Les contrôles métier refusent les montants insuffisants, les enchères du propriétaire et les enchères après l’échéance, mais la gestion de deux offres reçues exactement au même instant reste une amélioration future.
+
 ## Formulation de conclusion possible
 
 > J’ai construit une application d’enchères en PHP avec une architecture MVC simple. Les contrôleurs coordonnent les demandes, les modèles regroupent l’accès aux données et les règles métier, et les vues affichent les informations. J’ai utilisé l’héritage pour partager les traitements communs, PDO et les requêtes préparées pour la base de données, et JavaScript pour améliorer certaines interactions sans remplacer le fonctionnement serveur. Les règles importantes, notamment les enchères, les droits du vendeur et les photographies, sont contrôlées côté serveur.
-
-## `DateTime`
-
-`DateTime` est une classe native de PHP : elle est fournie par le langage et ne demande ni fichier à créer, ni chargement par Composer.
-
-Elle permet de représenter une date et une heure, par exemple l’instant actuel avec `new DateTime()` ou une date issue de la base avec `DateTime::createFromFormat()`.
-
-Certaines méthodes de `DateTime`, comme `modify('+1 day')`, modifient directement l’objet existant. Lorsqu’il faut conserver la date initiale, il faut donc créer un autre objet. Dans ce projet, les dates sont principalement créées, comparées et formatées : elles ne sont pas modifiées après leur création.
-
-Dans ce projet, elle sert à valider les dates de fin, comparer une échéance avec l’heure actuelle et préparer l’affichage des dates. Le fuseau `Europe/Paris` est défini une seule fois dans `index.php`.
-Ce réglage est utile car PHP utiliserait sinon le fuseau défini dans la configuration du serveur. Il garantit que les dates de fin, les contrôles des ventes terminées, les enchères et les affichages utilisent tous l’heure française. C’est une ligne simple placée au point d’entrée afin d’avoir une seule référence de date pour toute l’application.
